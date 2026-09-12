@@ -1027,7 +1027,7 @@ export default function App() {
         {/* ================= VIEW 3: QUẢN LÝ NGUỒN (SOURCES) ================= */}
         {activeTab === 'sources' && (
           <div className="font-sans">
-            <div className="mb-6 flex items-center justify-between">
+            <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
               <div>
                 <h2 className="flex items-center gap-2 font-serif text-lg font-bold text-[#1c1f24]">
                   <ShieldCheck className="h-5 w-5 text-emerald-700" />
@@ -1040,14 +1040,14 @@ export default function App() {
               </div>
               <button
                 onClick={() => setIsAddSourceOpen(true)}
-                className="flex cursor-pointer items-center gap-1.5 rounded-lg bg-emerald-700 px-3.5 py-2 text-xs font-semibold text-white shadow-xs transition hover:bg-emerald-800"
+                className="cursor-pointer flex items-center justify-center gap-1.5 self-start sm:self-auto rounded-lg bg-emerald-700 px-3.5 py-2 text-xs font-semibold text-white shadow-xs transition hover:bg-emerald-800"
               >
                 <Plus className="h-4 w-4" /> Thêm nguồn tin
               </button>
             </div>
 
-            <div className="overflow-hidden rounded-xl border border-[#e7e2d9] bg-white shadow-xs">
-              <table className="w-full text-left text-xs">
+            <div className="overflow-x-auto rounded-xl border border-[#e7e2d9] bg-white shadow-xs">
+              <table className="w-full min-w-[640px] text-left text-xs">
                 <thead className="border-b border-[#e7e2d9] bg-[#f7f4ed] font-medium text-[#635d52]">
                   <tr>
                     <th className="p-3.5">Tên Nguồn</th>
