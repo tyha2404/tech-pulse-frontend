@@ -5,5 +5,5 @@ export const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || '/api';
 
 export const apiClient = axios.create({
   baseURL: API_BASE_URL,
-  timeout: 60000,
+  timeout: 180000, // 3 minutes timeout for deep AI analysis & tunnel latency
 });

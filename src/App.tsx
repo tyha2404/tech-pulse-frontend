@@ -183,15 +183,18 @@ export default function App() {
   const handleSummarizeArticle = async (articleId: number) => {
     try {
       setSummarizingArticleId(articleId);
-      const res = await apiClient.post(`/articles/${articleId}/summarize`);
+      const res = await apiClient.post(`/articles/${articleId}/summarize`, {}, {
+        timeout: 180000, // 3 minutes specifically for AI generation
+      });
       const updated: Article = res.data;
       setArticles((prev) => prev.map((a) => (a.id === articleId ? updated : a)));
       if (selectedArticle && selectedArticle.id === articleId) {
         setSelectedArticle(updated);
       }
       alert('Đã tóm tắt lại bài viết bằng AI thành công!');
-    } catch (err) {
-      alert('Lỗi khi tóm tắt lại bằng AI: ' + err);
+    } catch (err: any) {
+      const errMsg = err?.response?.data?.detail || err?.message || String(err);
+      alert('Lỗi khi tóm tắt lại bằng AI: ' + errMsg);
     } finally {
       setSummarizingArticleId(null);
     }
