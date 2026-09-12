@@ -416,9 +416,6 @@ export default function App() {
                 <span className="font-serif text-lg font-bold tracking-tight text-[#1c1f24] sm:text-xl">
                   TechPulse
                 </span>
-                <span className="hidden rounded bg-[#eee9df] px-2 py-0.5 font-sans text-[10px] font-semibold tracking-widest text-[#635d52] uppercase sm:inline-block">
-                  Tạp chí AI & Backend
-                </span>
               </div>
             </div>
           </div>
