@@ -22,21 +22,28 @@ export const RadarIntelligenceView: React.FC<RadarIntelligenceViewProps> = ({
   const [loading, setLoading] = useState(false);
   const [dispatching, setDispatching] = useState(false);
   const [dispatchMsg, setDispatchMsg] = useState<string | null>(null);
+  const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
-  const fetchRadarDigest = async () => {
+  const fetchRadarDigest = async (force: boolean = false) => {
     try {
       setLoading(true);
-      const res = await apiClient.get('/intelligence/radar-digest');
+      setErrorMsg(null);
+      const res = await apiClient.get('/intelligence/radar-digest', {
+        params: force ? { force_refresh: true } : {},
+      });
       setDigest(res.data);
-    } catch (err) {
+    } catch (err: any) {
       console.error('Failed to fetch radar digest', err);
+      setErrorMsg(
+        'Không thể tải báo cáo radar từ AI Gateway vào lúc này. Vui lòng bấm "Thử lại" hoặc kiểm tra kết nối mạng.'
+      );
     } finally {
       setLoading(false);
     }
   };
 
   useEffect(() => {
-    fetchRadarDigest();
+    fetchRadarDigest(false);
   }, []);
 
   const handleDispatch = async () => {
@@ -105,12 +112,13 @@ export const RadarIntelligenceView: React.FC<RadarIntelligenceViewProps> = ({
 
         <div className="flex shrink-0 items-center gap-2">
           <button
-            onClick={fetchRadarDigest}
+            onClick={() => fetchRadarDigest(true)}
             disabled={loading}
             className="cursor-pointer flex items-center gap-1.5 rounded-lg border border-[#dcd5c7] bg-white px-3 py-2 font-sans text-xs font-medium text-[#2c313a] shadow-2xs transition hover:bg-[#eee9df] disabled:opacity-50"
+            title="Buộc AI phân tích lại báo cáo mới nhất"
           >
             <RefreshCw className={`h-3.5 w-3.5 ${loading ? 'animate-spin' : ''}`} />
-            Cập nhật Radar
+            Làm mới Radar
           </button>
           <button
             onClick={handleDispatch}
@@ -129,10 +137,23 @@ export const RadarIntelligenceView: React.FC<RadarIntelligenceViewProps> = ({
         </div>
       )}
 
+      {errorMsg && !digest && (
+        <div className="rounded-2xl border border-rose-200 bg-rose-50 p-6 text-center font-sans">
+          <p className="text-sm font-medium text-rose-800">{errorMsg}</p>
+          <button
+            onClick={() => fetchRadarDigest(false)}
+            className="mt-3 inline-flex items-center gap-1.5 rounded-lg bg-rose-700 px-4 py-2 text-xs font-semibold text-white hover:bg-rose-800"
+          >
+            <RefreshCw className="h-3.5 w-3.5" /> Thử lại
+          </button>
+        </div>
+      )}
+
       {loading && !digest ? (
         <div className="py-16 text-center font-sans text-sm text-[#756e60]">
           <Sparkles className="mx-auto mb-2 h-6 w-6 animate-spin text-amber-600" />
           AI đang tổng hợp và phân tích báo cáo radar công nghệ...
+          <p className="mt-1 text-xs text-[#9c9384]">Quá trình có thể mất khoảng 15-25 giây cho lần phân tích đầu tiên</p>
         </div>
       ) : (
         digest && (
