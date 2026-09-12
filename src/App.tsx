@@ -41,6 +41,7 @@ export default function App() {
 
   // Filters & Sorting
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
+  const [sourceCategoryFilter, setSourceCategoryFilter] = useState<string>('all');
   const [selectedSourceId, setSelectedSourceId] = useState<number | null>(null);
   const [topOnly, setTopOnly] = useState<boolean>(false);
   const [searchQuery, setSearchQuery] = useState<string>('');
@@ -1011,6 +1012,7 @@ export default function App() {
         {activeTab === 'radar' && (
           <div className="space-y-8">
             <RadarIntelligenceView
+              sourcesCount={sources.length}
               onSelectArticle={(art) => {
                 // Find full article from list if present, else set it directly
                 const found = articles.find((a) => a.id === art.id);
@@ -1092,6 +1094,34 @@ export default function App() {
               </button>
             </div>
 
+            {/* Category Filter Pills for Sources */}
+            <div className="mb-4 flex flex-wrap items-center gap-1.5 border-b border-[#e7e2d9] pb-3">
+              {[
+                { id: 'all', label: 'Tất cả nguồn' },
+                { id: 'AI & Future Tech', label: '🤖 AI & Công nghệ tương lai' },
+                { id: 'Backend & Architecture', label: '⚙️ Backend & Kiến trúc' },
+                { id: 'Vietnam Tech', label: '🇻🇳 Tin Việt Nam' },
+                { id: 'Global Tech', label: '🌐 Báo Quốc tế' },
+              ].map((c) => {
+                const count = c.id === 'all'
+                  ? sources.length
+                  : sources.filter((s) => s.category === c.id).length;
+                return (
+                  <button
+                    key={c.id}
+                    onClick={() => setSourceCategoryFilter(c.id)}
+                    className={`rounded-full px-3 py-1 text-xs whitespace-nowrap transition ${
+                      sourceCategoryFilter === c.id
+                        ? 'bg-[#2c313a] font-medium text-white'
+                        : 'bg-[#eee9df] text-[#554e42] hover:bg-[#e4ded2]'
+                    }`}
+                  >
+                    {c.label} ({count})
+                  </button>
+                );
+              })}
+            </div>
+
             <div className="overflow-x-auto rounded-xl border border-[#e7e2d9] bg-white shadow-xs">
               <table className="w-full min-w-[640px] text-left text-xs">
                 <thead className="border-b border-[#e7e2d9] bg-[#f7f4ed] font-medium text-[#635d52]">
@@ -1105,11 +1135,15 @@ export default function App() {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-[#ede8df]">
-                  {sources.map((s) => (
+                  {sources
+                    .filter((s) => sourceCategoryFilter === 'all' || s.category === sourceCategoryFilter)
+                    .map((s) => (
                     <tr key={s.id} className="transition hover:bg-[#fbf9f5]">
                       <td className="p-3.5">
                         <div className="font-semibold text-[#1c1f24]">{s.name}</div>
-                        <div className="text-[11px] text-[#756e60]">{s.category}</div>
+                        <div className="inline-block mt-0.5 rounded bg-[#f4efe6] px-1.5 py-0.5 text-[10px] font-medium text-[#635d52]">
+                          {s.category}
+                        </div>
                       </td>
                       <td className="p-3.5">
                         {s.status === 'healthy' && (
@@ -1453,11 +1487,10 @@ export default function App() {
                   onChange={(e) => setNewSourceCategory(e.target.value)}
                   className="w-full rounded-lg border border-[#dcd5c7] bg-white p-2.5 text-[#1e293b] focus:border-[#7c7465] focus:outline-none"
                 >
-                  <option value="AI & LLM">AI & LLM</option>
-                  <option value="Backend Architecture">Backend & Kiến trúc hệ thống</option>
-                  <option value="Global Tech">Báo công nghệ thế giới</option>
-                  <option value="Vietnam Tech">Tin công nghệ Việt Nam</option>
-                  <option value="General">Chung (General Tech)</option>
+                  <option value="AI & Future Tech">🤖 AI & Công nghệ tương lai</option>
+                  <option value="Backend & Architecture">⚙️ Backend & Kiến trúc hệ thống</option>
+                  <option value="Vietnam Tech">🇻🇳 Tin công nghệ Việt Nam</option>
+                  <option value="Global Tech">🌐 Báo công nghệ quốc tế</option>
                 </select>
               </div>
 

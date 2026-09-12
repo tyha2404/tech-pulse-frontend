@@ -13,10 +13,12 @@ import type { WeeklyRadarDigest, Article } from '../types';
 
 interface RadarIntelligenceViewProps {
   onSelectArticle: (article: Article) => void;
+  sourcesCount?: number;
 }
 
 export const RadarIntelligenceView: React.FC<RadarIntelligenceViewProps> = ({
   onSelectArticle,
+  sourcesCount = 28,
 }) => {
   const [digest, setDigest] = useState<WeeklyRadarDigest | null>(null);
   const [loading, setLoading] = useState(false);
@@ -94,19 +96,11 @@ export const RadarIntelligenceView: React.FC<RadarIntelligenceViewProps> = ({
       {/* Header Banner */}
       <div className="flex flex-col justify-between gap-4 rounded-2xl border border-[#e7e2d9] bg-gradient-to-r from-[#fbf9f5] via-[#f7f3ea] to-[#f4eee2] p-6 shadow-2xs md:flex-row md:items-center">
         <div>
-          <div className="flex items-center gap-2">
-            <span className="rounded-md bg-indigo-900 px-2.5 py-0.5 font-sans text-[11px] font-bold text-white uppercase">
-              Báo Cáo Chiến Lược
-            </span>
-            <span className="font-sans text-xs text-[#756e60]">
-              {digest?.week_label || 'Báo cáo Radar Công nghệ Tuần này'}
-            </span>
-          </div>
-          <h2 className="mt-2 font-serif text-xl font-bold text-[#1c1f24] sm:text-2xl">
-            Radar Công Nghệ & Trí Tuệ Kỹ Thuật (Backend & AI)
+          <h2 className="font-serif text-xl font-bold text-[#1c1f24] sm:text-2xl">
+            Radar Công Nghệ & Trí Tuệ Kỹ Thuật
           </h2>
           <p className="mt-1 font-serif text-xs text-[#635d52]">
-            Tổng hợp dữ liệu từ 22 nguồn tin kỹ sư uy tín nhất: ByteByteGo, LilLog, Kamil Mysliwiec, Latent Space, Prisma, Qdrant, Vercel...
+            Tổng hợp dữ liệu từ {sourcesCount} nguồn tin cào tự động: ByteByteGo, Google DeepMind, MIT Tech Review, The Verge, OpenAI, Prisma, Qdrant, Vercel...
           </p>
         </div>
 
