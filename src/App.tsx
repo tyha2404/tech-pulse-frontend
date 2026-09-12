@@ -1135,17 +1135,17 @@ export default function App() {
       {selectedArticle && (
         <div
           onClick={() => setSelectedArticle(null)}
-          className="fixed inset-0 z-50 flex cursor-pointer items-center justify-center bg-black/40 p-4 backdrop-blur-xs"
+          className="fixed inset-0 z-50 flex cursor-pointer items-end sm:items-center justify-center bg-black/50 p-0 sm:p-4 backdrop-blur-xs"
         >
           <div
             onClick={(e) => e.stopPropagation()}
-            className="animate-in fade-in flex max-h-[90vh] w-full max-w-4xl cursor-default flex-col overflow-hidden rounded-2xl border border-[#e7e2d9] bg-[#fbf9f5] shadow-2xl"
+            className="animate-in fade-in slide-in-from-bottom-4 sm:slide-in-from-bottom-0 flex max-h-[92vh] sm:max-h-[90vh] w-full max-w-4xl cursor-default flex-col overflow-hidden rounded-t-2xl sm:rounded-2xl border border-[#e7e2d9] bg-[#fbf9f5] shadow-2xl"
           >
             {/* Masthead */}
-            <div className="flex items-start justify-between gap-4 border-b border-[#e7e2d9] bg-white p-6">
-              <div>
-                <div className="mb-2 flex items-center gap-2 font-sans">
-                  <span className="rounded bg-[#f4efe6] px-2 py-0.5 text-[11px] font-semibold text-[#635d52]">
+            <div className="flex items-start justify-between gap-3 border-b border-[#e7e2d9] bg-white p-4 sm:p-6">
+              <div className="min-w-0 pr-1">
+                <div className="mb-1.5 flex flex-wrap items-center gap-1.5 font-sans">
+                  <span className="rounded bg-[#f4efe6] px-2 py-0.5 text-[10px] sm:text-[11px] font-semibold text-[#635d52]">
                     {selectedArticle.source_name}
                   </span>
                   <span

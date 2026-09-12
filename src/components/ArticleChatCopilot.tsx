@@ -68,17 +68,17 @@ export const ArticleChatCopilot: React.FC<ArticleChatCopilotProps> = ({ articleI
   };
 
   return (
-    <div className="flex h-[520px] flex-col rounded-xl border border-[#e7e2d9] bg-[#fdfcfa] font-sans">
+    <div className="flex h-[420px] sm:h-[520px] flex-col rounded-xl border border-[#e7e2d9] bg-[#fdfcfa] font-sans">
       {/* Header */}
-      <div className="flex items-center justify-between border-b border-[#e7e2d9] bg-[#f7f4ee] px-4 py-2.5">
-        <div className="flex items-center gap-2">
+      <div className="flex items-center justify-between border-b border-[#e7e2d9] bg-[#f7f4ee] px-3 sm:px-4 py-2 sm:py-2.5">
+        <div className="flex items-center gap-1.5 sm:gap-2">
           <Bot className="h-4 w-4 text-indigo-700" />
-          <span className="text-xs font-bold text-[#1c1f24]">
-            AI Copilot (Senior NestJS & AI Systems Architect)
+          <span className="text-[11px] sm:text-xs font-bold text-[#1c1f24] truncate max-w-[200px] sm:max-w-none">
+            AI Copilot (Principal Architect)
           </span>
         </div>
-        <span className="rounded bg-indigo-100/70 px-2 py-0.5 text-[10px] font-semibold text-indigo-800">
-          Chuyên sâu Backend
+        <span className="shrink-0 rounded bg-indigo-100/70 px-1.5 py-0.5 text-[9px] sm:text-[10px] font-semibold text-indigo-800">
+          Backend & AI
         </span>
       </div>
 
