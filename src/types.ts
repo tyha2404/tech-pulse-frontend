@@ -18,6 +18,25 @@ export interface TechStackItem {
   desc?: string;
 }
 
+export interface ArchitecturalTradeoffs {
+  pros: string[];
+  cons: string[];
+  when_not_to_use: string[];
+  scalability_bottlenecks: string[];
+}
+
+export interface NestJSBlueprint {
+  architectural_pattern?: string;
+  suggested_module_structure?: string;
+  code_snippet?: string;
+  database_integration?: string;
+}
+
+export interface LearningPath {
+  prerequisites: string[];
+  recommended_next_topics: string[];
+}
+
 export interface Article {
   id: number;
   source_id?: number;
@@ -29,14 +48,62 @@ export interface Article {
   is_processed: boolean;
   is_worth_reading: boolean;
   relevance_score: number;
+  is_read: boolean;
+  is_hidden: boolean;
+  is_bookmarked: boolean;
+  reading_time_minutes?: number;
   vietnamese_title?: string;
   vietnamese_summary?: string;
   key_takeaways: string[];
   new_tech_stacks: TechStackItem[];
   tags: string[];
   target_audience: string[];
+  architectural_tradeoffs?: ArchitecturalTradeoffs;
+  nestjs_blueprint?: NestJSBlueprint;
+  learning_path?: LearningPath;
   ai_model_used?: string;
   created_at: string;
+}
+
+export interface ChatMessage {
+  role: 'user' | 'assistant';
+  content: string;
+  timestamp?: string;
+}
+
+export interface RelatedArticleItem {
+  id: number;
+  title: string;
+  vietnamese_title?: string;
+  relevance_score: number;
+  tags: string[];
+  source_name?: string;
+}
+
+export interface WeeklyRadarDigest {
+  week_label: string;
+  dominant_trends: Array<{
+    topic: string;
+    status: 'Adopt' | 'Trial' | 'Assess' | 'Hold' | string;
+    summary: string;
+    relevance: string;
+  }>;
+  architectural_shifts: string[];
+  actionable_recommendations: string[];
+  top_articles: RelatedArticleItem[];
+}
+
+export interface ReaderContent {
+  id: number;
+  title: string;
+  vietnamese_title?: string;
+  url: string;
+  author?: string;
+  source_name?: string;
+  published_at?: string;
+  reading_time_minutes: number;
+  content: string;
+  is_bookmarked: boolean;
 }
 
 export interface CrawlTestResult {
@@ -47,3 +114,4 @@ export interface CrawlTestResult {
   sample_titles: string[];
   error?: string;
 }
+
