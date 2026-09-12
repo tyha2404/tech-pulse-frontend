@@ -48,6 +48,7 @@ export default function App() {
   const [readStatus, setReadStatus] = useState<'all' | 'unread' | 'read'>('all');
   const [bookmarkedOnly, setBookmarkedOnly] = useState<boolean>(false);
   const [viewHidden, setViewHidden] = useState<boolean>(false);
+  const [groupDuplicates, setGroupDuplicates] = useState<boolean>(true);
 
   // Modals & Details
   const [selectedArticle, setSelectedArticle] = useState<Article | null>(null);
@@ -77,6 +78,7 @@ export default function App() {
         read_status: readStatus,
         bookmarked_only: bookmarkedOnly,
         include_hidden: viewHidden,
+        group_duplicates: groupDuplicates,
         limit: PAGE_SIZE,
         offset: currentOffset,
       };
@@ -120,7 +122,7 @@ export default function App() {
 
   useEffect(() => {
     fetchArticles(true);
-  }, [selectedCategory, selectedSourceId, topOnly, sortBy, readStatus, bookmarkedOnly, viewHidden]);
+  }, [selectedCategory, selectedSourceId, topOnly, sortBy, readStatus, bookmarkedOnly, viewHidden, groupDuplicates]);
 
   // Infinite Scroll Listener
   useEffect(() => {
@@ -137,7 +139,7 @@ export default function App() {
 
     window.addEventListener('scroll', handleScroll, { passive: true });
     return () => window.removeEventListener('scroll', handleScroll);
-  }, [activeTab, loading, loadingMore, hasMore, articles.length, selectedCategory, selectedSourceId, topOnly, sortBy, readStatus, bookmarkedOnly, viewHidden, searchQuery]);
+  }, [activeTab, loading, loadingMore, hasMore, articles.length, selectedCategory, selectedSourceId, topOnly, sortBy, readStatus, bookmarkedOnly, viewHidden, groupDuplicates, searchQuery]);
 
   // Handlers for mark read / unread and hide / unhide
   const handleToggleRead = async (articleId: number, currentRead: boolean, e?: React.MouseEvent) => {
@@ -678,6 +680,20 @@ export default function App() {
                     </select>
                   </div>
 
+                  {/* Group Duplicates Toggle */}
+                  <button
+                    onClick={() => setGroupDuplicates(!groupDuplicates)}
+                    className={`flex items-center gap-1.5 rounded-lg border px-2.5 py-1 transition ${
+                      groupDuplicates
+                        ? 'border-indigo-200 bg-indigo-50/80 font-medium text-indigo-900 shadow-xs'
+                        : 'border-[#ded7ca] bg-white text-[#6b6456] hover:bg-[#eee9df]'
+                    }`}
+                    title={groupDuplicates ? 'Đang gộp bài viết trùng từ nhiều báo khác nhau' : 'Đang hiển thị dạng phẳng (không gộp tin trùng)'}
+                  >
+                    <Layers className="h-3.5 w-3.5 text-indigo-600" />
+                    <span>{groupDuplicates ? 'Đã gộp tin trùng' : 'Hiện tất cả tin'}</span>
+                  </button>
+
                   {/* View Hidden Toggle */}
                   <button
                     onClick={() => setViewHidden(!viewHidden)}
@@ -899,6 +915,33 @@ export default function App() {
                                   </li>
                                 ))}
                               </ul>
+                            </div>
+                          )}
+
+                          {/* Story Cluster Coverage Badges (Google News Style) */}
+                          {art.related_articles && art.related_articles.length > 0 && (
+                            <div
+                              onClick={(e) => e.stopPropagation()}
+                              className="mb-3 rounded-lg border border-indigo-100 bg-indigo-50/50 p-2.5 text-xs"
+                            >
+                              <div className="flex flex-wrap items-center gap-1.5 font-sans">
+                                <span className="font-semibold text-indigo-900 flex items-center gap-1 text-[11px]">
+                                  📰 Cùng chủ đề trên {art.related_articles.length} báo khác:
+                                </span>
+                                {art.related_articles.map((rel) => (
+                                  <a
+                                    key={rel.id}
+                                    href={rel.url}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    title={rel.vietnamese_title || rel.title}
+                                    className="inline-flex items-center gap-1 rounded border border-indigo-200 bg-white px-2 py-0.5 text-[11px] font-medium text-indigo-800 shadow-2xs transition hover:border-indigo-400 hover:bg-indigo-50 hover:text-indigo-950"
+                                  >
+                                    <span>{rel.source_name || 'Nguồn khác'}</span>
+                                    <ArrowUpRight className="h-3 w-3 text-indigo-600" />
+                                  </a>
+                                ))}
+                              </div>
                             </div>
                           )}
 

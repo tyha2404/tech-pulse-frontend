@@ -62,7 +62,20 @@ export interface Article {
   nestjs_blueprint?: NestJSBlueprint;
   learning_path?: LearningPath;
   ai_model_used?: string;
+  cluster_id?: string;
+  is_canonical?: boolean;
+  cluster_topic_key?: string;
+  related_articles?: RelatedSourceArticle[];
   created_at: string;
+}
+
+export interface RelatedSourceArticle {
+  id: number;
+  title: string;
+  source_name?: string;
+  url: string;
+  published_at?: string;
+  vietnamese_title?: string;
 }
 
 export interface ChatMessage {
