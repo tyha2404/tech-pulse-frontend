@@ -392,10 +392,19 @@ export default function App() {
     .flatMap((a) => (a.new_tech_stacks || []).map((ts) => ({ ...ts, article: a })))
     .filter((ts) => ts.name);
 
-  // Group current articles into ordered date sections
+  // Group current articles into ordered date sections based on local timezone
+  const getLocalDateKey = (dateStr?: string) => {
+    if (!dateStr) return 'unknown';
+    const d = new Date(dateStr);
+    const y = d.getFullYear();
+    const m = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    return `${y}-${m}-${day}`;
+  };
+
   const groupedArticles = articles.reduce<{ label: string; dateKey: string; items: Article[] }[]>(
     (acc, art) => {
-      const dateKey = art.published_at ? art.published_at.slice(0, 10) : 'unknown';
+      const dateKey = getLocalDateKey(art.published_at);
       const label = formatGroupDate(art.published_at);
       const existingGroup = acc.find((g) => g.dateKey === dateKey);
       if (existingGroup) {
@@ -411,7 +420,7 @@ export default function App() {
   return (
     <div className="min-h-screen bg-[#fbf9f5] font-serif text-[#2c313a] selection:bg-amber-100 selection:text-amber-900">
       {/* Top Header - Book / Newspaper Masthead Style */}
-      <header className="sticky top-0 z-30 border-b border-[#e7e2d9] bg-[#fbf9f5]/95 px-4 py-3 sm:px-6">
+      <header className="safe-pt sticky top-0 z-30 border-b border-[#e7e2d9] bg-[#fbf9f5]/95 px-3 py-2.5 sm:px-6 sm:py-3">
         <div className="mx-auto flex max-w-5xl items-center justify-between gap-2">
           <div className="flex min-w-0 items-center gap-2 sm:gap-3">
             <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-[#24292f] font-serif text-base font-bold text-white shadow-sm">
@@ -518,7 +527,7 @@ export default function App() {
         onTouchStart={handleTouchStart}
         onTouchMove={handleTouchMove}
         onTouchEnd={handleTouchEnd}
-        className="mx-auto max-w-5xl px-6 py-8"
+        className="mx-auto max-w-5xl px-3 py-4 sm:px-6 sm:py-8"
       >
         {/* Pull-To-Refresh Indicator */}
         {(pullDistance > 0 || crawlingAll) && activeTab === 'feed' && (
@@ -551,10 +560,10 @@ export default function App() {
         {activeTab === 'feed' && (
           <div>
             {/* Filter & Sort Bar */}
-            <div className="mb-6 space-y-3 border-b border-[#e7e2d9] pb-4 font-sans">
-              {/* Row 1: Categories & Search */}
-              <div className="flex flex-col items-stretch justify-between gap-3 sm:flex-row sm:items-center">
-                <div className="flex scrollbar-none items-center gap-1.5 overflow-x-auto pb-1 sm:pb-0">
+            <div className="mb-5 space-y-2.5 border-b border-[#e7e2d9] pb-3.5 font-sans">
+              {/* Row 1: Categories scrollable full-bleed & Search full-width on mobile */}
+              <div className="flex flex-col items-stretch gap-2.5 sm:flex-row sm:items-center sm:justify-between">
+                <div className="no-scrollbar -mx-3 flex items-center gap-1.5 overflow-x-auto px-3 pb-0.5 sm:mx-0 sm:px-0">
                   {[
                     { id: 'all', label: 'Tất cả' },
                     { id: 'AI', label: 'Trí tuệ nhân tạo (AI)' },
@@ -565,9 +574,9 @@ export default function App() {
                     <button
                       key={tab.id}
                       onClick={() => setSelectedCategory(tab.id)}
-                      className={`rounded-full px-3 py-1 text-xs whitespace-nowrap transition ${
+                      className={`cursor-pointer rounded-full px-3 py-1 text-xs font-medium whitespace-nowrap transition ${
                         selectedCategory === tab.id
-                          ? 'bg-[#2c313a] font-medium text-white'
+                          ? 'bg-[#2c313a] text-white shadow-xs'
                           : 'bg-[#eee9df] text-[#554e42] hover:bg-[#e4ded2]'
                       }`}
                     >
@@ -577,19 +586,19 @@ export default function App() {
 
                   <button
                     onClick={() => setTopOnly(!topOnly)}
-                    className={`flex items-center gap-1.5 rounded-full border px-3 py-1 text-xs whitespace-nowrap transition ${
+                    className={`cursor-pointer flex items-center gap-1.5 rounded-full border px-3 py-1 text-xs whitespace-nowrap transition ${
                       topOnly
-                        ? 'border-amber-300 bg-amber-100 font-medium text-amber-900 shadow-xs'
+                        ? 'border-amber-300 bg-amber-100 font-semibold text-amber-900 shadow-xs'
                         : 'border-[#dcd5c7] bg-transparent text-[#6b6456] hover:bg-[#eee9df]'
                     }`}
                   >
                     <Flame className="h-3.5 w-3.5 text-amber-600" />
-                    Bài tinh tuyển (≥7.5)
+                    <span>Bài tinh tuyển (≥7.5)</span>
                   </button>
                 </div>
 
-                {/* Search Box */}
-                <div className="relative shrink-0">
+                {/* Search Box - Full width on mobile, fixed width on tablet/desktop */}
+                <div className="relative w-full sm:w-60 sm:shrink-0">
                   <Search className="absolute top-2.5 left-3 h-3.5 w-3.5 text-[#8c8475]" />
                   <input
                     type="text"
@@ -597,151 +606,146 @@ export default function App() {
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
                     onKeyDown={(e) => e.key === 'Enter' && fetchArticles(true)}
-                    className="w-full rounded-full border border-[#dcd5c7] bg-white py-1.5 pr-4 pl-8.5 text-xs text-[#2c313a] placeholder-[#9c9485] focus:border-[#7c7465] focus:outline-none sm:w-56"
+                    className="w-full rounded-full border border-[#dcd5c7] bg-white py-1.5 pr-4 pl-8.5 text-xs text-[#2c313a] placeholder-[#9c9485] focus:border-[#7c7465] focus:outline-none"
                   />
                 </div>
               </div>
 
-              {/* Row 2: Read Status Filter + Sort Selector + Hidden View Toggle */}
-              <div className="flex flex-wrap items-center justify-between gap-3 pt-1 text-xs">
-                {/* Read Status Selector */}
-                <div className="flex items-center rounded-lg border border-[#e2dcd0] bg-[#eee9df]/80 p-0.5">
-                  <button
-                    onClick={() => {
-                      setViewHidden(false);
-                      setBookmarkedOnly(false);
-                      setReadStatus('all');
-                    }}
-                    className={`rounded px-2.5 py-1 transition ${
-                      !viewHidden && !bookmarkedOnly && readStatus === 'all'
-                        ? 'bg-white font-semibold text-[#1c1f24] shadow-xs'
-                        : 'text-[#6b6456] hover:text-[#1c1f24]'
-                    }`}
+              {/* Row 2: Read Status Segmented Control (Full width on mobile) */}
+              <div className="flex w-full items-center rounded-lg border border-[#e2dcd0] bg-[#eee9df]/80 p-0.5 text-xs">
+                <button
+                  onClick={() => {
+                    setViewHidden(false);
+                    setBookmarkedOnly(false);
+                    setReadStatus('all');
+                  }}
+                  className={`flex-1 rounded py-1.5 text-center transition ${
+                    !viewHidden && !bookmarkedOnly && readStatus === 'all'
+                      ? 'bg-white font-semibold text-[#1c1f24] shadow-xs'
+                      : 'text-[#6b6456] hover:text-[#1c1f24]'
+                  }`}
+                >
+                  Tất cả bài
+                </button>
+                <button
+                  onClick={() => {
+                    setViewHidden(false);
+                    setBookmarkedOnly(false);
+                    setReadStatus('unread');
+                  }}
+                  className={`flex-1 rounded py-1.5 text-center transition ${
+                    !viewHidden && !bookmarkedOnly && readStatus === 'unread'
+                      ? 'bg-white font-semibold text-[#1c1f24] shadow-xs'
+                      : 'text-[#6b6456] hover:text-[#1c1f24]'
+                  }`}
+                >
+                  Chưa đọc
+                </button>
+                <button
+                  onClick={() => {
+                    setViewHidden(false);
+                    setBookmarkedOnly(false);
+                    setReadStatus('read');
+                  }}
+                  className={`flex-1 rounded py-1.5 text-center transition ${
+                    !viewHidden && !bookmarkedOnly && readStatus === 'read'
+                      ? 'bg-white font-semibold text-[#1c1f24] shadow-xs'
+                      : 'text-[#6b6456] hover:text-[#1c1f24]'
+                  }`}
+                >
+                  Đã đọc
+                </button>
+                <button
+                  onClick={() => {
+                    setViewHidden(false);
+                    setBookmarkedOnly(true);
+                  }}
+                  className={`flex flex-1 items-center justify-center gap-1 rounded py-1.5 text-center transition ${
+                    !viewHidden && bookmarkedOnly
+                      ? 'bg-amber-100 font-semibold text-amber-900 shadow-xs'
+                      : 'text-[#6b6456] hover:text-[#1c1f24]'
+                  }`}
+                >
+                  <Bookmark className="h-3 w-3 text-amber-700" fill={bookmarkedOnly ? 'currentColor' : 'none'} />
+                  <span>Đã lưu</span>
+                </button>
+              </div>
+
+              {/* Row 3: Secondary Filters Grid (Fit 100% width on mobile) */}
+              <div className="grid grid-cols-2 gap-2 text-xs sm:flex sm:flex-wrap sm:items-center sm:justify-between sm:gap-3 sm:pt-0.5">
+                {/* Source Selector Dropdown */}
+                <div className="col-span-1 flex items-center rounded-lg border border-[#ded7ca] bg-white px-2 py-1 text-[#6b6456]">
+                  <Layers className="mr-1.5 h-3.5 w-3.5 shrink-0 text-[#8c8475]" />
+                  <select
+                    value={selectedSourceId || ''}
+                    onChange={(e) => setSelectedSourceId(e.target.value ? Number(e.target.value) : null)}
+                    className="w-full cursor-pointer bg-transparent text-xs font-medium text-[#2c313a] focus:outline-none"
                   >
-                    Tất cả bài
-                  </button>
-                  <button
-                    onClick={() => {
-                      setViewHidden(false);
-                      setBookmarkedOnly(false);
-                      setReadStatus('unread');
-                    }}
-                    className={`rounded px-2.5 py-1 transition ${
-                      !viewHidden && !bookmarkedOnly && readStatus === 'unread'
-                        ? 'bg-white font-semibold text-[#1c1f24] shadow-xs'
-                        : 'text-[#6b6456] hover:text-[#1c1f24]'
-                    }`}
-                  >
-                    Chưa đọc
-                  </button>
-                  <button
-                    onClick={() => {
-                      setViewHidden(false);
-                      setBookmarkedOnly(false);
-                      setReadStatus('read');
-                    }}
-                    className={`rounded px-2.5 py-1 transition ${
-                      !viewHidden && !bookmarkedOnly && readStatus === 'read'
-                        ? 'bg-white font-semibold text-[#1c1f24] shadow-xs'
-                        : 'text-[#6b6456] hover:text-[#1c1f24]'
-                    }`}
-                  >
-                    Đã đọc
-                  </button>
-                  <button
-                    onClick={() => {
-                      setViewHidden(false);
-                      setBookmarkedOnly(true);
-                    }}
-                    className={`flex items-center gap-1 rounded px-2.5 py-1 transition ${
-                      !viewHidden && bookmarkedOnly
-                        ? 'bg-amber-100 font-semibold text-amber-900 shadow-xs'
-                        : 'text-[#6b6456] hover:text-[#1c1f24]'
-                    }`}
-                  >
-                    <Bookmark className="h-3 w-3 text-amber-700" fill={bookmarkedOnly ? 'currentColor' : 'none'} />
-                    Đã lưu
-                  </button>
+                    <option value="">Tất cả nguồn ({sources.length})</option>
+                    {sources.map((s) => (
+                      <option key={s.id} value={s.id}>
+                        {s.name} ({s.articles_count || 0})
+                      </option>
+                    ))}
+                  </select>
                 </div>
 
-                {/* Right controls: Source Filter, Sort Dropdown & Hidden Toggle */}
-                <div className="flex flex-wrap items-center gap-3">
-                  {/* Source Selector Dropdown */}
-                  <div className="flex items-center gap-1.5 text-[#6b6456]">
-                    <Layers className="h-3.5 w-3.5 text-[#8c8475]" />
-                    <span className="text-[11px] text-[#756e60]">Nguồn:</span>
-                    <select
-                      value={selectedSourceId || ''}
-                      onChange={(e) => setSelectedSourceId(e.target.value ? Number(e.target.value) : null)}
-                      className="cursor-pointer rounded-lg border border-[#ded7ca] bg-white px-2.5 py-1 text-xs font-medium text-[#2c313a] focus:border-[#7c7465] focus:outline-none max-w-[150px] truncate"
-                    >
-                      <option value="">Tất cả nguồn ({sources.length})</option>
-                      {sources.map((s) => (
-                        <option key={s.id} value={s.id}>
-                          {s.name} ({s.articles_count || 0})
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-
-                  {/* Group Duplicates Toggle */}
-                  <button
-                    onClick={() => setGroupDuplicates(!groupDuplicates)}
-                    className={`flex items-center gap-1.5 rounded-lg border px-2.5 py-1 transition ${
-                      groupDuplicates
-                        ? 'border-indigo-200 bg-indigo-50/80 font-medium text-indigo-900 shadow-xs'
-                        : 'border-[#ded7ca] bg-white text-[#6b6456] hover:bg-[#eee9df]'
-                    }`}
-                    title={groupDuplicates ? 'Đang gộp bài viết trùng từ nhiều báo khác nhau' : 'Đang hiển thị dạng phẳng (không gộp tin trùng)'}
+                {/* Sort Selector */}
+                <div className="col-span-1 flex items-center rounded-lg border border-[#ded7ca] bg-white px-2 py-1 text-[#6b6456]">
+                  <ArrowUpDown className="mr-1.5 h-3.5 w-3.5 shrink-0 text-[#8c8475]" />
+                  <select
+                    value={sortBy}
+                    onChange={(e: any) => setSortBy(e.target.value)}
+                    className="w-full cursor-pointer bg-transparent text-xs font-medium text-[#2c313a] focus:outline-none"
                   >
-                    <Layers className="h-3.5 w-3.5 text-indigo-600" />
-                    <span>{groupDuplicates ? 'Đã gộp tin trùng' : 'Hiện tất cả tin'}</span>
-                  </button>
-
-                  {/* View Hidden Toggle */}
-                  <button
-                    onClick={() => setViewHidden(!viewHidden)}
-                    className={`flex items-center gap-1.5 rounded-lg border px-2.5 py-1 transition ${
-                      viewHidden
-                        ? 'border-rose-300 bg-rose-50 font-semibold text-rose-800 shadow-xs'
-                        : 'border-[#ded7ca] bg-white text-[#6b6456] hover:bg-[#eee9df]'
-                    }`}
-                    title={viewHidden ? 'Quay lại bản tin bình thường' : 'Xem danh sách bài bạn đã ẩn'}
-                  >
-                    {viewHidden ? (
-                      <>
-                        <Eye className="h-3.5 w-3.5 text-rose-700" />
-                        Đang xem bài đã ẩn
-                      </>
-                    ) : (
-                      <>
-                        <EyeOff className="h-3.5 w-3.5 text-[#8c8475]" />
-                        Bài đã ẩn
-                      </>
-                    )}
-                  </button>
-
-                  {/* Sort Selector */}
-                  <div className="flex items-center gap-1.5 text-[#6b6456]">
-                    <ArrowUpDown className="h-3.5 w-3.5 text-[#8c8475]" />
-                    <span className="text-[11px] text-[#756e60]">Sắp xếp:</span>
-                    <select
-                      value={sortBy}
-                      onChange={(e: any) => setSortBy(e.target.value)}
-                      className="cursor-pointer rounded-lg border border-[#ded7ca] bg-white px-2.5 py-1 text-xs font-medium text-[#2c313a] focus:border-[#7c7465] focus:outline-none"
-                    >
-                      <option value="newest">Mới nhất (Mặc định)</option>
-                      <option value="oldest">Cũ nhất</option>
-                      <option value="score">Điểm AI cao nhất</option>
-                    </select>
-                  </div>
+                    <option value="newest">Mới nhất</option>
+                    <option value="oldest">Cũ nhất</option>
+                    <option value="score">Điểm AI cao</option>
+                  </select>
                 </div>
+
+                {/* Group Duplicates Toggle */}
+                <button
+                  onClick={() => setGroupDuplicates(!groupDuplicates)}
+                  className={`col-span-1 flex items-center justify-center gap-1.5 rounded-lg border px-2.5 py-1.5 text-center transition sm:py-1 ${
+                    groupDuplicates
+                      ? 'border-indigo-200 bg-indigo-50/80 font-medium text-indigo-900 shadow-xs'
+                      : 'border-[#ded7ca] bg-white text-[#6b6456] hover:bg-[#eee9df]'
+                  }`}
+                  title={groupDuplicates ? 'Đang gộp bài viết trùng từ nhiều báo khác nhau' : 'Đang hiển thị dạng phẳng (không gộp tin trùng)'}
+                >
+                  <Layers className="h-3.5 w-3.5 shrink-0 text-indigo-600" />
+                  <span className="truncate">{groupDuplicates ? 'Gộp tin trùng' : 'Hiện tất cả'}</span>
+                </button>
+
+                {/* View Hidden Toggle */}
+                <button
+                  onClick={() => setViewHidden(!viewHidden)}
+                  className={`col-span-1 flex items-center justify-center gap-1.5 rounded-lg border px-2.5 py-1.5 text-center transition sm:py-1 ${
+                    viewHidden
+                      ? 'border-rose-300 bg-rose-50 font-semibold text-rose-800 shadow-xs'
+                      : 'border-[#ded7ca] bg-white text-[#6b6456] hover:bg-[#eee9df]'
+                  }`}
+                  title={viewHidden ? 'Quay lại bản tin bình thường' : 'Xem danh sách bài bạn đã ẩn'}
+                >
+                  {viewHidden ? (
+                    <>
+                      <Eye className="h-3.5 w-3.5 shrink-0 text-rose-700" />
+                      <span className="truncate">Xem bài ẩn</span>
+                    </>
+                  ) : (
+                    <>
+                      <EyeOff className="h-3.5 w-3.5 shrink-0 text-[#8c8475]" />
+                      <span className="truncate">Bài đã ẩn</span>
+                    </>
+                  )}
+                </button>
               </div>
 
               {/* Active Source Filter Tag */}
               {selectedSourceId && (
                 <div className="flex items-center gap-2 pt-1 font-sans">
-                  <span className="text-xs text-[#756e60]">Đang lọc theo nguồn:</span>
+                  <span className="text-xs text-[#756e60]">Đang lọc theo:</span>
                   <span className="inline-flex items-center gap-1.5 rounded-full border border-indigo-200 bg-indigo-50 px-3 py-0.5 text-xs font-semibold text-indigo-900 shadow-xs">
                     {sources.find((s) => s.id === selectedSourceId)?.name || 'Nguồn tin'}
                     <button
@@ -801,7 +805,7 @@ export default function App() {
                         <article
                           key={art.id}
                           onClick={() => handleOpenArticle(art)}
-                          className={`group relative cursor-pointer rounded-xl border p-6 shadow-xs transition ${
+                          className={`group relative cursor-pointer rounded-xl border p-4 sm:p-6 shadow-xs transition ${
                             art.is_read
                               ? 'border-[#ede7dc] bg-[#faf8f4] opacity-80 hover:border-[#cfc7b8] hover:opacity-100'
                               : 'border-[#e7e2d9] bg-white hover:border-[#cfc7b8] hover:bg-[#fcfbf9]'
@@ -1215,21 +1219,21 @@ export default function App() {
       {selectedArticle && (
         <div
           onClick={() => setSelectedArticle(null)}
-          className="fixed inset-0 z-50 flex cursor-pointer items-end sm:items-center justify-center bg-black/50 p-0 sm:p-4 backdrop-blur-xs"
+          className="fixed inset-0 z-50 flex cursor-pointer items-end justify-center bg-black/60 p-0 sm:items-center sm:p-4 backdrop-blur-xs"
         >
           <div
             onClick={(e) => e.stopPropagation()}
-            className="animate-in fade-in slide-in-from-bottom-4 sm:slide-in-from-bottom-0 flex max-h-[92vh] sm:max-h-[90vh] w-full max-w-4xl cursor-default flex-col overflow-hidden rounded-t-2xl sm:rounded-2xl border border-[#e7e2d9] bg-[#fbf9f5] shadow-2xl"
+            className="animate-in fade-in slide-in-from-bottom-2 sm:slide-in-from-bottom-0 flex h-[100dvh] w-full max-w-4xl cursor-default flex-col overflow-hidden rounded-none border-0 border-[#e7e2d9] bg-[#fbf9f5] shadow-2xl sm:h-auto sm:max-h-[90vh] sm:rounded-2xl sm:border"
           >
-            {/* Masthead */}
-            <div className="flex items-start justify-between gap-3 border-b border-[#e7e2d9] bg-white p-4 sm:p-6">
-              <div className="min-w-0 pr-1">
-                <div className="mb-1.5 flex flex-wrap items-center gap-1.5 font-sans">
-                  <span className="rounded bg-[#f4efe6] px-2 py-0.5 text-[10px] sm:text-[11px] font-semibold text-[#635d52]">
+            {/* Masthead Header with Safe Area Top */}
+            <div className="safe-pt flex shrink-0 items-start justify-between gap-2.5 border-b border-[#e7e2d9] bg-white px-3.5 py-3 sm:px-6 sm:py-5">
+              <div className="min-w-0 flex-1 pr-1">
+                <div className="mb-1 flex flex-wrap items-center gap-1.5 font-sans">
+                  <span className="rounded bg-[#f4efe6] px-2 py-0.5 text-[10px] font-semibold text-[#635d52] sm:text-[11px]">
                     {selectedArticle.source_name}
                   </span>
                   <span
-                    className={`rounded px-2 py-0.5 text-[11px] font-bold ${
+                    className={`rounded px-2 py-0.5 text-[10px] font-bold sm:text-[11px] ${
                       selectedArticle.relevance_score >= 8.0
                         ? 'border border-emerald-200 bg-emerald-50 text-emerald-800'
                         : selectedArticle.relevance_score >= 6.0
@@ -1240,17 +1244,17 @@ export default function App() {
                     Điểm AI: {selectedArticle.relevance_score.toFixed(1)}/10
                   </span>
                 </div>
-                <h2 className="font-serif text-xl leading-snug font-bold text-[#1c1f24]">
+                <h2 className="font-serif text-base leading-snug font-bold text-[#1c1f24] sm:text-xl">
                   {selectedArticle.vietnamese_title || selectedArticle.title}
                 </h2>
               </div>
-              <div className="flex items-center gap-1.5 font-sans">
+              <div className="flex shrink-0 items-center gap-1 font-sans sm:gap-1.5">
                 {/* Bookmark Button */}
                 <button
                   onClick={() =>
                     handleToggleBookmark(selectedArticle.id, selectedArticle.is_bookmarked)
                   }
-                  className={`flex cursor-pointer items-center gap-1 rounded-lg border px-2.5 py-1.5 text-xs font-medium transition ${
+                  className={`cursor-pointer flex items-center gap-1 rounded-lg border p-1.5 text-xs font-medium transition sm:px-2.5 sm:py-1.5 ${
                     selectedArticle.is_bookmarked
                       ? 'border-amber-300 bg-amber-50 text-amber-900'
                       : 'border-[#ded7ca] bg-white text-[#6b6456] hover:bg-amber-50 hover:text-amber-800'
@@ -1269,7 +1273,7 @@ export default function App() {
                 {/* Hide Button */}
                 <button
                   onClick={() => handleToggleHidden(selectedArticle.id, selectedArticle.is_hidden)}
-                  className={`flex cursor-pointer items-center gap-1 rounded-lg border px-2.5 py-1.5 text-xs font-medium transition ${
+                  className={`cursor-pointer flex items-center gap-1 rounded-lg border p-1.5 text-xs font-medium transition sm:px-2.5 sm:py-1.5 ${
                     selectedArticle.is_hidden
                       ? 'border-rose-300 bg-rose-50 text-rose-800'
                       : 'border-[#ded7ca] bg-white text-[#6b6456] hover:bg-rose-50 hover:text-rose-700'
@@ -1279,7 +1283,7 @@ export default function App() {
                   {selectedArticle.is_hidden ? (
                     <>
                       <Eye className="h-3.5 w-3.5" />
-                      <span className="hidden sm:inline">Bỏ ẩn bài</span>
+                      <span className="hidden sm:inline">Bỏ ẩn</span>
                     </>
                   ) : (
                     <>
@@ -1292,6 +1296,7 @@ export default function App() {
                 <button
                   onClick={() => setSelectedArticle(null)}
                   className="cursor-pointer rounded-lg p-1.5 text-[#756e60] transition hover:bg-[#f4efe6] hover:text-[#1c1f24]"
+                  title="Đóng trang đọc"
                 >
                   <X className="h-5 w-5" />
                 </button>
@@ -1299,7 +1304,7 @@ export default function App() {
             </div>
 
             {/* Reading Content with Deep AI Tabs */}
-            <div className="overflow-y-auto">
+            <div className="safe-pb flex-1 overflow-y-auto overscroll-contain">
               <ArticleModalTabs
                 article={selectedArticle}
                 onSummarize={async (id) => {

@@ -73,11 +73,11 @@ export const ArticleModalTabs: React.FC<ArticleModalTabsProps> = ({
 
   return (
     <div className="flex flex-col">
-      {/* Sub-Navigation Tabs */}
-      <div className="flex items-center gap-1.5 overflow-x-auto border-b border-[#e7e2d9] bg-[#fbf9f5] px-3 sm:px-6 py-2 font-sans text-xs scrollbar-none">
+      {/* Sub-Navigation Tabs - Horizontal Swipe on Mobile */}
+      <div className="no-scrollbar flex items-center gap-1.5 overflow-x-auto border-b border-[#e7e2d9] bg-[#fbf9f5] px-2.5 py-2 font-sans text-xs sm:px-6">
         <button
           onClick={() => setTab('overview')}
-          className={`cursor-pointer whitespace-nowrap flex items-center gap-1.5 rounded-lg px-2.5 sm:px-3 py-1.5 font-medium transition ${
+          className={`cursor-pointer whitespace-nowrap flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 font-medium transition sm:px-3 ${
             tab === 'overview'
               ? 'bg-white font-semibold text-[#1c1f24] shadow-xs'
               : 'text-[#6b6456] hover:bg-[#eee8dc]/60 hover:text-[#1c1f24]'
@@ -89,7 +89,7 @@ export const ArticleModalTabs: React.FC<ArticleModalTabsProps> = ({
 
         <button
           onClick={() => setTab('tradeoffs')}
-          className={`cursor-pointer whitespace-nowrap flex items-center gap-1.5 rounded-lg px-2.5 sm:px-3 py-1.5 font-medium transition ${
+          className={`cursor-pointer whitespace-nowrap flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 font-medium transition sm:px-3 ${
             tab === 'tradeoffs'
               ? 'bg-white font-semibold text-[#1c1f24] shadow-xs'
               : 'text-[#6b6456] hover:bg-[#eee8dc]/60 hover:text-[#1c1f24]'
@@ -101,7 +101,7 @@ export const ArticleModalTabs: React.FC<ArticleModalTabsProps> = ({
 
         <button
           onClick={() => setTab('blueprint')}
-          className={`cursor-pointer whitespace-nowrap flex items-center gap-1.5 rounded-lg px-2.5 sm:px-3 py-1.5 font-medium transition ${
+          className={`cursor-pointer whitespace-nowrap flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 font-medium transition sm:px-3 ${
             tab === 'blueprint'
               ? 'bg-white font-semibold text-[#1c1f24] shadow-xs'
               : 'text-[#6b6456] hover:bg-[#eee8dc]/60 hover:text-[#1c1f24]'
@@ -113,7 +113,7 @@ export const ArticleModalTabs: React.FC<ArticleModalTabsProps> = ({
 
         <button
           onClick={() => setTab('chat')}
-          className={`cursor-pointer whitespace-nowrap flex items-center gap-1.5 rounded-lg px-2.5 sm:px-3 py-1.5 font-medium transition ${
+          className={`cursor-pointer whitespace-nowrap flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 font-medium transition sm:px-3 ${
             tab === 'chat'
               ? 'bg-white font-semibold text-indigo-900 shadow-xs ring-1 ring-indigo-200'
               : 'text-indigo-800 hover:bg-indigo-50/70 hover:text-indigo-950 font-medium'
@@ -125,7 +125,7 @@ export const ArticleModalTabs: React.FC<ArticleModalTabsProps> = ({
 
         <button
           onClick={() => setTab('learning')}
-          className={`cursor-pointer whitespace-nowrap flex items-center gap-1.5 rounded-lg px-2.5 sm:px-3 py-1.5 font-medium transition ${
+          className={`cursor-pointer whitespace-nowrap flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 font-medium transition sm:px-3 ${
             tab === 'learning'
               ? 'bg-white font-semibold text-[#1c1f24] shadow-xs'
               : 'text-[#6b6456] hover:bg-[#eee8dc]/60 hover:text-[#1c1f24]'
@@ -137,7 +137,7 @@ export const ArticleModalTabs: React.FC<ArticleModalTabsProps> = ({
       </div>
 
       {/* Main Tab Content Area */}
-      <div className="p-4 sm:p-6 text-[#2c313a]">
+      <div className="p-3.5 sm:p-6 text-[#2c313a]">
         {/* TAB 1: OVERVIEW */}
         {tab === 'overview' && (
           <div className="space-y-6">
@@ -417,9 +417,10 @@ export const ArticleModalTabs: React.FC<ArticleModalTabsProps> = ({
             href={article.url}
             target="_blank"
             rel="noreferrer"
-            className="inline-flex items-center gap-1.5 text-xs font-semibold text-indigo-900 underline hover:text-indigo-950"
+            className="inline-flex items-center gap-1.5 text-xs font-semibold text-indigo-900 underline hover:text-indigo-950 break-words"
           >
-            Đọc toàn văn bài viết gốc tại {article.source_name} ({article.url}) <ExternalLink className="h-3 w-3" />
+            <span>Đọc bài gốc tại {article.source_name}</span>
+            <ExternalLink className="h-3 w-3 shrink-0" />
           </a>
         </div>
       </div>
