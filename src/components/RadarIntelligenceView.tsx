@@ -100,7 +100,8 @@ export const RadarIntelligenceView: React.FC<RadarIntelligenceViewProps> = ({
             Radar Công Nghệ & Trí Tuệ Kỹ Thuật
           </h2>
           <p className="mt-1 font-serif text-xs text-[#635d52]">
-            Tổng hợp dữ liệu từ {sourcesCount} nguồn tin cào tự động: ByteByteGo, Google DeepMind, MIT Tech Review, The Verge, OpenAI, Prisma, Qdrant, Vercel...
+            Tổng hợp dữ liệu từ {sourcesCount} nguồn tin cào tự động: ByteByteGo, Google DeepMind,
+            MIT Tech Review, The Verge, OpenAI, Prisma, Qdrant, Vercel...
           </p>
         </div>
 
@@ -108,7 +109,7 @@ export const RadarIntelligenceView: React.FC<RadarIntelligenceViewProps> = ({
           <button
             onClick={() => fetchRadarDigest(true)}
             disabled={loading}
-            className="cursor-pointer flex items-center gap-1.5 rounded-lg border border-[#dcd5c7] bg-white px-3 py-2 font-sans text-xs font-medium text-[#2c313a] shadow-2xs transition hover:bg-[#eee9df] disabled:opacity-50"
+            className="flex cursor-pointer items-center gap-1.5 rounded-lg border border-[#dcd5c7] bg-white px-3 py-2 font-sans text-xs font-medium text-[#2c313a] shadow-2xs transition hover:bg-[#eee9df] disabled:opacity-50"
             title="Buộc AI phân tích lại báo cáo mới nhất"
           >
             <RefreshCw className={`h-3.5 w-3.5 ${loading ? 'animate-spin' : ''}`} />
@@ -117,7 +118,7 @@ export const RadarIntelligenceView: React.FC<RadarIntelligenceViewProps> = ({
           <button
             onClick={handleDispatch}
             disabled={dispatching}
-            className="cursor-pointer flex items-center gap-1.5 rounded-lg bg-[#24292f] px-3.5 py-2 font-sans text-xs font-semibold text-white shadow-2xs transition hover:bg-black disabled:opacity-50"
+            className="flex cursor-pointer items-center gap-1.5 rounded-lg bg-[#24292f] px-3.5 py-2 font-sans text-xs font-semibold text-white shadow-2xs transition hover:bg-black disabled:opacity-50"
           >
             <Send className="h-3.5 w-3.5" />
             {dispatching ? 'Đang gửi...' : 'Gửi Digest Webhook'}
@@ -147,7 +148,9 @@ export const RadarIntelligenceView: React.FC<RadarIntelligenceViewProps> = ({
         <div className="py-16 text-center font-sans text-sm text-[#756e60]">
           <Sparkles className="mx-auto mb-2 h-6 w-6 animate-spin text-amber-600" />
           AI đang tổng hợp và phân tích báo cáo radar công nghệ...
-          <p className="mt-1 text-xs text-[#9c9384]">Quá trình có thể mất khoảng 15-25 giây cho lần phân tích đầu tiên</p>
+          <p className="mt-1 text-xs text-[#9c9384]">
+            Quá trình có thể mất khoảng 15-25 giây cho lần phân tích đầu tiên
+          </p>
         </div>
       ) : (
         digest && (
@@ -225,10 +228,10 @@ export const RadarIntelligenceView: React.FC<RadarIntelligenceViewProps> = ({
                     <div
                       key={art.id}
                       onClick={() => onSelectArticle(art as any)}
-                      className="cursor-pointer flex items-center justify-between rounded-xl border border-[#e7e2d9] bg-white p-3.5 shadow-2xs transition hover:border-indigo-300 hover:bg-indigo-50/30"
+                      className="flex cursor-pointer items-center justify-between rounded-xl border border-[#e7e2d9] bg-white p-3.5 shadow-2xs transition hover:border-indigo-300 hover:bg-indigo-50/30"
                     >
                       <div className="min-w-0 pr-3">
-                        <div className="font-serif text-xs font-bold text-[#1c1f24] line-clamp-1">
+                        <div className="line-clamp-1 font-serif text-xs font-bold text-[#1c1f24]">
                           {art.vietnamese_title || art.title}
                         </div>
                         <div className="mt-1 flex items-center gap-2 font-sans text-[11px] text-[#756e60]">

@@ -29,7 +29,9 @@ export const ArticleModalTabs: React.FC<ArticleModalTabsProps> = ({
   summarizing,
   onSelectRelatedArticle,
 }) => {
-  const [tab, setTab] = useState<'overview' | 'tradeoffs' | 'blueprint' | 'chat' | 'learning'>('overview');
+  const [tab, setTab] = useState<'overview' | 'tradeoffs' | 'blueprint' | 'chat' | 'learning'>(
+    'overview'
+  );
   const [copiedCode, setCopiedCode] = useState(false);
   const [copiedSummary, setCopiedSummary] = useState(false);
   const [relatedArticles, setRelatedArticles] = useState<RelatedArticleItem[]>([]);
@@ -77,7 +79,7 @@ export const ArticleModalTabs: React.FC<ArticleModalTabsProps> = ({
       <div className="no-scrollbar flex items-center gap-1.5 overflow-x-auto border-b border-[#e7e2d9] bg-[#fbf9f5] px-2.5 py-2 font-sans text-xs sm:px-6">
         <button
           onClick={() => setTab('overview')}
-          className={`cursor-pointer whitespace-nowrap flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 font-medium transition sm:px-3 ${
+          className={`flex cursor-pointer items-center gap-1.5 rounded-lg px-2.5 py-1.5 font-medium whitespace-nowrap transition sm:px-3 ${
             tab === 'overview'
               ? 'bg-white font-semibold text-[#1c1f24] shadow-xs'
               : 'text-[#6b6456] hover:bg-[#eee8dc]/60 hover:text-[#1c1f24]'
@@ -89,7 +91,7 @@ export const ArticleModalTabs: React.FC<ArticleModalTabsProps> = ({
 
         <button
           onClick={() => setTab('tradeoffs')}
-          className={`cursor-pointer whitespace-nowrap flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 font-medium transition sm:px-3 ${
+          className={`flex cursor-pointer items-center gap-1.5 rounded-lg px-2.5 py-1.5 font-medium whitespace-nowrap transition sm:px-3 ${
             tab === 'tradeoffs'
               ? 'bg-white font-semibold text-[#1c1f24] shadow-xs'
               : 'text-[#6b6456] hover:bg-[#eee8dc]/60 hover:text-[#1c1f24]'
@@ -101,7 +103,7 @@ export const ArticleModalTabs: React.FC<ArticleModalTabsProps> = ({
 
         <button
           onClick={() => setTab('blueprint')}
-          className={`cursor-pointer whitespace-nowrap flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 font-medium transition sm:px-3 ${
+          className={`flex cursor-pointer items-center gap-1.5 rounded-lg px-2.5 py-1.5 font-medium whitespace-nowrap transition sm:px-3 ${
             tab === 'blueprint'
               ? 'bg-white font-semibold text-[#1c1f24] shadow-xs'
               : 'text-[#6b6456] hover:bg-[#eee8dc]/60 hover:text-[#1c1f24]'
@@ -113,10 +115,10 @@ export const ArticleModalTabs: React.FC<ArticleModalTabsProps> = ({
 
         <button
           onClick={() => setTab('chat')}
-          className={`cursor-pointer whitespace-nowrap flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 font-medium transition sm:px-3 ${
+          className={`flex cursor-pointer items-center gap-1.5 rounded-lg px-2.5 py-1.5 font-medium whitespace-nowrap transition sm:px-3 ${
             tab === 'chat'
               ? 'bg-white font-semibold text-indigo-900 shadow-xs ring-1 ring-indigo-200'
-              : 'text-indigo-800 hover:bg-indigo-50/70 hover:text-indigo-950 font-medium'
+              : 'font-medium text-indigo-800 hover:bg-indigo-50/70 hover:text-indigo-950'
           }`}
         >
           <MessageSquare className="h-3.5 w-3.5 text-indigo-600" />
@@ -125,7 +127,7 @@ export const ArticleModalTabs: React.FC<ArticleModalTabsProps> = ({
 
         <button
           onClick={() => setTab('learning')}
-          className={`cursor-pointer whitespace-nowrap flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 font-medium transition sm:px-3 ${
+          className={`flex cursor-pointer items-center gap-1.5 rounded-lg px-2.5 py-1.5 font-medium whitespace-nowrap transition sm:px-3 ${
             tab === 'learning'
               ? 'bg-white font-semibold text-[#1c1f24] shadow-xs'
               : 'text-[#6b6456] hover:bg-[#eee8dc]/60 hover:text-[#1c1f24]'
@@ -137,7 +139,7 @@ export const ArticleModalTabs: React.FC<ArticleModalTabsProps> = ({
       </div>
 
       {/* Main Tab Content Area */}
-      <div className="p-3.5 sm:p-6 text-[#2c313a]">
+      <div className="p-3.5 text-[#2c313a] sm:p-6">
         {/* TAB 1: OVERVIEW */}
         {tab === 'overview' && (
           <div className="space-y-6">
@@ -150,7 +152,7 @@ export const ArticleModalTabs: React.FC<ArticleModalTabsProps> = ({
                   <button
                     onClick={() => onSummarize(article.id)}
                     disabled={summarizing}
-                    className="cursor-pointer flex items-center gap-1 rounded border border-indigo-200 bg-indigo-50 px-2.5 py-0.5 font-sans text-[11px] font-medium text-indigo-900 transition hover:bg-indigo-100 disabled:opacity-50"
+                    className="flex cursor-pointer items-center gap-1 rounded border border-indigo-200 bg-indigo-50 px-2.5 py-0.5 font-sans text-[11px] font-medium text-indigo-900 transition hover:bg-indigo-100 disabled:opacity-50"
                   >
                     <Sparkles
                       className={`h-3 w-3 text-indigo-600 ${summarizing ? 'animate-spin' : ''}`}
@@ -159,15 +161,20 @@ export const ArticleModalTabs: React.FC<ArticleModalTabsProps> = ({
                   </button>
                   <button
                     onClick={() => handleCopy(article.vietnamese_summary || '', 'summary')}
-                    className="cursor-pointer flex items-center gap-1 rounded bg-[#eee9df] px-2 py-0.5 font-sans text-[11px] text-[#6b6456] transition hover:bg-[#e4ded2] hover:text-[#1c1f24]"
+                    className="flex cursor-pointer items-center gap-1 rounded bg-[#eee9df] px-2 py-0.5 font-sans text-[11px] text-[#6b6456] transition hover:bg-[#e4ded2] hover:text-[#1c1f24]"
                   >
-                    {copiedSummary ? <Check className="h-3 w-3 text-emerald-600" /> : <Copy className="h-3 w-3" />}
+                    {copiedSummary ? (
+                      <Check className="h-3 w-3 text-emerald-600" />
+                    ) : (
+                      <Copy className="h-3 w-3" />
+                    )}
                     {copiedSummary ? 'Đã chép' : 'Sao chép'}
                   </button>
                 </div>
               </div>
               <div className="rounded-xl border border-[#e7e2d9] bg-white p-4 font-serif text-[15px] leading-relaxed text-[#2c313a]">
-                {article.vietnamese_summary || 'Chưa có tóm tắt. Vui lòng bấm "Phân tích lại bằng AI".'}
+                {article.vietnamese_summary ||
+                  'Chưa có tóm tắt. Vui lòng bấm "Phân tích lại bằng AI".'}
               </div>
             </div>
 
@@ -209,7 +216,9 @@ export const ArticleModalTabs: React.FC<ArticleModalTabsProps> = ({
           <div className="space-y-4 font-sans text-xs">
             <div className="rounded-xl border border-blue-200 bg-blue-50/60 p-3.5 text-blue-900">
               <p className="font-medium">
-                ⚖️ <strong>Đánh giá phản biện (Critical Review):</strong> Mọi quyết định kỹ thuật đều có sự đánh đổi giữa hiệu năng, độ phức tạp và chi phí vận hành. Dưới đây là phân tích khách quan cho hệ thống thực tế:
+                ⚖️ <strong>Đánh giá phản biện (Critical Review):</strong> Mọi quyết định kỹ thuật
+                đều có sự đánh đổi giữa hiệu năng, độ phức tạp và chi phí vận hành. Dưới đây là phân
+                tích khách quan cho hệ thống thực tế:
               </p>
             </div>
 
@@ -223,7 +232,9 @@ export const ArticleModalTabs: React.FC<ArticleModalTabsProps> = ({
                   {tradeoffs?.pros && tradeoffs.pros.length > 0 ? (
                     tradeoffs.pros.map((p, i) => <li key={i}>{p}</li>)
                   ) : (
-                    <li className="italic text-[#756e60]">Bấm "Phân tích lại bằng AI" để trích xuất đầy đủ ưu điểm.</li>
+                    <li className="text-[#756e60] italic">
+                      Bấm "Phân tích lại bằng AI" để trích xuất đầy đủ ưu điểm.
+                    </li>
                   )}
                 </ul>
               </div>
@@ -237,7 +248,9 @@ export const ArticleModalTabs: React.FC<ArticleModalTabsProps> = ({
                   {tradeoffs?.cons && tradeoffs.cons.length > 0 ? (
                     tradeoffs.cons.map((c, i) => <li key={i}>{c}</li>)
                   ) : (
-                    <li className="italic text-[#756e60]">Bấm "Phân tích lại bằng AI" để xem các nhược điểm kỹ thuật.</li>
+                    <li className="text-[#756e60] italic">
+                      Bấm "Phân tích lại bằng AI" để xem các nhược điểm kỹ thuật.
+                    </li>
                   )}
                 </ul>
               </div>
@@ -252,7 +265,9 @@ export const ArticleModalTabs: React.FC<ArticleModalTabsProps> = ({
                 {tradeoffs?.when_not_to_use && tradeoffs.when_not_to_use.length > 0 ? (
                   tradeoffs.when_not_to_use.map((w, i) => <li key={i}>{w}</li>)
                 ) : (
-                  <li className="italic text-[#756e60]">Chưa có dữ liệu chống lạm dụng kiến trúc. Hãy bấm phân tích lại.</li>
+                  <li className="text-[#756e60] italic">
+                    Chưa có dữ liệu chống lạm dụng kiến trúc. Hãy bấm phân tích lại.
+                  </li>
                 )}
               </ul>
             </div>
@@ -263,10 +278,13 @@ export const ArticleModalTabs: React.FC<ArticleModalTabsProps> = ({
                 ⚡ Điểm nghẽn khi Scale (Scalability Bottlenecks)
               </h4>
               <ul className="mt-2.5 list-inside list-disc space-y-1.5 text-[#2c313a]">
-                {tradeoffs?.scalability_bottlenecks && tradeoffs.scalability_bottlenecks.length > 0 ? (
+                {tradeoffs?.scalability_bottlenecks &&
+                tradeoffs.scalability_bottlenecks.length > 0 ? (
                   tradeoffs.scalability_bottlenecks.map((b, i) => <li key={i}>{b}</li>)
                 ) : (
-                  <li className="italic text-[#756e60]">Chưa phát hiện điểm nghẽn. Hãy bấm phân tích lại.</li>
+                  <li className="text-[#756e60] italic">
+                    Chưa phát hiện điểm nghẽn. Hãy bấm phân tích lại.
+                  </li>
                 )}
               </ul>
             </div>
@@ -280,15 +298,20 @@ export const ArticleModalTabs: React.FC<ArticleModalTabsProps> = ({
               <div>
                 <p className="font-bold">🧱 Kiến trúc đề xuất cho NestJS:</p>
                 <p className="mt-0.5 text-[11px] text-indigo-800">
-                  {blueprint?.architectural_pattern || 'Hexagonal Architecture / Modular Service Pattern'}
+                  {blueprint?.architectural_pattern ||
+                    'Hexagonal Architecture / Modular Service Pattern'}
                 </p>
               </div>
               {blueprint?.code_snippet && (
                 <button
                   onClick={() => handleCopy(blueprint.code_snippet || '', 'code')}
-                  className="cursor-pointer flex items-center gap-1 rounded bg-white px-2.5 py-1 text-xs font-medium text-indigo-900 shadow-2xs transition hover:bg-indigo-100"
+                  className="flex cursor-pointer items-center gap-1 rounded bg-white px-2.5 py-1 text-xs font-medium text-indigo-900 shadow-2xs transition hover:bg-indigo-100"
                 >
-                  {copiedCode ? <Check className="h-3.5 w-3.5 text-emerald-600" /> : <Copy className="h-3.5 w-3.5" />}
+                  {copiedCode ? (
+                    <Check className="h-3.5 w-3.5 text-emerald-600" />
+                  ) : (
+                    <Copy className="h-3.5 w-3.5" />
+                  )}
                   {copiedCode ? 'Đã sao chép' : 'Sao chép mã'}
                 </button>
               )}
@@ -305,7 +328,9 @@ export const ArticleModalTabs: React.FC<ArticleModalTabsProps> = ({
 
             {blueprint?.database_integration && (
               <div className="rounded-xl border border-[#e7e2d9] bg-white p-3.5">
-                <span className="font-bold text-[#475569]">🗄️ Tích hợp Cơ sở dữ liệu (Prisma / pgvector / Cache):</span>
+                <span className="font-bold text-[#475569]">
+                  🗄️ Tích hợp Cơ sở dữ liệu (Prisma / pgvector / Cache):
+                </span>
                 <p className="mt-1 text-[#2c313a]">{blueprint.database_integration}</p>
               </div>
             )}
@@ -333,7 +358,10 @@ export const ArticleModalTabs: React.FC<ArticleModalTabsProps> = ({
 
         {/* TAB 4: CHAT COPILOT */}
         {tab === 'chat' && (
-          <ArticleChatCopilot articleId={article.id} articleTitle={article.vietnamese_title || article.title} />
+          <ArticleChatCopilot
+            articleId={article.id}
+            articleTitle={article.vietnamese_title || article.title}
+          />
         )}
 
         {/* TAB 5: LEARNING PATH & RELATED */}
@@ -348,7 +376,9 @@ export const ArticleModalTabs: React.FC<ArticleModalTabsProps> = ({
                   {learning?.prerequisites && learning.prerequisites.length > 0 ? (
                     learning.prerequisites.map((item, idx) => <li key={idx}>{item}</li>)
                   ) : (
-                    <li className="italic text-[#756e60]">TypeScript nâng cao, Node.js Event Loop, NestJS DI cơ bản.</li>
+                    <li className="text-[#756e60] italic">
+                      TypeScript nâng cao, Node.js Event Loop, NestJS DI cơ bản.
+                    </li>
                   )}
                 </ul>
               </div>
@@ -358,10 +388,13 @@ export const ArticleModalTabs: React.FC<ArticleModalTabsProps> = ({
                   🚀 Chủ đề nên nghiên cứu tiếp theo:
                 </h4>
                 <ul className="mt-2.5 list-inside list-disc space-y-1.5 text-[#475569]">
-                  {learning?.recommended_next_topics && learning.recommended_next_topics.length > 0 ? (
+                  {learning?.recommended_next_topics &&
+                  learning.recommended_next_topics.length > 0 ? (
                     learning.recommended_next_topics.map((item, idx) => <li key={idx}>{item}</li>)
                   ) : (
-                    <li className="italic text-[#756e60]">PostgreSQL Vector Indexing, Hybrid Search Reranking.</li>
+                    <li className="text-[#756e60] italic">
+                      PostgreSQL Vector Indexing, Hybrid Search Reranking.
+                    </li>
                   )}
                 </ul>
               </div>
@@ -378,17 +411,19 @@ export const ArticleModalTabs: React.FC<ArticleModalTabsProps> = ({
               </p>
 
               {loadingRelated ? (
-                <div className="mt-3 py-2 text-center text-[#756e60] italic">Đang tìm bài viết liên quan...</div>
+                <div className="mt-3 py-2 text-center text-[#756e60] italic">
+                  Đang tìm bài viết liên quan...
+                </div>
               ) : relatedArticles.length > 0 ? (
                 <div className="mt-3 space-y-2">
                   {relatedArticles.map((rel) => (
                     <div
                       key={rel.id}
                       onClick={() => onSelectRelatedArticle && onSelectRelatedArticle(rel.id)}
-                      className="cursor-pointer flex items-center justify-between rounded-lg border border-[#e7e2d9] bg-white p-2.5 transition hover:border-indigo-300 hover:bg-indigo-50/40"
+                      className="flex cursor-pointer items-center justify-between rounded-lg border border-[#e7e2d9] bg-white p-2.5 transition hover:border-indigo-300 hover:bg-indigo-50/40"
                     >
                       <div className="min-w-0 pr-2">
-                        <div className="font-serif text-[13px] font-semibold text-[#1c1f24] line-clamp-1">
+                        <div className="line-clamp-1 font-serif text-[13px] font-semibold text-[#1c1f24]">
                           {rel.vietnamese_title || rel.title}
                         </div>
                         <div className="mt-0.5 flex items-center gap-2 text-[10px] text-[#756e60]">
@@ -396,16 +431,22 @@ export const ArticleModalTabs: React.FC<ArticleModalTabsProps> = ({
                           <span>•</span>
                           <span>Điểm: {rel.relevance_score.toFixed(1)}</span>
                           {rel.tags && rel.tags.length > 0 && (
-                            <span className="hidden sm:inline-block">({rel.tags.slice(0, 3).join(', ')})</span>
+                            <span className="hidden sm:inline-block">
+                              ({rel.tags.slice(0, 3).join(', ')})
+                            </span>
                           )}
                         </div>
                       </div>
-                      <span className="shrink-0 text-xs font-semibold text-indigo-800">Xem bài →</span>
+                      <span className="shrink-0 text-xs font-semibold text-indigo-800">
+                        Xem bài →
+                      </span>
                     </div>
                   ))}
                 </div>
               ) : (
-                <div className="mt-3 text-[#756e60] italic">Chưa có bài viết tương đồng trong hệ thống.</div>
+                <div className="mt-3 text-[#756e60] italic">
+                  Chưa có bài viết tương đồng trong hệ thống.
+                </div>
               )}
             </div>
           </div>
@@ -417,7 +458,7 @@ export const ArticleModalTabs: React.FC<ArticleModalTabsProps> = ({
             href={article.url}
             target="_blank"
             rel="noreferrer"
-            className="inline-flex items-center gap-1.5 text-xs font-semibold text-indigo-900 underline hover:text-indigo-950 break-words"
+            className="inline-flex items-center gap-1.5 text-xs font-semibold break-words text-indigo-900 underline hover:text-indigo-950"
           >
             <span>Đọc bài gốc tại {article.source_name}</span>
             <ExternalLink className="h-3 w-3 shrink-0" />

@@ -53,7 +53,8 @@ export const ArticleChatCopilot: React.FC<ArticleChatCopilotProps> = ({ articleI
     } catch (err) {
       const errorMsg: ChatMessage = {
         role: 'assistant',
-        content: 'Xin lỗi, đã xảy ra lỗi khi trao đổi với AI Copilot. Vui lòng thử lại sau ít phút.',
+        content:
+          'Xin lỗi, đã xảy ra lỗi khi trao đổi với AI Copilot. Vui lòng thử lại sau ít phút.',
       };
       setMessages([...newHistory, errorMsg]);
     } finally {
@@ -68,16 +69,16 @@ export const ArticleChatCopilot: React.FC<ArticleChatCopilotProps> = ({ articleI
   };
 
   return (
-    <div className="flex h-[420px] sm:h-[520px] flex-col rounded-xl border border-[#e7e2d9] bg-[#fdfcfa] font-sans">
+    <div className="flex h-[420px] flex-col rounded-xl border border-[#e7e2d9] bg-[#fdfcfa] font-sans sm:h-[520px]">
       {/* Header */}
-      <div className="flex items-center justify-between border-b border-[#e7e2d9] bg-[#f7f4ee] px-3 sm:px-4 py-2 sm:py-2.5">
+      <div className="flex items-center justify-between border-b border-[#e7e2d9] bg-[#f7f4ee] px-3 py-2 sm:px-4 sm:py-2.5">
         <div className="flex items-center gap-1.5 sm:gap-2">
           <Bot className="h-4 w-4 text-indigo-700" />
-          <span className="text-[11px] sm:text-xs font-bold text-[#1c1f24] truncate max-w-[200px] sm:max-w-none">
+          <span className="max-w-[200px] truncate text-[11px] font-bold text-[#1c1f24] sm:max-w-none sm:text-xs">
             AI Copilot (Principal Architect)
           </span>
         </div>
-        <span className="shrink-0 rounded bg-indigo-100/70 px-1.5 py-0.5 text-[9px] sm:text-[10px] font-semibold text-indigo-800">
+        <span className="shrink-0 rounded bg-indigo-100/70 px-1.5 py-0.5 text-[9px] font-semibold text-indigo-800 sm:text-[10px]">
           Backend & AI
         </span>
       </div>
@@ -91,7 +92,8 @@ export const ArticleChatCopilot: React.FC<ArticleChatCopilotProps> = ({ articleI
               Hỏi đáp chuyên sâu về kiến trúc & code với bài viết này
             </p>
             <p className="mt-1 max-w-sm text-[11px] text-[#756e60]">
-              Bạn có thể yêu cầu AI sinh mã nguồn NestJS Module/Service, phân tích rủi ro khi scale, hoặc đề xuất cấu trúc Prisma DB.
+              Bạn có thể yêu cầu AI sinh mã nguồn NestJS Module/Service, phân tích rủi ro khi scale,
+              hoặc đề xuất cấu trúc Prisma DB.
             </p>
 
             {/* Quick Prompts */}
@@ -125,14 +127,14 @@ export const ArticleChatCopilot: React.FC<ArticleChatCopilotProps> = ({ articleI
                     : 'border border-[#e7e2d9] bg-white text-[#2c313a]'
                 }`}
               >
-                <div className="whitespace-pre-wrap font-sans text-xs leading-relaxed">
+                <div className="font-sans text-xs leading-relaxed whitespace-pre-wrap">
                   {m.content}
                 </div>
                 {m.role === 'assistant' && (
                   <div className="mt-2 flex justify-end">
                     <button
                       onClick={() => handleCopyCode(m.content, idx)}
-                      className="cursor-pointer flex items-center gap-1 text-[10px] text-[#756e60] hover:text-indigo-700"
+                      className="flex cursor-pointer items-center gap-1 text-[10px] text-[#756e60] hover:text-indigo-700"
                     >
                       {copiedIndex === idx ? (
                         <>
@@ -159,7 +161,9 @@ export const ArticleChatCopilot: React.FC<ArticleChatCopilotProps> = ({ articleI
         {loading && (
           <div className="flex items-center gap-2 text-[#756e60]">
             <Bot className="h-4 w-4 animate-bounce text-indigo-600" />
-            <span className="text-[11px] italic">AI Architect đang phân tích và soạn câu trả lời...</span>
+            <span className="text-[11px] italic">
+              AI Architect đang phân tích và soạn câu trả lời...
+            </span>
           </div>
         )}
       </div>
@@ -167,7 +171,7 @@ export const ArticleChatCopilot: React.FC<ArticleChatCopilotProps> = ({ articleI
       {/* Suggested Followups */}
       {followups.length > 0 && !loading && (
         <div className="flex flex-wrap gap-1 border-t border-[#ede7dc] bg-[#fbf9f5] px-4 py-2">
-          <span className="text-[10px] font-bold uppercase text-[#756e60]">Gợi ý:</span>
+          <span className="text-[10px] font-bold text-[#756e60] uppercase">Gợi ý:</span>
           {followups.map((f, i) => (
             <button
               key={i}
@@ -200,7 +204,7 @@ export const ArticleChatCopilot: React.FC<ArticleChatCopilotProps> = ({ articleI
           <button
             type="submit"
             disabled={loading || !input.trim()}
-            className="cursor-pointer flex items-center justify-center rounded-lg bg-indigo-900 px-3.5 py-2 text-xs font-medium text-white transition hover:bg-indigo-950 disabled:opacity-40"
+            className="flex cursor-pointer items-center justify-center rounded-lg bg-indigo-900 px-3.5 py-2 text-xs font-medium text-white transition hover:bg-indigo-950 disabled:opacity-40"
           >
             <Send className="h-3.5 w-3.5" />
           </button>

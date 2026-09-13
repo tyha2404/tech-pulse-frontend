@@ -123,33 +123,56 @@ export default function App() {
 
   useEffect(() => {
     fetchArticles(true);
-  }, [selectedCategory, selectedSourceId, topOnly, sortBy, readStatus, bookmarkedOnly, viewHidden, groupDuplicates]);
+  }, [
+    selectedCategory,
+    selectedSourceId,
+    topOnly,
+    sortBy,
+    readStatus,
+    bookmarkedOnly,
+    viewHidden,
+    groupDuplicates,
+  ]);
 
   // Infinite Scroll Listener
   useEffect(() => {
     const handleScroll = () => {
       if (activeTab !== 'feed' || loading || loadingMore || !hasMore) return;
       // When scrolled near the bottom (within 250px)
-      if (
-        window.innerHeight + window.scrollY >=
-        document.documentElement.scrollHeight - 250
-      ) {
+      if (window.innerHeight + window.scrollY >= document.documentElement.scrollHeight - 250) {
         fetchArticles(false);
       }
     };
 
     window.addEventListener('scroll', handleScroll, { passive: true });
     return () => window.removeEventListener('scroll', handleScroll);
-  }, [activeTab, loading, loadingMore, hasMore, articles.length, selectedCategory, selectedSourceId, topOnly, sortBy, readStatus, bookmarkedOnly, viewHidden, groupDuplicates, searchQuery]);
+  }, [
+    activeTab,
+    loading,
+    loadingMore,
+    hasMore,
+    articles.length,
+    selectedCategory,
+    selectedSourceId,
+    topOnly,
+    sortBy,
+    readStatus,
+    bookmarkedOnly,
+    viewHidden,
+    groupDuplicates,
+    searchQuery,
+  ]);
 
   // Handlers for mark read / unread and hide / unhide
-  const handleToggleRead = async (articleId: number, currentRead: boolean, e?: React.MouseEvent) => {
+  const handleToggleRead = async (
+    articleId: number,
+    currentRead: boolean,
+    e?: React.MouseEvent
+  ) => {
     if (e) e.stopPropagation();
     const nextRead = !currentRead;
     // Optimistic UI
-    setArticles((prev) =>
-      prev.map((a) => (a.id === articleId ? { ...a, is_read: nextRead } : a))
-    );
+    setArticles((prev) => prev.map((a) => (a.id === articleId ? { ...a, is_read: nextRead } : a)));
     if (selectedArticle && selectedArticle.id === articleId) {
       setSelectedArticle({ ...selectedArticle, is_read: nextRead });
     }
@@ -184,9 +207,13 @@ export default function App() {
   const handleSummarizeArticle = async (articleId: number) => {
     try {
       setSummarizingArticleId(articleId);
-      const res = await apiClient.post(`/articles/${articleId}/summarize`, {}, {
-        timeout: 180000, // 3 minutes specifically for AI generation
-      });
+      const res = await apiClient.post(
+        `/articles/${articleId}/summarize`,
+        {},
+        {
+          timeout: 180000, // 3 minutes specifically for AI generation
+        }
+      );
       const updated: Article = res.data;
       setArticles((prev) => prev.map((a) => (a.id === articleId ? updated : a)));
       if (selectedArticle && selectedArticle.id === articleId) {
@@ -420,7 +447,7 @@ export default function App() {
   return (
     <div className="min-h-screen bg-[#fbf9f5] font-serif text-[#2c313a] selection:bg-amber-100 selection:text-amber-900">
       {/* Top Header - Book / Newspaper Masthead Style */}
-      <header className="safe-pt sticky top-0 z-30 border-b border-[#e7e2d9] bg-[#fbf9f5]/95 px-3 py-2.5 sm:px-6 sm:py-3">
+      <header className="header-safe-pt sticky top-0 z-30 border-b border-[#e7e2d9] bg-[#fbf9f5]/95 px-3.5 pb-3 sm:px-6 sm:pb-3.5">
         <div className="mx-auto flex max-w-5xl items-center justify-between gap-2">
           <div className="flex min-w-0 items-center gap-2 sm:gap-3">
             <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-[#24292f] font-serif text-base font-bold text-white shadow-sm">
@@ -586,7 +613,7 @@ export default function App() {
 
                   <button
                     onClick={() => setTopOnly(!topOnly)}
-                    className={`cursor-pointer flex items-center gap-1.5 rounded-full border px-3 py-1 text-xs whitespace-nowrap transition ${
+                    className={`flex cursor-pointer items-center gap-1.5 rounded-full border px-3 py-1 text-xs whitespace-nowrap transition ${
                       topOnly
                         ? 'border-amber-300 bg-amber-100 font-semibold text-amber-900 shadow-xs'
                         : 'border-[#dcd5c7] bg-transparent text-[#6b6456] hover:bg-[#eee9df]'
@@ -666,7 +693,10 @@ export default function App() {
                       : 'text-[#6b6456] hover:text-[#1c1f24]'
                   }`}
                 >
-                  <Bookmark className="h-3 w-3 text-amber-700" fill={bookmarkedOnly ? 'currentColor' : 'none'} />
+                  <Bookmark
+                    className="h-3 w-3 text-amber-700"
+                    fill={bookmarkedOnly ? 'currentColor' : 'none'}
+                  />
                   <span>Đã lưu</span>
                 </button>
               </div>
@@ -678,7 +708,9 @@ export default function App() {
                   <Layers className="mr-1.5 h-3.5 w-3.5 shrink-0 text-[#8c8475]" />
                   <select
                     value={selectedSourceId || ''}
-                    onChange={(e) => setSelectedSourceId(e.target.value ? Number(e.target.value) : null)}
+                    onChange={(e) =>
+                      setSelectedSourceId(e.target.value ? Number(e.target.value) : null)
+                    }
                     className="w-full cursor-pointer bg-transparent text-xs font-medium text-[#2c313a] focus:outline-none"
                   >
                     <option value="">Tất cả nguồn ({sources.length})</option>
@@ -712,10 +744,16 @@ export default function App() {
                       ? 'border-indigo-200 bg-indigo-50/80 font-medium text-indigo-900 shadow-xs'
                       : 'border-[#ded7ca] bg-white text-[#6b6456] hover:bg-[#eee9df]'
                   }`}
-                  title={groupDuplicates ? 'Đang gộp bài viết trùng từ nhiều báo khác nhau' : 'Đang hiển thị dạng phẳng (không gộp tin trùng)'}
+                  title={
+                    groupDuplicates
+                      ? 'Đang gộp bài viết trùng từ nhiều báo khác nhau'
+                      : 'Đang hiển thị dạng phẳng (không gộp tin trùng)'
+                  }
                 >
                   <Layers className="h-3.5 w-3.5 shrink-0 text-indigo-600" />
-                  <span className="truncate">{groupDuplicates ? 'Gộp tin trùng' : 'Hiện tất cả'}</span>
+                  <span className="truncate">
+                    {groupDuplicates ? 'Gộp tin trùng' : 'Hiện tất cả'}
+                  </span>
                 </button>
 
                 {/* View Hidden Toggle */}
@@ -726,7 +764,9 @@ export default function App() {
                       ? 'border-rose-300 bg-rose-50 font-semibold text-rose-800 shadow-xs'
                       : 'border-[#ded7ca] bg-white text-[#6b6456] hover:bg-[#eee9df]'
                   }`}
-                  title={viewHidden ? 'Quay lại bản tin bình thường' : 'Xem danh sách bài bạn đã ẩn'}
+                  title={
+                    viewHidden ? 'Quay lại bản tin bình thường' : 'Xem danh sách bài bạn đã ẩn'
+                  }
                 >
                   {viewHidden ? (
                     <>
@@ -788,15 +828,13 @@ export default function App() {
                 {groupedArticles.map((group) => (
                   <section key={group.dateKey} className="space-y-4">
                     {/* Date Section Header */}
-                    <div className="sticky top-[57px] z-20 flex items-center gap-3 bg-[#fbf9f5]/95 py-2 backdrop-blur-xs font-sans">
+                    <div className="sticky top-[57px] z-20 flex items-center gap-3 bg-[#fbf9f5]/95 py-2 font-sans backdrop-blur-xs">
                       <div className="flex items-center gap-1.5 rounded-full border border-[#ded7ca] bg-[#f4efe6] px-3 py-0.5 text-xs font-bold text-[#554e42] shadow-xs">
                         <Clock className="h-3 w-3 text-amber-700" />
                         <span>{group.label}</span>
                       </div>
                       <div className="h-px flex-1 bg-[#e7e2d9]"></div>
-                      <span className="text-[11px] text-[#8c8475]">
-                        {group.items.length} bài
-                      </span>
+                      <span className="text-[11px] text-[#8c8475]">{group.items.length} bài</span>
                     </div>
 
                     {/* Articles in Date Group */}
@@ -805,7 +843,7 @@ export default function App() {
                         <article
                           key={art.id}
                           onClick={() => handleOpenArticle(art)}
-                          className={`group relative cursor-pointer rounded-xl border p-4 sm:p-6 shadow-xs transition ${
+                          className={`group relative cursor-pointer rounded-xl border p-4 shadow-xs transition sm:p-6 ${
                             art.is_read
                               ? 'border-[#ede7dc] bg-[#faf8f4] opacity-80 hover:border-[#cfc7b8] hover:opacity-100'
                               : 'border-[#e7e2d9] bg-white hover:border-[#cfc7b8] hover:bg-[#fcfbf9]'
@@ -837,7 +875,11 @@ export default function App() {
                               <span className="text-[11px] text-[#a8a193]">·</span>
                               <span className="flex items-center gap-0.5 text-[11px] text-[#8c8475]">
                                 <Clock className="inline h-3 w-3" />{' '}
-                                {art.reading_time_minutes || Math.max(1, Math.ceil((art.vietnamese_summary?.length || 300) / 350))}{' '}
+                                {art.reading_time_minutes ||
+                                  Math.max(
+                                    1,
+                                    Math.ceil((art.vietnamese_summary?.length || 300) / 350)
+                                  )}{' '}
                                 phút đọc
                               </span>
                             </div>
@@ -865,9 +907,14 @@ export default function App() {
                                     ? 'bg-amber-100 text-amber-800 hover:bg-amber-200'
                                     : 'text-[#8c8475] hover:bg-amber-50 hover:text-amber-700'
                                 }`}
-                                title={art.is_bookmarked ? 'Bỏ lưu bài viết' : 'Lưu bài viết vào đọc sau'}
+                                title={
+                                  art.is_bookmarked ? 'Bỏ lưu bài viết' : 'Lưu bài viết vào đọc sau'
+                                }
                               >
-                                <Bookmark className="h-4 w-4" fill={art.is_bookmarked ? 'currentColor' : 'none'} />
+                                <Bookmark
+                                  className="h-4 w-4"
+                                  fill={art.is_bookmarked ? 'currentColor' : 'none'}
+                                />
                               </button>
 
                               {/* Quick action: Hide / Unhide */}
@@ -878,7 +925,9 @@ export default function App() {
                                     ? 'text-rose-700 hover:bg-rose-100'
                                     : 'text-[#8c8475] hover:bg-rose-50 hover:text-rose-600'
                                 }`}
-                                title={art.is_hidden ? 'Bỏ ẩn bài viết này' : 'Không thích / Ẩn bài viết'}
+                                title={
+                                  art.is_hidden ? 'Bỏ ẩn bài viết này' : 'Không thích / Ẩn bài viết'
+                                }
                               >
                                 {art.is_hidden ? (
                                   <Eye className="h-4 w-4" />
@@ -912,13 +961,14 @@ export default function App() {
                           {/* Key Takeaways Preview (3 bullet points) */}
                           {art.key_takeaways && art.key_takeaways.length > 0 && (
                             <div className="mb-3 rounded-lg border border-[#eee8dd] bg-[#faf8f5] p-3 text-xs">
-                              <div className="mb-1.5 flex items-center gap-1 font-sans font-bold text-[#635c50] uppercase tracking-wider text-[10px]">
-                                <Sparkles className="h-3 w-3 text-amber-600" /> Điểm cốt lõi kỹ thuật:
+                              <div className="mb-1.5 flex items-center gap-1 font-sans text-[10px] font-bold tracking-wider text-[#635c50] uppercase">
+                                <Sparkles className="h-3 w-3 text-amber-600" /> Điểm cốt lõi kỹ
+                                thuật:
                               </div>
                               <ul className="space-y-1 font-serif text-[#3f4651]">
                                 {art.key_takeaways.slice(0, 3).map((point, pIdx) => (
                                   <li key={pIdx} className="flex items-start gap-1.5">
-                                    <span className="text-amber-700 font-bold">•</span>
+                                    <span className="font-bold text-amber-700">•</span>
                                     <span>{point}</span>
                                   </li>
                                 ))}
@@ -933,7 +983,7 @@ export default function App() {
                               className="mb-3 rounded-lg border border-indigo-100 bg-indigo-50/50 p-2.5 text-xs"
                             >
                               <div className="flex flex-wrap items-center gap-1.5 font-sans">
-                                <span className="font-semibold text-indigo-900 flex items-center gap-1 text-[11px]">
+                                <span className="flex items-center gap-1 text-[11px] font-semibold text-indigo-900">
                                   📰 Cùng chủ đề trên {art.related_articles.length} báo khác:
                                 </span>
                                 {art.related_articles.map((rel) => (
@@ -1092,7 +1142,7 @@ export default function App() {
               </div>
               <button
                 onClick={() => setIsAddSourceOpen(true)}
-                className="cursor-pointer flex items-center justify-center gap-1.5 self-start sm:self-auto rounded-lg bg-emerald-700 px-3.5 py-2 text-xs font-semibold text-white shadow-xs transition hover:bg-emerald-800"
+                className="flex cursor-pointer items-center justify-center gap-1.5 self-start rounded-lg bg-emerald-700 px-3.5 py-2 text-xs font-semibold text-white shadow-xs transition hover:bg-emerald-800 sm:self-auto"
               >
                 <Plus className="h-4 w-4" /> Thêm nguồn tin
               </button>
@@ -1107,9 +1157,10 @@ export default function App() {
                 { id: 'Vietnam Tech', label: '🇻🇳 Tin Việt Nam' },
                 { id: 'Global Tech', label: '🌐 Báo Quốc tế' },
               ].map((c) => {
-                const count = c.id === 'all'
-                  ? sources.length
-                  : sources.filter((s) => s.category === c.id).length;
+                const count =
+                  c.id === 'all'
+                    ? sources.length
+                    : sources.filter((s) => s.category === c.id).length;
                 return (
                   <button
                     key={c.id}
@@ -1140,74 +1191,76 @@ export default function App() {
                 </thead>
                 <tbody className="divide-y divide-[#ede8df]">
                   {sources
-                    .filter((s) => sourceCategoryFilter === 'all' || s.category === sourceCategoryFilter)
+                    .filter(
+                      (s) => sourceCategoryFilter === 'all' || s.category === sourceCategoryFilter
+                    )
                     .map((s) => (
-                    <tr key={s.id} className="transition hover:bg-[#fbf9f5]">
-                      <td className="p-3.5">
-                        <div className="font-semibold text-[#1c1f24]">{s.name}</div>
-                        <div className="inline-block mt-0.5 rounded bg-[#f4efe6] px-1.5 py-0.5 text-[10px] font-medium text-[#635d52]">
-                          {s.category}
-                        </div>
-                      </td>
-                      <td className="p-3.5">
-                        {s.status === 'healthy' && (
-                          <span className="inline-flex items-center gap-1 rounded border border-emerald-200 bg-emerald-50 px-2 py-0.5 text-[11px] font-medium text-emerald-800">
-                            <CheckCircle2 className="h-3 w-3" /> Hoạt động tốt
-                          </span>
-                        )}
-                        {s.status === 'error' && (
-                          <span
-                            className="inline-flex items-center gap-1 rounded border border-rose-200 bg-rose-50 px-2 py-0.5 text-[11px] font-medium text-rose-800"
-                            title={s.last_error}
+                      <tr key={s.id} className="transition hover:bg-[#fbf9f5]">
+                        <td className="p-3.5">
+                          <div className="font-semibold text-[#1c1f24]">{s.name}</div>
+                          <div className="mt-0.5 inline-block rounded bg-[#f4efe6] px-1.5 py-0.5 text-[10px] font-medium text-[#635d52]">
+                            {s.category}
+                          </div>
+                        </td>
+                        <td className="p-3.5">
+                          {s.status === 'healthy' && (
+                            <span className="inline-flex items-center gap-1 rounded border border-emerald-200 bg-emerald-50 px-2 py-0.5 text-[11px] font-medium text-emerald-800">
+                              <CheckCircle2 className="h-3 w-3" /> Hoạt động tốt
+                            </span>
+                          )}
+                          {s.status === 'error' && (
+                            <span
+                              className="inline-flex items-center gap-1 rounded border border-rose-200 bg-rose-50 px-2 py-0.5 text-[11px] font-medium text-rose-800"
+                              title={s.last_error}
+                            >
+                              <AlertCircle className="h-3 w-3" /> Bị lỗi
+                            </span>
+                          )}
+                          {s.status === 'pending' && (
+                            <span className="inline-flex items-center gap-1 rounded border border-amber-200 bg-amber-50 px-2 py-0.5 text-[11px] font-medium text-amber-800">
+                              <Clock className="h-3 w-3 animate-spin" /> Đang cào...
+                            </span>
+                          )}
+                        </td>
+                        <td className="max-w-[200px] truncate p-3.5 font-mono text-[11px] text-[#756e60]">
+                          <a
+                            href={s.feed_url || s.url}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="flex items-center gap-1 underline hover:text-[#1c1f24]"
                           >
-                            <AlertCircle className="h-3 w-3" /> Bị lỗi
-                          </span>
-                        )}
-                        {s.status === 'pending' && (
-                          <span className="inline-flex items-center gap-1 rounded border border-amber-200 bg-amber-50 px-2 py-0.5 text-[11px] font-medium text-amber-800">
-                            <Clock className="h-3 w-3 animate-spin" /> Đang cào...
-                          </span>
-                        )}
-                      </td>
-                      <td className="max-w-[200px] truncate p-3.5 font-mono text-[11px] text-[#756e60]">
-                        <a
-                          href={s.feed_url || s.url}
-                          target="_blank"
-                          rel="noreferrer"
-                          className="flex items-center gap-1 underline hover:text-[#1c1f24]"
-                        >
-                          {s.feed_url || s.url} <ExternalLink className="inline h-2.5 w-2.5" />
-                        </a>
-                      </td>
-                      <td className="p-3.5 font-semibold text-[#2c313a]">
-                        {s.articles_count || 0} bài
-                      </td>
-                      <td className="p-3.5 text-[#756e60]">
-                        {s.last_crawled_at
-                          ? new Date(s.last_crawled_at).toLocaleTimeString('vi-VN') +
-                            ' ' +
-                            new Date(s.last_crawled_at).toLocaleDateString('vi-VN')
-                          : 'Chưa cào'}
-                      </td>
-                      <td className="p-3.5 text-right">
-                        <div className="flex items-center justify-end gap-2">
-                          <button
-                            onClick={() => handleCrawlSingle(s.id)}
-                            className="cursor-pointer rounded border border-[#ded7ca] bg-[#f4efe6] px-2.5 py-1 text-[11px] font-medium text-[#2c313a] transition hover:bg-[#eae4d7]"
-                          >
-                            Cào ngay
-                          </button>
-                          <button
-                            onClick={() => handleDeleteSource(s.id, s.name)}
-                            className="cursor-pointer p-1 text-[#8c8475] transition hover:text-rose-600"
-                            title="Xóa nguồn tin này"
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
+                            {s.feed_url || s.url} <ExternalLink className="inline h-2.5 w-2.5" />
+                          </a>
+                        </td>
+                        <td className="p-3.5 font-semibold text-[#2c313a]">
+                          {s.articles_count || 0} bài
+                        </td>
+                        <td className="p-3.5 text-[#756e60]">
+                          {s.last_crawled_at
+                            ? new Date(s.last_crawled_at).toLocaleTimeString('vi-VN') +
+                              ' ' +
+                              new Date(s.last_crawled_at).toLocaleDateString('vi-VN')
+                            : 'Chưa cào'}
+                        </td>
+                        <td className="p-3.5 text-right">
+                          <div className="flex items-center justify-end gap-2">
+                            <button
+                              onClick={() => handleCrawlSingle(s.id)}
+                              className="cursor-pointer rounded border border-[#ded7ca] bg-[#f4efe6] px-2.5 py-1 text-[11px] font-medium text-[#2c313a] transition hover:bg-[#eae4d7]"
+                            >
+                              Cào ngay
+                            </button>
+                            <button
+                              onClick={() => handleDeleteSource(s.id, s.name)}
+                              className="cursor-pointer p-1 text-[#8c8475] transition hover:text-rose-600"
+                              title="Xóa nguồn tin này"
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
                 </tbody>
               </table>
             </div>
@@ -1219,14 +1272,14 @@ export default function App() {
       {selectedArticle && (
         <div
           onClick={() => setSelectedArticle(null)}
-          className="fixed inset-0 z-50 flex cursor-pointer items-end justify-center bg-black/60 p-0 sm:items-center sm:p-4 backdrop-blur-xs"
+          className="fixed inset-0 z-50 flex cursor-pointer items-end justify-center bg-black/60 p-0 backdrop-blur-xs sm:items-center sm:p-4"
         >
           <div
             onClick={(e) => e.stopPropagation()}
             className="animate-in fade-in slide-in-from-bottom-2 sm:slide-in-from-bottom-0 flex h-[100dvh] w-full max-w-4xl cursor-default flex-col overflow-hidden rounded-none border-0 border-[#e7e2d9] bg-[#fbf9f5] shadow-2xl sm:h-auto sm:max-h-[90vh] sm:rounded-2xl sm:border"
           >
             {/* Masthead Header with Safe Area Top */}
-            <div className="safe-pt flex shrink-0 items-start justify-between gap-2.5 border-b border-[#e7e2d9] bg-white px-3.5 py-3 sm:px-6 sm:py-5">
+            <div className="header-safe-pt flex shrink-0 items-start justify-between gap-2.5 border-b border-[#e7e2d9] bg-white px-3.5 pb-3 sm:px-6 sm:pb-5">
               <div className="min-w-0 flex-1 pr-1">
                 <div className="mb-1 flex flex-wrap items-center gap-1.5 font-sans">
                   <span className="rounded bg-[#f4efe6] px-2 py-0.5 text-[10px] font-semibold text-[#635d52] sm:text-[11px]">
@@ -1254,7 +1307,7 @@ export default function App() {
                   onClick={() =>
                     handleToggleBookmark(selectedArticle.id, selectedArticle.is_bookmarked)
                   }
-                  className={`cursor-pointer flex items-center gap-1 rounded-lg border p-1.5 text-xs font-medium transition sm:px-2.5 sm:py-1.5 ${
+                  className={`flex cursor-pointer items-center gap-1 rounded-lg border p-1.5 text-xs font-medium transition sm:px-2.5 sm:py-1.5 ${
                     selectedArticle.is_bookmarked
                       ? 'border-amber-300 bg-amber-50 text-amber-900'
                       : 'border-[#ded7ca] bg-white text-[#6b6456] hover:bg-amber-50 hover:text-amber-800'
@@ -1273,7 +1326,7 @@ export default function App() {
                 {/* Hide Button */}
                 <button
                   onClick={() => handleToggleHidden(selectedArticle.id, selectedArticle.is_hidden)}
-                  className={`cursor-pointer flex items-center gap-1 rounded-lg border p-1.5 text-xs font-medium transition sm:px-2.5 sm:py-1.5 ${
+                  className={`flex cursor-pointer items-center gap-1 rounded-lg border p-1.5 text-xs font-medium transition sm:px-2.5 sm:py-1.5 ${
                     selectedArticle.is_hidden
                       ? 'border-rose-300 bg-rose-50 text-rose-800'
                       : 'border-[#ded7ca] bg-white text-[#6b6456] hover:bg-rose-50 hover:text-rose-700'
