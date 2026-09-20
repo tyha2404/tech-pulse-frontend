@@ -544,13 +544,13 @@ export default function App() {
             </button>
             <button
               onClick={() => setActiveTab('admin')}
-              className={`flex items-center gap-1.5 rounded-md px-3 py-1.5 text-xs font-medium transition ${
+              className={`flex items-center gap-1.5 rounded-md px-3.5 py-1.5 text-xs font-medium transition ${
                 activeTab === 'admin'
-                  ? 'bg-slate-900 font-semibold text-white shadow-xs'
+                  ? 'bg-white font-semibold text-[#1c1f24] shadow-xs'
                   : 'text-[#6b6456] hover:text-[#1c1f24]'
               }`}
             >
-              <Activity className="h-3.5 w-3.5 text-emerald-500" /> Admin Health
+              <Activity className="h-3.5 w-3.5 text-emerald-600" /> Admin Health
             </button>
           </div>
 
@@ -622,10 +622,10 @@ export default function App() {
           <button
             onClick={() => setActiveTab('admin')}
             className={`flex shrink-0 items-center justify-center gap-1 rounded px-2.5 py-1.5 text-center font-medium ${
-              activeTab === 'admin' ? 'bg-slate-900 font-bold text-white' : 'text-[#6b6456]'
+              activeTab === 'admin' ? 'bg-[#eee9df] font-bold text-[#1c1f24]' : 'text-[#6b6456]'
             }`}
           >
-            <Activity className="h-3.5 w-3.5 text-emerald-500" /> Admin
+            <Activity className="h-3.5 w-3.5 text-emerald-600" /> Admin
           </button>
         </div>
       </header>
