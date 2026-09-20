@@ -33,7 +33,10 @@ export async function searchSemanticArticles(params: {
 }
 
 // Personalization API
-export async function getPersonalizedArticles(userId = 'default_user', limit = 30): Promise<Article[]> {
+export async function getPersonalizedArticles(
+  userId = 'default_user',
+  limit = 30
+): Promise<Article[]> {
   const res = await apiClient.get<Article[]>('/articles/personalized', {
     params: { user_id: userId, limit },
   });

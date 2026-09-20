@@ -34,7 +34,9 @@ import { AdminDashboard } from './components/AdminDashboard';
 import { SemanticSearchBar } from './components/SemanticSearchBar';
 
 export default function App() {
-  const [activeTab, setActiveTab] = useState<'feed' | 'semantic' | 'personalized' | 'radar' | 'sources' | 'admin'>('feed');
+  const [activeTab, setActiveTab] = useState<
+    'feed' | 'semantic' | 'personalized' | 'radar' | 'sources' | 'admin'
+  >('feed');
   const [articles, setArticles] = useState<Article[]>([]);
   const [feedbackMap, setFeedbackMap] = useState<Record<number, string>>({});
   const [sources, setSources] = useState<Source[]>([]);
@@ -127,7 +129,11 @@ export default function App() {
     }
   };
 
-  const handleFeedback = async (e: React.MouseEvent, articleId: number, type: 'like' | 'dislike') => {
+  const handleFeedback = async (
+    e: React.MouseEvent,
+    articleId: number,
+    type: 'like' | 'dislike'
+  ) => {
     e.stopPropagation();
     try {
       setFeedbackMap((prev) => ({ ...prev, [articleId]: type }));
@@ -530,7 +536,8 @@ export default function App() {
                   : 'text-[#6b6456] hover:text-[#1c1f24]'
               }`}
             >
-              <Sparkles className="h-3.5 w-3.5 text-amber-600" /> Radar Tech ({allTechStacks.length})
+              <Sparkles className="h-3.5 w-3.5 text-amber-600" /> Radar Tech ({allTechStacks.length}
+              )
             </button>
             <button
               onClick={() => setActiveTab('sources')}
@@ -578,7 +585,7 @@ export default function App() {
         </div>
 
         {/* Mobile Navigation Tabs */}
-        <div className="mt-2.5 flex items-center justify-around border-t border-[#e7e2d9]/60 pt-2 font-sans text-[11px] overflow-x-auto no-scrollbar gap-1 md:hidden">
+        <div className="no-scrollbar mt-2.5 flex items-center justify-around gap-1 overflow-x-auto border-t border-[#e7e2d9]/60 pt-2 font-sans text-[11px] md:hidden">
           <button
             onClick={() => setActiveTab('feed')}
             className={`flex shrink-0 items-center justify-center gap-1 rounded px-2.5 py-1.5 text-center font-medium ${
@@ -598,7 +605,9 @@ export default function App() {
           <button
             onClick={() => setActiveTab('personalized')}
             className={`flex shrink-0 items-center justify-center gap-1 rounded px-2.5 py-1.5 text-center font-medium ${
-              activeTab === 'personalized' ? 'bg-[#eee9df] font-bold text-[#1c1f24]' : 'text-[#6b6456]'
+              activeTab === 'personalized'
+                ? 'bg-[#eee9df] font-bold text-[#1c1f24]'
+                : 'text-[#6b6456]'
             }`}
           >
             <Compass className="h-3.5 w-3.5 text-rose-500" /> Gợi ý
@@ -1379,9 +1388,7 @@ export default function App() {
         )}
 
         {/* ================= VIEW 5: ADMIN OBSERVABILITY DASHBOARD ================= */}
-        {activeTab === 'admin' && (
-          <AdminDashboard onRefreshFeed={fetchArticles} />
-        )}
+        {activeTab === 'admin' && <AdminDashboard onRefreshFeed={fetchArticles} />}
       </main>
 
       {/* ================= READING DRAWER / MODAL (EDITORIAL STYLE) ================= */}
