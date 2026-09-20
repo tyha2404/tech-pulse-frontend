@@ -21,15 +21,22 @@ import {
   ArrowUpDown,
   ArrowDown,
   Bookmark,
+  Activity,
+  ThumbsUp,
+  ThumbsDown,
+  Compass,
 } from 'lucide-react';
-import { apiClient } from './api';
+import { apiClient, getPersonalizedArticles, sendArticleFeedback } from './api';
 import type { Article, Source, CrawlTestResult } from './types';
 import { ArticleModalTabs } from './components/ArticleModalTabs';
 import { RadarIntelligenceView } from './components/RadarIntelligenceView';
+import { AdminDashboard } from './components/AdminDashboard';
+import { SemanticSearchBar } from './components/SemanticSearchBar';
 
 export default function App() {
-  const [activeTab, setActiveTab] = useState<'feed' | 'radar' | 'sources'>('feed');
+  const [activeTab, setActiveTab] = useState<'feed' | 'semantic' | 'personalized' | 'radar' | 'sources' | 'admin'>('feed');
   const [articles, setArticles] = useState<Article[]>([]);
+  const [feedbackMap, setFeedbackMap] = useState<Record<number, string>>({});
   const [sources, setSources] = useState<Source[]>([]);
   const [loading, setLoading] = useState(false);
   const [loadingMore, setLoadingMore] = useState(false);
@@ -73,6 +80,14 @@ export default function App() {
       } else {
         setLoadingMore(true);
       }
+
+      if (activeTab === 'personalized') {
+        const data = await getPersonalizedArticles('default_user', 30);
+        setArticles(data);
+        setHasMore(false);
+        return;
+      }
+
       const currentOffset = reset ? 0 : articles.length;
       const params: any = {
         sort_by: sortBy,
@@ -112,6 +127,16 @@ export default function App() {
     }
   };
 
+  const handleFeedback = async (e: React.MouseEvent, articleId: number, type: 'like' | 'dislike') => {
+    e.stopPropagation();
+    try {
+      setFeedbackMap((prev) => ({ ...prev, [articleId]: type }));
+      await sendArticleFeedback(articleId, type);
+    } catch (err) {
+      console.error('Feedback error:', err);
+    }
+  };
+
   const fetchSources = async () => {
     try {
       const res = await apiClient.get('/sources');
@@ -122,8 +147,11 @@ export default function App() {
   };
 
   useEffect(() => {
-    fetchArticles(true);
+    if (activeTab === 'feed' || activeTab === 'personalized') {
+      fetchArticles(true);
+    }
   }, [
+    activeTab,
     selectedCategory,
     selectedSourceId,
     topOnly,
@@ -466,7 +494,7 @@ export default function App() {
           <div className="hidden items-center rounded-lg border border-[#e2dcd0] bg-[#eee9df]/80 p-1 font-sans md:flex">
             <button
               onClick={() => setActiveTab('feed')}
-              className={`flex items-center gap-1.5 rounded-md px-3.5 py-1.5 text-xs font-medium transition ${
+              className={`flex items-center gap-1.5 rounded-md px-3 py-1.5 text-xs font-medium transition ${
                 activeTab === 'feed'
                   ? 'bg-white font-semibold text-[#1c1f24] shadow-xs'
                   : 'text-[#6b6456] hover:text-[#1c1f24]'
@@ -475,25 +503,54 @@ export default function App() {
               <BookOpen className="h-3.5 w-3.5" /> Bài đọc
             </button>
             <button
+              onClick={() => setActiveTab('semantic')}
+              className={`flex items-center gap-1.5 rounded-md px-3 py-1.5 text-xs font-medium transition ${
+                activeTab === 'semantic'
+                  ? 'bg-white font-semibold text-indigo-950 shadow-xs'
+                  : 'text-[#6b6456] hover:text-[#1c1f24]'
+              }`}
+            >
+              <Search className="h-3.5 w-3.5 text-indigo-600" /> Semantic Search
+            </button>
+            <button
+              onClick={() => setActiveTab('personalized')}
+              className={`flex items-center gap-1.5 rounded-md px-3 py-1.5 text-xs font-medium transition ${
+                activeTab === 'personalized'
+                  ? 'bg-white font-semibold text-rose-950 shadow-xs'
+                  : 'text-[#6b6456] hover:text-[#1c1f24]'
+              }`}
+            >
+              <Compass className="h-3.5 w-3.5 text-rose-500" /> Dành cho bạn
+            </button>
+            <button
               onClick={() => setActiveTab('radar')}
-              className={`flex items-center gap-1.5 rounded-md px-3.5 py-1.5 text-xs font-medium transition ${
+              className={`flex items-center gap-1.5 rounded-md px-3 py-1.5 text-xs font-medium transition ${
                 activeTab === 'radar'
                   ? 'bg-white font-semibold text-[#1c1f24] shadow-xs'
                   : 'text-[#6b6456] hover:text-[#1c1f24]'
               }`}
             >
-              <Sparkles className="h-3.5 w-3.5 text-amber-600" /> Radar Tech ({allTechStacks.length}
-              )
+              <Sparkles className="h-3.5 w-3.5 text-amber-600" /> Radar Tech ({allTechStacks.length})
             </button>
             <button
               onClick={() => setActiveTab('sources')}
-              className={`flex items-center gap-1.5 rounded-md px-3.5 py-1.5 text-xs font-medium transition ${
+              className={`flex items-center gap-1.5 rounded-md px-3 py-1.5 text-xs font-medium transition ${
                 activeTab === 'sources'
                   ? 'bg-white font-semibold text-[#1c1f24] shadow-xs'
                   : 'text-[#6b6456] hover:text-[#1c1f24]'
               }`}
             >
-              <Layers className="h-3.5 w-3.5" /> Nguồn tin ({sources.length})
+              <Layers className="h-3.5 w-3.5" /> Nguồn ({sources.length})
+            </button>
+            <button
+              onClick={() => setActiveTab('admin')}
+              className={`flex items-center gap-1.5 rounded-md px-3 py-1.5 text-xs font-medium transition ${
+                activeTab === 'admin'
+                  ? 'bg-slate-900 font-semibold text-white shadow-xs'
+                  : 'text-[#6b6456] hover:text-[#1c1f24]'
+              }`}
+            >
+              <Activity className="h-3.5 w-3.5 text-emerald-500" /> Admin Health
             </button>
           </div>
 
@@ -521,30 +578,54 @@ export default function App() {
         </div>
 
         {/* Mobile Navigation Tabs */}
-        <div className="mt-2.5 flex items-center justify-around border-t border-[#e7e2d9]/60 pt-2 font-sans text-xs md:hidden">
+        <div className="mt-2.5 flex items-center justify-around border-t border-[#e7e2d9]/60 pt-2 font-sans text-[11px] overflow-x-auto no-scrollbar gap-1 md:hidden">
           <button
             onClick={() => setActiveTab('feed')}
-            className={`flex flex-1 items-center justify-center gap-1 rounded py-1.5 text-center font-medium ${
+            className={`flex shrink-0 items-center justify-center gap-1 rounded px-2.5 py-1.5 text-center font-medium ${
               activeTab === 'feed' ? 'bg-[#eee9df] font-bold text-[#1c1f24]' : 'text-[#6b6456]'
             }`}
           >
             <BookOpen className="h-3.5 w-3.5" /> Bài đọc
           </button>
           <button
+            onClick={() => setActiveTab('semantic')}
+            className={`flex shrink-0 items-center justify-center gap-1 rounded px-2.5 py-1.5 text-center font-medium ${
+              activeTab === 'semantic' ? 'bg-[#eee9df] font-bold text-[#1c1f24]' : 'text-[#6b6456]'
+            }`}
+          >
+            <Search className="h-3.5 w-3.5 text-indigo-600" /> Search
+          </button>
+          <button
+            onClick={() => setActiveTab('personalized')}
+            className={`flex shrink-0 items-center justify-center gap-1 rounded px-2.5 py-1.5 text-center font-medium ${
+              activeTab === 'personalized' ? 'bg-[#eee9df] font-bold text-[#1c1f24]' : 'text-[#6b6456]'
+            }`}
+          >
+            <Compass className="h-3.5 w-3.5 text-rose-500" /> Gợi ý
+          </button>
+          <button
             onClick={() => setActiveTab('radar')}
-            className={`flex flex-1 items-center justify-center gap-1 rounded py-1.5 text-center font-medium ${
+            className={`flex shrink-0 items-center justify-center gap-1 rounded px-2.5 py-1.5 text-center font-medium ${
               activeTab === 'radar' ? 'bg-[#eee9df] font-bold text-[#1c1f24]' : 'text-[#6b6456]'
             }`}
           >
-            <Sparkles className="h-3.5 w-3.5 text-amber-600" /> Radar ({allTechStacks.length})
+            <Sparkles className="h-3.5 w-3.5 text-amber-600" /> Radar
           </button>
           <button
             onClick={() => setActiveTab('sources')}
-            className={`flex flex-1 items-center justify-center gap-1 rounded py-1.5 text-center font-medium ${
+            className={`flex shrink-0 items-center justify-center gap-1 rounded px-2.5 py-1.5 text-center font-medium ${
               activeTab === 'sources' ? 'bg-[#eee9df] font-bold text-[#1c1f24]' : 'text-[#6b6456]'
             }`}
           >
-            <Layers className="h-3.5 w-3.5" /> Nguồn ({sources.length})
+            <Layers className="h-3.5 w-3.5" /> Nguồn
+          </button>
+          <button
+            onClick={() => setActiveTab('admin')}
+            className={`flex shrink-0 items-center justify-center gap-1 rounded px-2.5 py-1.5 text-center font-medium ${
+              activeTab === 'admin' ? 'bg-slate-900 font-bold text-white' : 'text-[#6b6456]'
+            }`}
+          >
+            <Activity className="h-3.5 w-3.5 text-emerald-500" /> Admin
           </button>
         </div>
       </header>
@@ -583,8 +664,8 @@ export default function App() {
           </div>
         )}
 
-        {/* ================= VIEW 1: BÀI ĐỌC (FEED) ================= */}
-        {activeTab === 'feed' && (
+        {/* ================= VIEW 1: BÀI ĐỌC (FEED & PERSONALIZED) ================= */}
+        {(activeTab === 'feed' || activeTab === 'personalized') && (
           <div>
             {/* Filter & Sort Bar */}
             <div className="mb-5 space-y-2.5 border-b border-[#e7e2d9] pb-3.5 font-sans">
@@ -898,6 +979,31 @@ export default function App() {
                                   Điểm: {art.relevance_score.toFixed(1)}/10
                                 </span>
                               )}
+
+                              {/* Quick Feedback Actions */}
+                              <button
+                                onClick={(e) => handleFeedback(e, art.id, 'like')}
+                                className={`cursor-pointer rounded-md p-1.5 transition ${
+                                  feedbackMap[art.id] === 'like'
+                                    ? 'bg-emerald-100 text-emerald-800'
+                                    : 'text-[#8c8475] hover:bg-emerald-50 hover:text-emerald-700'
+                                }`}
+                                title="Đánh giá bài viết hay / hữu ích"
+                              >
+                                <ThumbsUp className="h-3.5 w-3.5" />
+                              </button>
+
+                              <button
+                                onClick={(e) => handleFeedback(e, art.id, 'dislike')}
+                                className={`cursor-pointer rounded-md p-1.5 transition ${
+                                  feedbackMap[art.id] === 'dislike'
+                                    ? 'bg-rose-100 text-rose-800'
+                                    : 'text-[#8c8475] hover:bg-rose-50 hover:text-rose-700'
+                                }`}
+                                title="Bài viết không liên quan / chất lượng thấp"
+                              >
+                                <ThumbsDown className="h-3.5 w-3.5" />
+                              </button>
 
                               {/* Quick action: Bookmark */}
                               <button
@@ -1265,6 +1371,16 @@ export default function App() {
               </table>
             </div>
           </div>
+        )}
+
+        {/* ================= VIEW 4: SEMANTIC SEARCH ================= */}
+        {activeTab === 'semantic' && (
+          <SemanticSearchBar onSelectArticle={(art) => setSelectedArticle(art)} />
+        )}
+
+        {/* ================= VIEW 5: ADMIN OBSERVABILITY DASHBOARD ================= */}
+        {activeTab === 'admin' && (
+          <AdminDashboard onRefreshFeed={fetchArticles} />
         )}
       </main>
 

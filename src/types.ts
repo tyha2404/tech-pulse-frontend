@@ -65,6 +65,8 @@ export interface Article {
   cluster_id?: string;
   is_canonical?: boolean;
   cluster_topic_key?: string;
+  similarity_score?: number;
+  user_feedback?: string;
   related_articles?: RelatedSourceArticle[];
   created_at: string;
 }
@@ -126,4 +128,52 @@ export interface CrawlTestResult {
   items_count: number;
   sample_titles: string[];
   error?: string;
+}
+
+export interface CrawlRun {
+  id: number;
+  source_id: number;
+  started_at: string;
+  finished_at?: string;
+  duration_ms: number;
+  http_status?: number;
+  articles_found: number;
+  articles_new: number;
+  status: string;
+  error_message?: string;
+  created_at: string;
+}
+
+export interface SourceHealthMetric {
+  id: number;
+  name: string;
+  url: string;
+  source_type: string;
+  status: string;
+  articles_count: number;
+  last_crawled_at?: string;
+  last_error?: string;
+  success_rate: number;
+}
+
+export interface AdminMetrics {
+  total_articles: number;
+  analyzed_articles: number;
+  high_score_articles: number;
+  total_sources: number;
+  active_sources: number;
+  healthy_sources: number;
+  error_sources: number;
+  recent_runs: CrawlRun[];
+  source_health: SourceHealthMetric[];
+  ai_model_distribution: Record<string, number>;
+  circuit_breakers_status: Record<string, string>;
+}
+
+export interface UserPreference {
+  user_id: string;
+  topic_weights: Record<string, number>;
+  preferred_sources: number[];
+  created_at?: string;
+  updated_at?: string;
 }
