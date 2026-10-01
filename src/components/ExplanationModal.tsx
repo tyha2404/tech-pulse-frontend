@@ -12,11 +12,12 @@ export const ExplanationModal: React.FC<ExplanationModalProps> = ({ isOpen, onCl
   return (
     <div
       onClick={onClose}
-      className="fixed inset-0 z-50 flex cursor-pointer items-center justify-center bg-black/40 p-4 font-sans backdrop-blur-xs"
+      className="fixed inset-0 z-50 flex cursor-pointer items-end justify-center bg-black/40 p-0 font-sans backdrop-blur-xs sm:items-center sm:p-4"
     >
       <div
         onClick={(e) => e.stopPropagation()}
-        className="animate-in fade-in w-full max-w-lg cursor-default rounded-2xl border border-[#e7e2d9] bg-white p-6 shadow-xl"
+        style={{ paddingBottom: 'max(env(safe-area-inset-bottom, 0px), 1.25rem)' }}
+        className="animate-in fade-in slide-in-from-bottom-2 sm:slide-in-from-bottom-0 w-full max-w-lg cursor-default rounded-t-2xl border-0 border-[#e7e2d9] bg-white p-5 shadow-xl sm:rounded-2xl sm:border sm:p-6"
       >
         <div className="mb-4 flex items-center justify-between border-b border-[#e7e2d9] pb-3">
           <h3 className="flex items-center gap-2 font-serif text-base font-bold text-[#1c1f24]">
@@ -24,7 +25,8 @@ export const ExplanationModal: React.FC<ExplanationModalProps> = ({ isOpen, onCl
           </h3>
           <button
             onClick={onClose}
-            className="cursor-pointer rounded-lg p-1 text-[#756e60] transition hover:bg-[#f4efe6] hover:text-[#1c1f24]"
+            className="flex min-h-[44px] min-w-[44px] cursor-pointer items-center justify-center rounded-lg text-[#756e60] transition hover:bg-[#f4efe6] hover:text-[#1c1f24]"
+            aria-label="Đóng dialog"
           >
             <X className="h-5 w-5" />
           </button>
@@ -73,7 +75,7 @@ export const ExplanationModal: React.FC<ExplanationModalProps> = ({ isOpen, onCl
         <div className="flex justify-end border-t border-[#e7e2d9] pt-4">
           <button
             onClick={onClose}
-            className="cursor-pointer rounded-lg bg-[#2c313a] px-4 py-2 text-xs font-semibold text-white hover:bg-[#1a1d23]"
+            className="flex min-h-[44px] cursor-pointer items-center justify-center rounded-xl bg-[#2c313a] px-5 py-2 text-xs font-semibold text-white transition hover:bg-[#1a1d23]"
           >
             Đã hiểu
           </button>

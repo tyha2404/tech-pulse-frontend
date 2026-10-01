@@ -184,8 +184,8 @@ export const ArticleChatCopilot: React.FC<ArticleChatCopilotProps> = ({ articleI
         </div>
       )}
 
-      {/* Input Area */}
-      <div className="border-t border-[#e7e2d9] bg-white p-2.5">
+      {/* Input Area with Safe Area Bottom */}
+      <div className="border-t border-[#e7e2d9] bg-white p-2.5 pb-[max(env(safe-area-inset-bottom,0px),0.75rem)]">
         <form
           onSubmit={(e) => {
             e.preventDefault();
@@ -198,15 +198,16 @@ export const ArticleChatCopilot: React.FC<ArticleChatCopilotProps> = ({ articleI
             value={input}
             onChange={(e) => setInput(e.target.value)}
             placeholder="Hỏi về kiến trúc, trade-offs hoặc yêu cầu code NestJS..."
-            className="flex-1 rounded-lg border border-[#dcd5c7] bg-[#fcfbf9] px-3 py-2 text-xs text-[#1c1f24] focus:border-indigo-500 focus:bg-white focus:outline-none"
+            className="h-11 flex-1 rounded-xl border border-[#dcd5c7] bg-[#fcfbf9] px-3.5 py-2 text-[16px] text-[#1c1f24] focus:border-indigo-500 focus:bg-white focus:outline-none sm:h-9 sm:text-xs"
             disabled={loading}
           />
           <button
             type="submit"
             disabled={loading || !input.trim()}
-            className="flex cursor-pointer items-center justify-center rounded-lg bg-indigo-900 px-3.5 py-2 text-xs font-medium text-white transition hover:bg-indigo-950 disabled:opacity-40"
+            className="flex min-h-[44px] min-w-[44px] cursor-pointer items-center justify-center rounded-xl bg-indigo-900 px-3.5 py-2 text-xs font-medium text-white transition hover:bg-indigo-950 disabled:opacity-40 sm:min-h-9 sm:min-w-0"
+            aria-label="Gửi tin nhắn"
           >
-            <Send className="h-3.5 w-3.5" />
+            <Send className="h-4 w-4" />
           </button>
         </form>
       </div>

@@ -423,7 +423,7 @@ export default function App() {
   );
 
   return (
-    <div className="min-h-screen bg-[#fbf9f5] font-serif text-[#2c313a] selection:bg-amber-100 selection:text-amber-900">
+    <div className="min-h-screen w-full max-w-full overflow-x-hidden bg-[#fbf9f5] font-serif text-[#2c313a] selection:bg-amber-100 selection:text-amber-900">
       {/* Sub-component: Modular Feed Header */}
       <FeedHeader
         activeTab={activeTab}
@@ -436,12 +436,12 @@ export default function App() {
         pullDistance={pullDistance}
       />
 
-      {/* Main Container */}
+      {/* Main Container with Safe Area Bottom */}
       <main
         onTouchStart={handleTouchStart}
         onTouchMove={handleTouchMove}
         onTouchEnd={handleTouchEnd}
-        className="mx-auto max-w-5xl px-3 py-4 sm:px-6 sm:py-8"
+        className="mx-auto w-full max-w-5xl px-3 py-4 pb-[max(env(safe-area-inset-bottom,0px),2rem)] sm:px-6 sm:py-8"
       >
         {/* ================= VIEW 1: BÀI ĐỌC (FEED & PERSONALIZED) ================= */}
         {(activeTab === 'feed' || activeTab === 'personalized') && (

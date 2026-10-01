@@ -48,10 +48,10 @@ export const FilterToolbar: React.FC<FilterToolbarProps> = ({
   setGroupDuplicates,
 }) => {
   return (
-    <div className="mb-5 space-y-2.5 border-b border-[#e7e2d9] pb-3.5 font-sans">
-      {/* Row 1: Categories scrollable full-bleed & Search full-width on mobile */}
+    <div className="mb-5 space-y-3 border-b border-[#e7e2d9] pb-4 font-sans">
+      {/* Row 1: Categories scrollable full-bleed & Search (Touch target >= 40px) */}
       <div className="flex flex-col items-stretch gap-2.5 sm:flex-row sm:items-center sm:justify-between">
-        <div className="no-scrollbar -mx-3 flex items-center gap-1.5 overflow-x-auto px-3 pb-0.5 sm:mx-0 sm:px-0">
+        <div className="no-scrollbar -mx-3 flex items-center gap-2 overflow-x-auto px-3 pb-1 sm:mx-0 sm:px-0">
           {[
             { id: 'all', label: 'Tất cả' },
             { id: 'AI', label: 'Trí tuệ nhân tạo (AI)' },
@@ -62,7 +62,7 @@ export const FilterToolbar: React.FC<FilterToolbarProps> = ({
             <button
               key={tab.id}
               onClick={() => setSelectedCategory(tab.id)}
-              className={`cursor-pointer rounded-full px-3 py-1 text-xs font-medium whitespace-nowrap transition ${
+              className={`flex min-h-[40px] shrink-0 cursor-pointer items-center rounded-full px-3.5 py-1.5 text-xs font-medium whitespace-nowrap transition ${
                 selectedCategory === tab.id
                   ? 'bg-[#2c313a] text-white shadow-xs'
                   : 'bg-[#eee9df] text-[#554e42] hover:bg-[#e4ded2]'
@@ -74,7 +74,7 @@ export const FilterToolbar: React.FC<FilterToolbarProps> = ({
 
           <button
             onClick={() => setTopOnly(!topOnly)}
-            className={`flex cursor-pointer items-center gap-1.5 rounded-full border px-3 py-1 text-xs whitespace-nowrap transition ${
+            className={`flex min-h-[40px] shrink-0 cursor-pointer items-center gap-1.5 rounded-full border px-3.5 py-1.5 text-xs whitespace-nowrap transition ${
               topOnly
                 ? 'border-amber-300 bg-amber-100 font-semibold text-amber-900 shadow-xs'
                 : 'border-[#dcd5c7] bg-transparent text-[#6b6456] hover:bg-[#eee9df]'
@@ -85,29 +85,29 @@ export const FilterToolbar: React.FC<FilterToolbarProps> = ({
           </button>
         </div>
 
-        {/* Search Box - Full width on mobile, fixed width on tablet/desktop */}
-        <div className="relative w-full sm:w-60 sm:shrink-0">
-          <Search className="absolute top-2.5 left-3 h-3.5 w-3.5 text-[#8c8475]" />
+        {/* Search Box - 44px height, text-[16px] on mobile to prevent iOS Safari auto-zoom */}
+        <div className="relative w-full sm:w-64 sm:shrink-0">
+          <Search className="absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-[#8c8475]" />
           <input
             type="text"
             placeholder="Tìm chủ đề, công nghệ..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             onKeyDown={(e) => e.key === 'Enter' && onSearchSubmit()}
-            className="w-full rounded-full border border-[#dcd5c7] bg-white py-1.5 pr-4 pl-8.5 text-xs text-[#2c313a] placeholder-[#9c9485] focus:border-[#7c7465] focus:outline-none"
+            className="h-11 w-full rounded-full border border-[#dcd5c7] bg-white pr-4 pl-9 text-[16px] text-[#2c313a] placeholder-[#9c9485] focus:border-[#7c7465] focus:outline-none sm:h-9 sm:text-xs"
           />
         </div>
       </div>
 
-      {/* Row 2: Read Status Segmented Control (Full width on mobile) */}
-      <div className="flex w-full items-center rounded-lg border border-[#e2dcd0] bg-[#eee9df]/80 p-0.5 text-xs">
+      {/* Row 2: Read Status Segmented Control (Min touch height 42px on mobile) */}
+      <div className="flex w-full items-center rounded-xl border border-[#e2dcd0] bg-[#eee9df]/80 p-1 text-xs">
         <button
           onClick={() => {
             setViewHidden(false);
             setBookmarkedOnly(false);
             setReadStatus('all');
           }}
-          className={`flex-1 cursor-pointer rounded py-1.5 text-center transition ${
+          className={`flex min-h-[42px] flex-1 cursor-pointer items-center justify-center rounded-lg py-1.5 text-center transition ${
             !viewHidden && !bookmarkedOnly && readStatus === 'all'
               ? 'bg-white font-semibold text-[#1c1f24] shadow-xs'
               : 'text-[#6b6456] hover:text-[#1c1f24]'
@@ -121,7 +121,7 @@ export const FilterToolbar: React.FC<FilterToolbarProps> = ({
             setBookmarkedOnly(false);
             setReadStatus('unread');
           }}
-          className={`flex-1 cursor-pointer rounded py-1.5 text-center transition ${
+          className={`flex min-h-[42px] flex-1 cursor-pointer items-center justify-center rounded-lg py-1.5 text-center transition ${
             !viewHidden && !bookmarkedOnly && readStatus === 'unread'
               ? 'bg-white font-semibold text-[#1c1f24] shadow-xs'
               : 'text-[#6b6456] hover:text-[#1c1f24]'
@@ -135,7 +135,7 @@ export const FilterToolbar: React.FC<FilterToolbarProps> = ({
             setBookmarkedOnly(false);
             setReadStatus('read');
           }}
-          className={`flex-1 cursor-pointer rounded py-1.5 text-center transition ${
+          className={`flex min-h-[42px] flex-1 cursor-pointer items-center justify-center rounded-lg py-1.5 text-center transition ${
             !viewHidden && !bookmarkedOnly && readStatus === 'read'
               ? 'bg-white font-semibold text-[#1c1f24] shadow-xs'
               : 'text-[#6b6456] hover:text-[#1c1f24]'
@@ -148,29 +148,29 @@ export const FilterToolbar: React.FC<FilterToolbarProps> = ({
             setViewHidden(false);
             setBookmarkedOnly(true);
           }}
-          className={`flex flex-1 cursor-pointer items-center justify-center gap-1 rounded py-1.5 text-center transition ${
+          className={`flex min-h-[42px] flex-1 cursor-pointer items-center justify-center gap-1 rounded-lg py-1.5 text-center transition ${
             !viewHidden && bookmarkedOnly
               ? 'bg-amber-100 font-semibold text-amber-900 shadow-xs'
               : 'text-[#6b6456] hover:text-[#1c1f24]'
           }`}
         >
           <Bookmark
-            className="h-3 w-3 text-amber-700"
+            className="h-3.5 w-3.5 text-amber-700"
             fill={bookmarkedOnly ? 'currentColor' : 'none'}
           />
           <span>Đã lưu</span>
         </button>
       </div>
 
-      {/* Row 3: Secondary Filters Grid (Fit 100% width on mobile) */}
+      {/* Row 3: Secondary Filters Grid (Touch targets 44px on mobile) */}
       <div className="grid grid-cols-2 gap-2 text-xs sm:flex sm:flex-wrap sm:items-center sm:justify-between sm:gap-3 sm:pt-0.5">
         {/* Source Selector Dropdown */}
-        <div className="col-span-1 flex items-center rounded-lg border border-[#ded7ca] bg-white px-2 py-1 text-[#6b6456]">
-          <Layers className="mr-1.5 h-3.5 w-3.5 shrink-0 text-[#8c8475]" />
+        <div className="col-span-1 flex min-h-[44px] items-center rounded-xl border border-[#ded7ca] bg-white px-2.5 py-1 text-[#6b6456] sm:min-h-9">
+          <Layers className="mr-1.5 h-4 w-4 shrink-0 text-[#8c8475]" />
           <select
             value={selectedSourceId || ''}
             onChange={(e) => setSelectedSourceId(e.target.value ? Number(e.target.value) : null)}
-            className="w-full cursor-pointer bg-transparent text-xs font-medium text-[#2c313a] focus:outline-none"
+            className="w-full cursor-pointer bg-transparent text-[16px] font-medium text-[#2c313a] focus:outline-none sm:text-xs"
           >
             <option value="">Tất cả nguồn ({sources.length})</option>
             {sources.map((s) => (
@@ -182,12 +182,12 @@ export const FilterToolbar: React.FC<FilterToolbarProps> = ({
         </div>
 
         {/* Sort Selector */}
-        <div className="col-span-1 flex items-center rounded-lg border border-[#ded7ca] bg-white px-2 py-1 text-[#6b6456]">
-          <ArrowUpDown className="mr-1.5 h-3.5 w-3.5 shrink-0 text-[#8c8475]" />
+        <div className="col-span-1 flex min-h-[44px] items-center rounded-xl border border-[#ded7ca] bg-white px-2.5 py-1 text-[#6b6456] sm:min-h-9">
+          <ArrowUpDown className="mr-1.5 h-4 w-4 shrink-0 text-[#8c8475]" />
           <select
             value={sortBy}
             onChange={(e: any) => setSortBy(e.target.value)}
-            className="w-full cursor-pointer bg-transparent text-xs font-medium text-[#2c313a] focus:outline-none"
+            className="w-full cursor-pointer bg-transparent text-[16px] font-medium text-[#2c313a] focus:outline-none sm:text-xs"
           >
             <option value="newest">Mới nhất</option>
             <option value="oldest">Cũ nhất</option>
@@ -198,7 +198,7 @@ export const FilterToolbar: React.FC<FilterToolbarProps> = ({
         {/* Group Duplicates Toggle */}
         <button
           onClick={() => setGroupDuplicates(!groupDuplicates)}
-          className={`col-span-1 flex cursor-pointer items-center justify-center gap-1.5 rounded-lg border px-2.5 py-1.5 text-center transition sm:py-1 ${
+          className={`col-span-1 flex min-h-[44px] cursor-pointer items-center justify-center gap-1.5 rounded-xl border px-3 py-2 text-center transition sm:min-h-9 sm:py-1 ${
             groupDuplicates
               ? 'border-indigo-200 bg-indigo-50/80 font-medium text-indigo-900 shadow-xs'
               : 'border-[#ded7ca] bg-white text-[#6b6456] hover:bg-[#eee9df]'
@@ -209,14 +209,14 @@ export const FilterToolbar: React.FC<FilterToolbarProps> = ({
               : 'Đang hiển thị dạng phẳng (không gộp tin trùng)'
           }
         >
-          <Layers className="h-3.5 w-3.5 shrink-0 text-indigo-600" />
+          <Layers className="h-4 w-4 shrink-0 text-indigo-600" />
           <span className="truncate">{groupDuplicates ? 'Gộp tin trùng' : 'Hiện tất cả'}</span>
         </button>
 
         {/* View Hidden Toggle */}
         <button
           onClick={() => setViewHidden(!viewHidden)}
-          className={`col-span-1 flex cursor-pointer items-center justify-center gap-1.5 rounded-lg border px-2.5 py-1.5 text-center transition sm:py-1 ${
+          className={`col-span-1 flex min-h-[44px] cursor-pointer items-center justify-center gap-1.5 rounded-xl border px-3 py-2 text-center transition sm:min-h-9 sm:py-1 ${
             viewHidden
               ? 'border-rose-300 bg-rose-50 font-semibold text-rose-800 shadow-xs'
               : 'border-[#ded7ca] bg-white text-[#6b6456] hover:bg-[#eee9df]'
@@ -225,12 +225,12 @@ export const FilterToolbar: React.FC<FilterToolbarProps> = ({
         >
           {viewHidden ? (
             <>
-              <Eye className="h-3.5 w-3.5 shrink-0 text-rose-700" />
+              <Eye className="h-4 w-4 shrink-0 text-rose-700" />
               <span className="truncate">Xem bài ẩn</span>
             </>
           ) : (
             <>
-              <EyeOff className="h-3.5 w-3.5 shrink-0 text-[#8c8475]" />
+              <EyeOff className="h-4 w-4 shrink-0 text-[#8c8475]" />
               <span className="truncate">Bài đã ẩn</span>
             </>
           )}
@@ -241,14 +241,14 @@ export const FilterToolbar: React.FC<FilterToolbarProps> = ({
       {selectedSourceId && (
         <div className="flex items-center gap-2 pt-1 font-sans">
           <span className="text-xs text-[#756e60]">Đang lọc theo:</span>
-          <span className="inline-flex items-center gap-1.5 rounded-full border border-indigo-200 bg-indigo-50 px-3 py-0.5 text-xs font-semibold text-indigo-900 shadow-xs">
+          <span className="inline-flex items-center gap-1.5 rounded-full border border-indigo-200 bg-indigo-50 px-3 py-1 text-xs font-semibold text-indigo-900 shadow-xs">
             {sources.find((s) => s.id === selectedSourceId)?.name || 'Nguồn tin'}
             <button
               onClick={() => setSelectedSourceId(null)}
-              className="cursor-pointer rounded-full p-0.5 hover:bg-indigo-200 hover:text-indigo-950"
+              className="flex min-h-[30px] min-w-[30px] cursor-pointer items-center justify-center rounded-full hover:bg-indigo-200 hover:text-indigo-950"
               title="Bỏ lọc theo nguồn này"
             >
-              <X className="h-3 w-3" />
+              <X className="h-3.5 w-3.5" />
             </button>
           </span>
         </div>

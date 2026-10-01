@@ -2,13 +2,23 @@
 
 :root {
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Charter', 'Georgia', serif;
+  --sat: env(safe-area-inset-top, 0px);
+  --sab: env(safe-area-inset-bottom, 0px);
+  --sal: env(safe-area-inset-left, 0px);
+  --sar: env(safe-area-inset-right, 0px);
 }
 
+html,
 body {
   margin: 0;
   min-height: 100vh;
+  min-height: -webkit-fill-available;
+  min-height: 100dvh;
   background-color: #fcfbf9; /* Tone giấy ấm dịu mắt cho người đọc sách */
   color: #1f2937;
+  overflow-x: hidden;
+  max-width: 100vw;
+  -webkit-text-size-adjust: 100%;
 }
 
 /* Custom editorial typography styling */
@@ -16,7 +26,7 @@ body {
   font-family: 'Charter', 'Georgia', 'Cambria', serif;
 }
 
-/* PWA Safe Area utility padding & margins with solid minimum baseline */
+/* PWA & iPhone Safe Area utility padding & margins */
 .safe-pt {
   padding-top: max(env(safe-area-inset-top, 0px), 0px);
 }
@@ -28,6 +38,15 @@ body {
     padding-top: calc(max(env(safe-area-inset-top, 0px), 0px) + 0.875rem);
   }
 }
+
+.modal-safe-pt {
+  padding-top: max(env(safe-area-inset-top, 0px), 0.75rem);
+}
+
+.modal-safe-pb {
+  padding-bottom: max(env(safe-area-inset-bottom, 0px), 1rem);
+}
+
 .safe-pb {
   padding-bottom: max(env(safe-area-inset-bottom, 0px), 0px);
 }
@@ -36,6 +55,18 @@ body {
 }
 .safe-pr {
   padding-right: max(env(safe-area-inset-right, 0px), 0px);
+}
+
+/* iOS momentum scrolling & bounce containment */
+.ios-scroll {
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior-y: contain;
+}
+
+/* Mobile minimum touch target (44x44px per Apple HIG) */
+.touch-target-44 {
+  min-height: 44px;
+  min-width: 44px;
 }
 
 /* Hide scrollbar for clean horizontal swipe */

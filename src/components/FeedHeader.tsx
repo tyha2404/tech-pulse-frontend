@@ -34,7 +34,7 @@ export const FeedHeader: React.FC<FeedHeaderProps> = ({
 }) => {
   return (
     <>
-      <header className="header-safe-pt sticky top-0 z-30 border-b border-[#e7e2d9] bg-[#fbf9f5]/95 px-3.5 pb-3 sm:px-6 sm:pb-3.5">
+      <header className="header-safe-pt sticky top-0 z-30 border-b border-[#e7e2d9] bg-[#fbf9f5]/95 px-3.5 pb-2.5 backdrop-blur-md sm:px-6 sm:pb-3.5">
         <div className="mx-auto flex max-w-5xl items-center justify-between gap-2">
           {/* Logo & Brand */}
           <div className="flex min-w-0 items-center gap-2 sm:gap-3">
@@ -114,19 +114,20 @@ export const FeedHeader: React.FC<FeedHeaderProps> = ({
             </button>
           </div>
 
-          {/* Top Actions */}
+          {/* Top Actions with Minimum Touch Target (44x44px on mobile) */}
           <div className="flex shrink-0 items-center gap-1.5 font-sans sm:gap-2">
             <button
               onClick={onOpenExplanation}
-              className="cursor-pointer rounded-lg border border-[#e2dcd0] p-1.5 text-[#756e60] transition hover:bg-[#eee9df] hover:text-[#1c1f24] sm:p-2"
+              className="flex min-h-[44px] min-w-[44px] cursor-pointer items-center justify-center rounded-lg border border-[#e2dcd0] text-[#756e60] transition hover:bg-[#eee9df] hover:text-[#1c1f24]"
               title="Tìm hiểu về Điểm AI & Radar Tech Stack"
+              aria-label="Về Điểm AI & Radar"
             >
               <HelpCircle className="h-4 w-4" />
             </button>
             <button
               onClick={onCrawlAll}
               disabled={crawlingAll}
-              className="flex cursor-pointer items-center gap-1 rounded-lg bg-[#2c313a] px-2.5 py-1.5 text-xs font-medium text-white shadow-xs transition hover:bg-[#1a1d23] disabled:opacity-50 sm:gap-1.5 sm:px-3.5"
+              className="flex min-h-[44px] cursor-pointer items-center gap-1.5 rounded-lg bg-[#2c313a] px-3 py-2 text-xs font-medium text-white shadow-xs transition hover:bg-[#1a1d23] disabled:opacity-50 sm:px-3.5"
             >
               <RefreshCw className={`h-3.5 w-3.5 ${crawlingAll ? 'animate-spin' : ''}`} />
               <span className="hidden sm:inline">
@@ -137,59 +138,78 @@ export const FeedHeader: React.FC<FeedHeaderProps> = ({
           </div>
         </div>
 
-        {/* Mobile Navigation Tabs */}
-        <div className="no-scrollbar mt-2.5 flex items-center justify-around gap-1 overflow-x-auto border-t border-[#e7e2d9]/60 pt-2 font-sans text-[11px] md:hidden">
+        {/* Mobile Navigation Tabs - Optimized for iPhone 15 Pro (393px width, min touch target 44px) */}
+        <nav
+          aria-label="Điều hướng chính"
+          className="no-scrollbar mt-2 flex items-center justify-between gap-1 overflow-x-auto border-t border-[#e7e2d9]/70 pt-1.5 font-sans text-[11px] md:hidden"
+        >
           <button
             onClick={() => setActiveTab('feed')}
-            className={`flex shrink-0 items-center justify-center gap-1 rounded px-2.5 py-1.5 text-center font-medium ${
-              activeTab === 'feed' ? 'bg-[#eee9df] font-bold text-[#1c1f24]' : 'text-[#6b6456]'
+            className={`flex min-h-[44px] flex-1 shrink-0 cursor-pointer items-center justify-center gap-1 rounded-lg px-2 py-2 text-center font-medium transition ${
+              activeTab === 'feed'
+                ? 'bg-[#eee9df] font-bold text-[#1c1f24] shadow-2xs'
+                : 'text-[#6b6456] hover:bg-[#f4efe6]'
             }`}
           >
-            <BookOpen className="h-3.5 w-3.5" /> Bài đọc
+            <BookOpen className="h-3.5 w-3.5 shrink-0" />
+            <span>Bài đọc</span>
           </button>
           <button
             onClick={() => setActiveTab('semantic')}
-            className={`flex shrink-0 items-center justify-center gap-1 rounded px-2.5 py-1.5 text-center font-medium ${
-              activeTab === 'semantic' ? 'bg-[#eee9df] font-bold text-[#1c1f24]' : 'text-[#6b6456]'
+            className={`flex min-h-[44px] flex-1 shrink-0 cursor-pointer items-center justify-center gap-1 rounded-lg px-2 py-2 text-center font-medium transition ${
+              activeTab === 'semantic'
+                ? 'bg-[#eee9df] font-bold text-[#1c1f24] shadow-2xs'
+                : 'text-[#6b6456] hover:bg-[#f4efe6]'
             }`}
           >
-            <Search className="h-3.5 w-3.5 text-indigo-600" /> Search
+            <Search className="h-3.5 w-3.5 shrink-0 text-indigo-600" />
+            <span>Search</span>
           </button>
           <button
             onClick={() => setActiveTab('personalized')}
-            className={`flex shrink-0 items-center justify-center gap-1 rounded px-2.5 py-1.5 text-center font-medium ${
+            className={`flex min-h-[44px] flex-1 shrink-0 cursor-pointer items-center justify-center gap-1 rounded-lg px-2 py-2 text-center font-medium transition ${
               activeTab === 'personalized'
-                ? 'bg-[#eee9df] font-bold text-[#1c1f24]'
-                : 'text-[#6b6456]'
+                ? 'bg-[#eee9df] font-bold text-[#1c1f24] shadow-2xs'
+                : 'text-[#6b6456] hover:bg-[#f4efe6]'
             }`}
           >
-            <Compass className="h-3.5 w-3.5 text-rose-500" /> Gợi ý
+            <Compass className="h-3.5 w-3.5 shrink-0 text-rose-500" />
+            <span>Gợi ý</span>
           </button>
           <button
             onClick={() => setActiveTab('radar')}
-            className={`flex shrink-0 items-center justify-center gap-1 rounded px-2.5 py-1.5 text-center font-medium ${
-              activeTab === 'radar' ? 'bg-[#eee9df] font-bold text-[#1c1f24]' : 'text-[#6b6456]'
+            className={`flex min-h-[44px] flex-1 shrink-0 cursor-pointer items-center justify-center gap-1 rounded-lg px-2 py-2 text-center font-medium transition ${
+              activeTab === 'radar'
+                ? 'bg-[#eee9df] font-bold text-[#1c1f24] shadow-2xs'
+                : 'text-[#6b6456] hover:bg-[#f4efe6]'
             }`}
           >
-            <Sparkles className="h-3.5 w-3.5 text-amber-600" /> Radar
+            <Sparkles className="h-3.5 w-3.5 shrink-0 text-amber-600" />
+            <span>Radar</span>
           </button>
           <button
             onClick={() => setActiveTab('sources')}
-            className={`flex shrink-0 items-center justify-center gap-1 rounded px-2.5 py-1.5 text-center font-medium ${
-              activeTab === 'sources' ? 'bg-[#eee9df] font-bold text-[#1c1f24]' : 'text-[#6b6456]'
+            className={`flex min-h-[44px] flex-1 shrink-0 cursor-pointer items-center justify-center gap-1 rounded-lg px-2 py-2 text-center font-medium transition ${
+              activeTab === 'sources'
+                ? 'bg-[#eee9df] font-bold text-[#1c1f24] shadow-2xs'
+                : 'text-[#6b6456] hover:bg-[#f4efe6]'
             }`}
           >
-            <Layers className="h-3.5 w-3.5" /> Nguồn
+            <Layers className="h-3.5 w-3.5 shrink-0" />
+            <span>Nguồn</span>
           </button>
           <button
             onClick={() => setActiveTab('admin')}
-            className={`flex shrink-0 items-center justify-center gap-1 rounded px-2.5 py-1.5 text-center font-medium ${
-              activeTab === 'admin' ? 'bg-[#eee9df] font-bold text-[#1c1f24]' : 'text-[#6b6456]'
+            className={`flex min-h-[44px] flex-1 shrink-0 cursor-pointer items-center justify-center gap-1 rounded-lg px-2 py-2 text-center font-medium transition ${
+              activeTab === 'admin'
+                ? 'bg-[#eee9df] font-bold text-[#1c1f24] shadow-2xs'
+                : 'text-[#6b6456] hover:bg-[#f4efe6]'
             }`}
           >
-            <Activity className="h-3.5 w-3.5 text-emerald-600" /> Admin
+            <Activity className="h-3.5 w-3.5 shrink-0 text-emerald-600" />
+            <span>Admin</span>
           </button>
-        </div>
+        </nav>
       </header>
 
       {/* Pull-To-Refresh Indicator */}

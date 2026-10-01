@@ -89,14 +89,12 @@ export const ArticleModalTabs: React.FC<ArticleModalTabsProps> = ({
       try {
         mdText = await exportArticleMarkdown(article.id);
       } catch {
-        // Fallback to client-side Markdown generator
         mdText = generateArticleMarkdown(article);
       }
       const filename = `${article.vietnamese_title || article.title || 'article'}`;
       downloadMarkdownFile(filename, mdText);
     } catch (err) {
       console.error('Export markdown error:', err);
-      // Fallback
       const mdText = generateArticleMarkdown(article);
       downloadMarkdownFile(article.vietnamese_title || article.title, mdText);
     } finally {
@@ -147,68 +145,68 @@ export const ArticleModalTabs: React.FC<ArticleModalTabsProps> = ({
 
   return (
     <div className="flex flex-col">
-      {/* Modernized Streamlined Navigation Tabs */}
+      {/* Modernized Streamlined Navigation Tabs - Horizontal Swipe on Mobile */}
       <div className="no-scrollbar flex items-center justify-between border-b border-[#e7e2d9] bg-[#fbf9f5] px-2.5 py-2 font-sans text-xs sm:px-6">
-        <div className="flex items-center gap-1.5 overflow-x-auto">
+        <div className="no-scrollbar flex items-center gap-1.5 overflow-x-auto pb-0.5">
           <button
             onClick={() => setTab('briefing')}
-            className={`flex cursor-pointer items-center gap-1.5 rounded-lg px-2.5 py-1.5 font-medium whitespace-nowrap transition sm:px-3 ${
+            className={`flex min-h-[40px] shrink-0 cursor-pointer items-center gap-1.5 rounded-lg px-3 py-2 font-medium whitespace-nowrap transition ${
               tab === 'briefing'
                 ? 'bg-white font-semibold text-[#1c1f24] shadow-xs ring-1 ring-[#e7e2d9]'
                 : 'text-[#6b6456] hover:bg-[#eee8dc]/60 hover:text-[#1c1f24]'
             }`}
           >
             <Sparkles className="h-3.5 w-3.5 text-amber-600" />
-            Tổng quan & Kiến trúc
+            <span>Tổng quan & Kiến trúc</span>
           </button>
 
           <button
             onClick={() => setTab('chat')}
-            className={`flex cursor-pointer items-center gap-1.5 rounded-lg px-2.5 py-1.5 font-medium whitespace-nowrap transition sm:px-3 ${
+            className={`flex min-h-[40px] shrink-0 cursor-pointer items-center gap-1.5 rounded-lg px-3 py-2 font-medium whitespace-nowrap transition ${
               tab === 'chat'
                 ? 'bg-white font-semibold text-indigo-900 shadow-xs ring-1 ring-indigo-200'
                 : 'font-medium text-indigo-800 hover:bg-indigo-50/70 hover:text-indigo-950'
             }`}
           >
             <MessageSquare className="h-3.5 w-3.5 text-indigo-600" />
-            Chat Copilot
+            <span>Chat Copilot</span>
           </button>
 
           <button
             onClick={() => setTab('learning')}
-            className={`flex cursor-pointer items-center gap-1.5 rounded-lg px-2.5 py-1.5 font-medium whitespace-nowrap transition sm:px-3 ${
+            className={`flex min-h-[40px] shrink-0 cursor-pointer items-center gap-1.5 rounded-lg px-3 py-2 font-medium whitespace-nowrap transition ${
               tab === 'learning'
                 ? 'bg-white font-semibold text-[#1c1f24] shadow-xs ring-1 ring-[#e7e2d9]'
                 : 'text-[#6b6456] hover:bg-[#eee8dc]/60 hover:text-[#1c1f24]'
             }`}
           >
             <Compass className="h-3.5 w-3.5 text-purple-700" />
-            Lộ trình & Liên quan
+            <span>Lộ trình & Liên quan</span>
           </button>
         </div>
 
-        {/* Global Markdown / Obsidian Action Buttons */}
+        {/* Global Markdown / Obsidian Action Buttons on Desktop */}
         <div className="hidden items-center gap-2 sm:flex">
           <button
             onClick={handleCopyMarkdown}
-            className="flex cursor-pointer items-center gap-1 rounded-lg border border-[#e2dcd0] bg-white px-2.5 py-1 text-[11px] font-medium text-[#554e42] shadow-2xs transition hover:bg-[#eee9df] hover:text-[#1c1f24]"
+            className="flex min-h-[36px] cursor-pointer items-center gap-1 rounded-lg border border-[#e2dcd0] bg-white px-2.5 py-1 text-[11px] font-medium text-[#554e42] shadow-2xs transition hover:bg-[#eee9df] hover:text-[#1c1f24]"
             title="Sao chép toàn bộ bài dưới dạng Markdown (Frontmatter) cho Obsidian / Notion"
           >
             {copiedMarkdown ? (
-              <Check className="h-3 w-3 text-emerald-600" />
+              <Check className="h-3.5 w-3.5 text-emerald-600" />
             ) : (
-              <Copy className="h-3 w-3 text-[#756e60]" />
+              <Copy className="h-3.5 w-3.5 text-[#756e60]" />
             )}
             <span>{copiedMarkdown ? 'Đã sao chép MD' : 'Copy Markdown'}</span>
           </button>
           <button
             onClick={handleExportMarkdown}
             disabled={exportingMarkdown}
-            className="flex cursor-pointer items-center gap-1.5 rounded-lg border border-purple-200 bg-purple-50/80 px-2.5 py-1 text-[11px] font-medium text-purple-900 shadow-2xs transition hover:bg-purple-100 disabled:opacity-50"
+            className="flex min-h-[36px] cursor-pointer items-center gap-1.5 rounded-lg border border-purple-200 bg-purple-50/80 px-2.5 py-1 text-[11px] font-medium text-purple-900 shadow-2xs transition hover:bg-purple-100 disabled:opacity-50"
             title="Tải file .md chuẩn Obsidian kèm YAML Frontmatter"
           >
             <Download
-              className={`h-3 w-3 text-purple-700 ${exportingMarkdown ? 'animate-bounce' : ''}`}
+              className={`h-3.5 w-3.5 text-purple-700 ${exportingMarkdown ? 'animate-bounce' : ''}`}
             />
             <span>{exportingMarkdown ? 'Đang xuất...' : 'Xuất Obsidian .md'}</span>
           </button>
@@ -220,27 +218,27 @@ export const ArticleModalTabs: React.FC<ArticleModalTabsProps> = ({
         {/* ================= TAB 1: EXECUTIVE BRIEFING (TỔNG QUAN + TRADEOFFS + ON-DEMAND BLUEPRINT) ================= */}
         {tab === 'briefing' && (
           <div className="space-y-6">
-            {/* Top Toolbar for Mobile / Quick Action */}
-            <div className="flex flex-wrap items-center justify-between gap-2 rounded-xl border border-[#ede7dc] bg-[#fbf9f5] p-2 sm:hidden">
-              <div className="text-[11px] font-medium text-[#756e60]">Second Brain / PKM:</div>
+            {/* Top Toolbar for Mobile / Quick Action (Min touch target 40px) */}
+            <div className="flex flex-wrap items-center justify-between gap-2 rounded-xl border border-[#ede7dc] bg-[#fbf9f5] p-2.5 sm:hidden">
+              <div className="text-xs font-semibold text-[#756e60]">Second Brain / PKM:</div>
               <div className="flex items-center gap-1.5">
                 <button
                   onClick={handleCopyMarkdown}
-                  className="flex items-center gap-1 rounded bg-white px-2 py-1 text-[10px] font-medium text-[#554e42] shadow-2xs"
+                  className="flex min-h-[40px] cursor-pointer items-center gap-1.5 rounded-lg bg-white px-3 py-1.5 text-xs font-medium text-[#554e42] shadow-2xs transition hover:bg-[#eee9df]"
                 >
                   {copiedMarkdown ? (
-                    <Check className="h-3 w-3 text-emerald-600" />
+                    <Check className="h-3.5 w-3.5 text-emerald-600" />
                   ) : (
-                    <Copy className="h-3 w-3" />
+                    <Copy className="h-3.5 w-3.5" />
                   )}
                   <span>{copiedMarkdown ? 'Đã chép MD' : 'Copy MD'}</span>
                 </button>
                 <button
                   onClick={handleExportMarkdown}
                   disabled={exportingMarkdown}
-                  className="flex items-center gap-1 rounded bg-purple-100 px-2 py-1 text-[10px] font-medium text-purple-900"
+                  className="flex min-h-[40px] cursor-pointer items-center gap-1.5 rounded-lg bg-purple-100 px-3 py-1.5 text-xs font-semibold text-purple-900 transition hover:bg-purple-200"
                 >
-                  <Download className="h-3 w-3" />
+                  <Download className="h-3.5 w-3.5" />
                   <span>Tải .md</span>
                 </button>
               </div>
@@ -248,35 +246,36 @@ export const ArticleModalTabs: React.FC<ArticleModalTabsProps> = ({
 
             {/* Section 1: Executive Summary */}
             <div>
-              <div className="mb-2 flex items-center justify-between">
+              <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
                 <h3 className="flex items-center gap-1.5 font-sans text-xs font-bold tracking-wider text-[#756e60] uppercase">
-                  <Sparkles className="h-3.5 w-3.5 text-amber-600" /> Tóm tắt cốt lõi cho kỹ sư:
+                  <Sparkles className="h-3.5 w-3.5 shrink-0 text-amber-600" /> Tóm tắt cốt lõi cho
+                  kỹ sư:
                 </h3>
                 <div className="flex items-center gap-2">
                   <button
                     onClick={() => onSummarize(article.id)}
                     disabled={summarizing}
-                    className="flex cursor-pointer items-center gap-1 rounded border border-indigo-200 bg-indigo-50 px-2.5 py-0.5 font-sans text-[11px] font-medium text-indigo-900 transition hover:bg-indigo-100 disabled:opacity-50"
+                    className="flex min-h-[36px] cursor-pointer items-center gap-1 rounded-lg border border-indigo-200 bg-indigo-50 px-2.5 py-1 font-sans text-xs font-medium text-indigo-900 transition hover:bg-indigo-100 disabled:opacity-50"
                   >
                     <Sparkles
-                      className={`h-3 w-3 text-indigo-600 ${summarizing ? 'animate-spin' : ''}`}
+                      className={`h-3.5 w-3.5 text-indigo-600 ${summarizing ? 'animate-spin' : ''}`}
                     />
-                    {summarizing ? 'Đang phân tích sâu...' : 'Phân tích lại bằng AI'}
+                    <span>{summarizing ? 'Đang phân tích...' : 'Phân tích lại'}</span>
                   </button>
                   <button
                     onClick={() => handleCopy(article.vietnamese_summary || '', 'summary')}
-                    className="flex cursor-pointer items-center gap-1 rounded bg-[#eee9df] px-2 py-0.5 font-sans text-[11px] text-[#6b6456] transition hover:bg-[#e4ded2] hover:text-[#1c1f24]"
+                    className="flex min-h-[36px] cursor-pointer items-center gap-1 rounded-lg bg-[#eee9df] px-2.5 py-1 font-sans text-xs text-[#6b6456] transition hover:bg-[#e4ded2] hover:text-[#1c1f24]"
                   >
                     {copiedSummary ? (
-                      <Check className="h-3 w-3 text-emerald-600" />
+                      <Check className="h-3.5 w-3.5 text-emerald-600" />
                     ) : (
-                      <Copy className="h-3 w-3" />
+                      <Copy className="h-3.5 w-3.5" />
                     )}
-                    {copiedSummary ? 'Đã chép' : 'Sao chép'}
+                    <span>{copiedSummary ? 'Đã chép' : 'Sao chép'}</span>
                   </button>
                 </div>
               </div>
-              <div className="rounded-xl border border-[#e7e2d9] bg-white p-4 font-serif text-[15px] leading-relaxed text-[#2c313a]">
+              <div className="rounded-2xl border border-[#e7e2d9] bg-white p-4 font-serif text-[14px] leading-relaxed break-words text-[#2c313a] sm:text-[15px]">
                 {article.vietnamese_summary ||
                   'Chưa có tóm tắt. Vui lòng bấm "Phân tích lại bằng AI".'}
               </div>
@@ -288,9 +287,11 @@ export const ArticleModalTabs: React.FC<ArticleModalTabsProps> = ({
                 <h3 className="mb-2 flex items-center gap-1.5 font-sans text-xs font-bold tracking-wider text-[#756e60] uppercase">
                   💡 Bài học & Điểm kỹ thuật đáng chú ý:
                 </h3>
-                <ul className="list-inside list-disc space-y-2 rounded-xl border border-[#e7e2d9] bg-white p-4 font-serif text-[14px] leading-relaxed text-[#333d4b]">
+                <ul className="list-inside list-disc space-y-2 rounded-2xl border border-[#e7e2d9] bg-white p-4 font-serif text-[13px] leading-relaxed break-words text-[#333d4b] sm:text-[14px]">
                   {article.key_takeaways.map((item, idx) => (
-                    <li key={idx}>{item}</li>
+                    <li key={idx} className="break-words">
+                      {item}
+                    </li>
                   ))}
                 </ul>
               </div>
@@ -306,7 +307,9 @@ export const ArticleModalTabs: React.FC<ArticleModalTabsProps> = ({
                   {article.new_tech_stacks.map((ts, idx) => (
                     <div key={idx} className="rounded-xl border border-[#e7e2d9] bg-white p-3.5">
                       <div className="font-mono text-xs font-bold text-[#0f172a]">{ts.name}</div>
-                      <div className="mt-1 font-serif text-[12px] text-[#64748b]">{ts.desc}</div>
+                      <div className="mt-1 font-serif text-[12px] break-words text-[#64748b]">
+                        {ts.desc}
+                      </div>
                     </div>
                   ))}
                 </div>
@@ -317,12 +320,12 @@ export const ArticleModalTabs: React.FC<ArticleModalTabsProps> = ({
             <div className="space-y-4 pt-2 font-sans text-xs">
               <div className="flex items-center justify-between border-t border-[#ede7dc] pt-5">
                 <h3 className="flex items-center gap-1.5 text-xs font-bold tracking-wider text-[#756e60] uppercase">
-                  ⚖️ Đánh giá phản biện & Đánh đổi kiến trúc (Architectural Tradeoffs):
+                  ⚖️ Đánh giá phản biện & Đánh đổi kiến trúc (Tradeoffs):
                 </h3>
               </div>
 
               <div className="rounded-xl border border-blue-200 bg-blue-50/60 p-3.5 text-blue-900">
-                <p className="font-medium">
+                <p className="leading-relaxed font-medium">
                   Mọi quyết định kỹ thuật đều có sự đánh đổi giữa hiệu năng, độ phức tạp và chi phí
                   vận hành:
                 </p>
@@ -332,14 +335,19 @@ export const ArticleModalTabs: React.FC<ArticleModalTabsProps> = ({
                 {/* Pros */}
                 <div className="rounded-xl border border-emerald-200 bg-emerald-50/40 p-4">
                   <h4 className="flex items-center gap-1.5 font-bold text-emerald-900">
-                    <CheckCircle2 className="h-4 w-4 text-emerald-700" /> Ưu điểm & Điểm vượt trội
+                    <CheckCircle2 className="h-4 w-4 shrink-0 text-emerald-700" /> Ưu điểm & Điểm
+                    vượt trội
                   </h4>
                   <ul className="mt-2.5 list-inside list-disc space-y-1.5 text-[#2c313a]">
                     {tradeoffs?.pros && tradeoffs.pros.length > 0 ? (
-                      tradeoffs.pros.map((p, i) => <li key={i}>{p}</li>)
+                      tradeoffs.pros.map((p, i) => (
+                        <li key={i} className="break-words">
+                          {p}
+                        </li>
+                      ))
                     ) : (
                       <li className="text-[#756e60] italic">
-                        Bấm "Phân tích lại bằng AI" để trích xuất đầy đủ ưu điểm.
+                        Bấm "Phân tích lại" để trích xuất đầy đủ ưu điểm.
                       </li>
                     )}
                   </ul>
@@ -348,15 +356,19 @@ export const ArticleModalTabs: React.FC<ArticleModalTabsProps> = ({
                 {/* Cons */}
                 <div className="rounded-xl border border-rose-200 bg-rose-50/40 p-4">
                   <h4 className="flex items-center gap-1.5 font-bold text-rose-900">
-                    <AlertTriangle className="h-4 w-4 text-rose-700" /> Nhược điểm & Chi phí phải
-                    trả
+                    <AlertTriangle className="h-4 w-4 shrink-0 text-rose-700" /> Nhược điểm & Chi
+                    phí
                   </h4>
                   <ul className="mt-2.5 list-inside list-disc space-y-1.5 text-[#2c313a]">
                     {tradeoffs?.cons && tradeoffs.cons.length > 0 ? (
-                      tradeoffs.cons.map((c, i) => <li key={i}>{c}</li>)
+                      tradeoffs.cons.map((c, i) => (
+                        <li key={i} className="break-words">
+                          {c}
+                        </li>
+                      ))
                     ) : (
                       <li className="text-[#756e60] italic">
-                        Bấm "Phân tích lại bằng AI" để xem các nhược điểm kỹ thuật.
+                        Bấm "Phân tích lại" để xem các nhược điểm kỹ thuật.
                       </li>
                     )}
                   </ul>
@@ -371,10 +383,14 @@ export const ArticleModalTabs: React.FC<ArticleModalTabsProps> = ({
                   </h4>
                   <ul className="mt-2.5 list-inside list-disc space-y-1.5 text-[#3b3223]">
                     {tradeoffs?.when_not_to_use && tradeoffs.when_not_to_use.length > 0 ? (
-                      tradeoffs.when_not_to_use.map((w, i) => <li key={i}>{w}</li>)
+                      tradeoffs.when_not_to_use.map((w, i) => (
+                        <li key={i} className="break-words">
+                          {w}
+                        </li>
+                      ))
                     ) : (
                       <li className="text-[#756e60] italic">
-                        Chưa có dữ liệu chống lạm dụng kiến trúc. Hãy bấm phân tích lại.
+                        Chưa có dữ liệu chống lạm dụng kiến trúc.
                       </li>
                     )}
                   </ul>
@@ -387,11 +403,13 @@ export const ArticleModalTabs: React.FC<ArticleModalTabsProps> = ({
                   <ul className="mt-2.5 list-inside list-disc space-y-1.5 text-[#2c313a]">
                     {tradeoffs?.scalability_bottlenecks &&
                     tradeoffs.scalability_bottlenecks.length > 0 ? (
-                      tradeoffs.scalability_bottlenecks.map((b, i) => <li key={i}>{b}</li>)
+                      tradeoffs.scalability_bottlenecks.map((b, i) => (
+                        <li key={i} className="break-words">
+                          {b}
+                        </li>
+                      ))
                     ) : (
-                      <li className="text-[#756e60] italic">
-                        Chưa phát hiện điểm nghẽn. Hãy bấm phân tích lại.
-                      </li>
+                      <li className="text-[#756e60] italic">Chưa phát hiện điểm nghẽn.</li>
                     )}
                   </ul>
                 </div>
@@ -400,16 +418,16 @@ export const ArticleModalTabs: React.FC<ArticleModalTabsProps> = ({
 
             {/* Section 5: ON-DEMAND ARCHITECTURAL BLUEPRINT */}
             <div className="border-t border-[#ede7dc] pt-6 font-sans">
-              <div className="mb-3 flex items-center justify-between">
+              <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
                 <h3 className="flex items-center gap-1.5 text-xs font-bold tracking-wider text-[#756e60] uppercase">
-                  <Code2 className="h-3.5 w-3.5 text-indigo-700" /> Kịch bản Kiến trúc & Blueprint
-                  (On-Demand):
+                  <Code2 className="h-3.5 w-3.5 shrink-0 text-indigo-700" /> Kịch bản Kiến trúc &
+                  Blueprint (On-Demand):
                 </h3>
                 {hasBlueprint && (
                   <button
                     onClick={handleGenerateBlueprint}
                     disabled={generatingBlueprint}
-                    className="flex cursor-pointer items-center gap-1 rounded-lg border border-indigo-200 bg-indigo-50 px-2.5 py-1 text-[11px] font-medium text-indigo-900 transition hover:bg-indigo-100 disabled:opacity-50"
+                    className="flex min-h-[36px] cursor-pointer items-center gap-1 rounded-lg border border-indigo-200 bg-indigo-50 px-2.5 py-1 text-xs font-medium text-indigo-900 transition hover:bg-indigo-100 disabled:opacity-50"
                   >
                     <RefreshCw className={`h-3 w-3 ${generatingBlueprint ? 'animate-spin' : ''}`} />
                     <span>{generatingBlueprint ? 'Đang tạo lại...' : 'Làm mới Blueprint'}</span>
@@ -419,7 +437,7 @@ export const ArticleModalTabs: React.FC<ArticleModalTabsProps> = ({
 
               {hasBlueprint ? (
                 <div className="space-y-4 text-xs">
-                  <div className="flex items-center justify-between rounded-xl border border-indigo-200 bg-indigo-50/60 p-3.5 text-indigo-900">
+                  <div className="flex flex-wrap items-center justify-between gap-2 rounded-xl border border-indigo-200 bg-indigo-50/60 p-3.5 text-indigo-900">
                     <div>
                       <p className="font-bold">🧱 Kiến trúc đề xuất:</p>
                       <p className="mt-0.5 text-[11px] text-indigo-800">
@@ -430,14 +448,14 @@ export const ArticleModalTabs: React.FC<ArticleModalTabsProps> = ({
                     {blueprint?.code_snippet && (
                       <button
                         onClick={() => handleCopy(blueprint.code_snippet || '', 'code')}
-                        className="flex cursor-pointer items-center gap-1 rounded bg-white px-2.5 py-1 text-xs font-medium text-indigo-900 shadow-2xs transition hover:bg-indigo-100"
+                        className="flex min-h-[36px] cursor-pointer items-center gap-1 rounded-lg bg-white px-3 py-1.5 text-xs font-medium text-indigo-900 shadow-2xs transition hover:bg-indigo-100"
                       >
                         {copiedCode ? (
                           <Check className="h-3.5 w-3.5 text-emerald-600" />
                         ) : (
                           <Copy className="h-3.5 w-3.5" />
                         )}
-                        {copiedCode ? 'Đã sao chép' : 'Sao chép mã'}
+                        <span>{copiedCode ? 'Đã chép' : 'Sao chép mã'}</span>
                       </button>
                     )}
                   </div>
@@ -445,7 +463,7 @@ export const ArticleModalTabs: React.FC<ArticleModalTabsProps> = ({
                   {blueprint?.suggested_module_structure && (
                     <div className="rounded-xl border border-[#e7e2d9] bg-white p-3.5">
                       <span className="font-bold text-[#475569]">📁 Cấu trúc Module gợi ý:</span>
-                      <code className="mt-1 block rounded bg-[#f4efe6] px-2 py-1 font-mono text-[11px] text-[#2c313a]">
+                      <code className="mt-1 block max-w-full overflow-x-auto rounded bg-[#f4efe6] px-2 py-1 font-mono text-[11px] text-[#2c313a]">
                         {blueprint.suggested_module_structure}
                       </code>
                     </div>
@@ -454,29 +472,31 @@ export const ArticleModalTabs: React.FC<ArticleModalTabsProps> = ({
                   {blueprint?.database_integration && (
                     <div className="rounded-xl border border-[#e7e2d9] bg-white p-3.5">
                       <span className="font-bold text-[#475569]">🗄️ Tích hợp Cơ sở dữ liệu:</span>
-                      <p className="mt-1 text-[#2c313a]">{blueprint.database_integration}</p>
+                      <p className="mt-1 break-words text-[#2c313a]">
+                        {blueprint.database_integration}
+                      </p>
                     </div>
                   )}
 
                   {blueprint?.code_snippet && (
-                    <div className="rounded-xl border border-[#24292f] bg-[#1e2329] p-4 text-white">
+                    <div className="rounded-xl border border-[#24292f] bg-[#1e2329] p-3 text-white sm:p-4">
                       <div className="mb-2 flex items-center justify-between text-[11px] text-[#9ca3af]">
                         <span>typescript (Module Implementation)</span>
                         <button
                           onClick={() => handleCopy(blueprint.code_snippet || '', 'code')}
-                          className="cursor-pointer hover:text-white"
+                          className="flex min-h-[32px] cursor-pointer items-center p-1 hover:text-white"
                         >
                           {copiedCode ? 'Copied!' : 'Copy Code'}
                         </button>
                       </div>
-                      <pre className="max-h-96 overflow-x-auto overflow-y-auto font-mono text-[11px] leading-relaxed text-[#e5e7eb]">
+                      <pre className="max-h-96 w-full max-w-[calc(100vw-3.5rem)] overflow-x-auto font-mono text-[11px] leading-relaxed text-[#e5e7eb] sm:max-w-none">
                         {blueprint.code_snippet}
                       </pre>
                     </div>
                   )}
                 </div>
               ) : (
-                <div className="rounded-xl border border-dashed border-indigo-200 bg-gradient-to-r from-indigo-50/50 to-purple-50/50 p-6 text-center">
+                <div className="rounded-2xl border border-dashed border-indigo-200 bg-gradient-to-r from-indigo-50/50 to-purple-50/50 p-6 text-center">
                   <div className="mx-auto mb-2.5 flex h-11 w-11 items-center justify-center rounded-xl bg-white text-indigo-700 shadow-xs">
                     <Cpu className="h-6 w-6" />
                   </div>
@@ -491,7 +511,7 @@ export const ArticleModalTabs: React.FC<ArticleModalTabsProps> = ({
                     <button
                       onClick={handleGenerateBlueprint}
                       disabled={generatingBlueprint}
-                      className="inline-flex cursor-pointer items-center gap-2 rounded-xl bg-indigo-900 px-4 py-2.5 text-xs font-semibold text-white shadow-xs transition hover:bg-indigo-950 disabled:opacity-50"
+                      className="inline-flex min-h-[44px] cursor-pointer items-center gap-2 rounded-xl bg-indigo-900 px-4 py-2.5 text-xs font-semibold text-white shadow-xs transition hover:bg-indigo-950 disabled:opacity-50"
                     >
                       <Code2 className={`h-4 w-4 ${generatingBlueprint ? 'animate-spin' : ''}`} />
                       <span>
@@ -534,7 +554,11 @@ export const ArticleModalTabs: React.FC<ArticleModalTabsProps> = ({
                 </h4>
                 <ul className="mt-2.5 list-inside list-disc space-y-1.5 text-[#475569]">
                   {learning?.prerequisites && learning.prerequisites.length > 0 ? (
-                    learning.prerequisites.map((item, idx) => <li key={idx}>{item}</li>)
+                    learning.prerequisites.map((item, idx) => (
+                      <li key={idx} className="break-words">
+                        {item}
+                      </li>
+                    ))
                   ) : (
                     <li className="text-[#756e60] italic">
                       TypeScript nâng cao, Node.js Event Loop, NestJS DI cơ bản.
@@ -550,7 +574,11 @@ export const ArticleModalTabs: React.FC<ArticleModalTabsProps> = ({
                 <ul className="mt-2.5 list-inside list-disc space-y-1.5 text-[#475569]">
                   {learning?.recommended_next_topics &&
                   learning.recommended_next_topics.length > 0 ? (
-                    learning.recommended_next_topics.map((item, idx) => <li key={idx}>{item}</li>)
+                    learning.recommended_next_topics.map((item, idx) => (
+                      <li key={idx} className="break-words">
+                        {item}
+                      </li>
+                    ))
                   ) : (
                     <li className="text-[#756e60] italic">
                       PostgreSQL Vector Indexing, Hybrid Search Reranking.
@@ -563,7 +591,7 @@ export const ArticleModalTabs: React.FC<ArticleModalTabsProps> = ({
             {/* Knowledge Graph: Related Articles */}
             <div className="rounded-xl border border-[#e7e2d9] bg-[#fbf9f5] p-4">
               <h4 className="flex items-center gap-1.5 font-bold text-[#1c1f24]">
-                <Link2 className="h-4 w-4 text-indigo-700" />
+                <Link2 className="h-4 w-4 shrink-0 text-indigo-700" />
                 Bài viết liên quan trong TechPulse (Knowledge Graph):
               </h4>
               <p className="mt-0.5 text-[11px] text-[#756e60]">
@@ -580,13 +608,13 @@ export const ArticleModalTabs: React.FC<ArticleModalTabsProps> = ({
                     <div
                       key={rel.id}
                       onClick={() => onSelectRelatedArticle && onSelectRelatedArticle(rel.id)}
-                      className="flex cursor-pointer items-center justify-between rounded-lg border border-[#e7e2d9] bg-white p-2.5 transition hover:border-indigo-300 hover:bg-indigo-50/40"
+                      className="flex min-h-[44px] cursor-pointer items-center justify-between rounded-xl border border-[#e7e2d9] bg-white p-3 transition hover:border-indigo-300 hover:bg-indigo-50/40"
                     >
                       <div className="min-w-0 pr-2">
                         <div className="line-clamp-1 font-serif text-[13px] font-semibold text-[#1c1f24]">
                           {rel.vietnamese_title || rel.title}
                         </div>
-                        <div className="mt-0.5 flex items-center gap-2 text-[10px] text-[#756e60]">
+                        <div className="mt-0.5 flex flex-wrap items-center gap-1.5 text-[10px] text-[#756e60]">
                           <span>{rel.source_name || 'Tech'}</span>
                           <span>•</span>
                           <span>Điểm: {rel.relevance_score.toFixed(1)}</span>
@@ -612,23 +640,23 @@ export const ArticleModalTabs: React.FC<ArticleModalTabsProps> = ({
           </div>
         )}
 
-        {/* Source link footer */}
+        {/* Source link footer with Safe Area */}
         <div className="mt-6 flex flex-wrap items-center justify-between gap-3 border-t border-[#e7e2d9] pt-3 font-sans">
           <a
             href={article.url}
             target="_blank"
             rel="noreferrer"
-            className="inline-flex items-center gap-1.5 text-xs font-semibold break-words text-indigo-900 underline hover:text-indigo-950"
+            className="inline-flex min-h-[36px] items-center gap-1.5 text-xs font-semibold break-words text-indigo-900 underline hover:text-indigo-950"
           >
             <span>Đọc bài gốc tại {article.source_name}</span>
-            <ExternalLink className="h-3 w-3 shrink-0" />
+            <ExternalLink className="h-3.5 w-3.5 shrink-0" />
           </a>
 
           <button
             onClick={handleExportMarkdown}
-            className="inline-flex cursor-pointer items-center gap-1 text-xs font-medium text-purple-900 hover:underline"
+            className="inline-flex min-h-[36px] cursor-pointer items-center gap-1 text-xs font-medium text-purple-900 hover:underline"
           >
-            <FileText className="h-3.5 w-3.5" />
+            <FileText className="h-4 w-4" />
             <span>Tải Markdown cho Obsidian</span>
           </button>
         </div>

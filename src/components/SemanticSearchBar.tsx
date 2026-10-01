@@ -96,17 +96,17 @@ export const SemanticSearchBar: React.FC<SemanticSearchBarProps> = ({ onSelectAr
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             placeholder="VD: Cách tối ưu deadlock trong PostgreSQL, mô hình Agentic RAG, async job queue NestJS..."
-            className="w-full bg-transparent px-3 py-2 text-xs font-medium text-[#1c1f24] placeholder-[#9c9485] focus:outline-none sm:text-sm"
+            className="h-11 w-full bg-transparent px-3 py-2 text-[16px] font-medium text-[#1c1f24] placeholder-[#9c9485] focus:outline-none sm:h-auto sm:text-sm"
           />
           <button
             type="submit"
             disabled={loading || !query.trim()}
-            className="flex shrink-0 cursor-pointer items-center gap-1.5 rounded-xl bg-[#2c313a] px-4 py-2 text-xs font-semibold text-white shadow-xs transition hover:bg-[#1a1d23] disabled:opacity-50"
+            className="flex min-h-[44px] shrink-0 cursor-pointer items-center gap-1.5 rounded-xl bg-[#2c313a] px-4 py-2 text-xs font-semibold text-white shadow-xs transition hover:bg-[#1a1d23] disabled:opacity-50 sm:min-h-9"
           >
             {loading ? (
-              <Loader2 className="h-3.5 w-3.5 animate-spin" />
+              <Loader2 className="h-4 w-4 animate-spin" />
             ) : (
-              <Search className="h-3.5 w-3.5" />
+              <Search className="h-4 w-4" />
             )}
             <span>Tìm kiếm</span>
           </button>
@@ -128,7 +128,11 @@ export const SemanticSearchBar: React.FC<SemanticSearchBarProps> = ({ onSelectAr
                 setTopic(t);
               }
             }}
-            className="cursor-pointer rounded-full border border-[#ded7ca] bg-[#eee9df] px-3 py-1 text-[11px] font-medium text-[#554e42] transition hover:bg-[#e4ded2]"
+            className={`flex min-h-[36px] cursor-pointer items-center rounded-lg px-2.5 py-1.5 text-xs transition ${
+              topic === t
+                ? 'bg-[#2c313a] font-medium text-white shadow-2xs'
+                : 'border border-[#ded7ca] bg-white text-[#554e42] hover:bg-[#eee9df]'
+            }`}
           >
             {t}
           </button>

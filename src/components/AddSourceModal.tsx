@@ -66,11 +66,12 @@ export const AddSourceModal: React.FC<AddSourceModalProps> = ({
   return (
     <div
       onClick={onClose}
-      className="fixed inset-0 z-50 flex cursor-pointer items-center justify-center bg-black/40 p-4 font-sans backdrop-blur-xs"
+      className="fixed inset-0 z-50 flex cursor-pointer items-end justify-center bg-black/40 p-0 font-sans backdrop-blur-xs sm:items-center sm:p-4"
     >
       <div
         onClick={(e) => e.stopPropagation()}
-        className="animate-in fade-in w-full max-w-lg cursor-default rounded-2xl border border-[#e7e2d9] bg-white p-6 shadow-xl"
+        style={{ paddingBottom: 'max(env(safe-area-inset-bottom, 0px), 1.25rem)' }}
+        className="animate-in fade-in slide-in-from-bottom-2 sm:slide-in-from-bottom-0 w-full max-w-lg cursor-default rounded-t-2xl border-0 border-[#e7e2d9] bg-white p-5 shadow-xl sm:rounded-2xl sm:border sm:p-6"
       >
         <div className="mb-4 flex items-center justify-between border-b border-[#e7e2d9] pb-3">
           <h3 className="flex items-center gap-2 font-serif text-base font-bold text-[#1c1f24]">
@@ -78,7 +79,8 @@ export const AddSourceModal: React.FC<AddSourceModalProps> = ({
           </h3>
           <button
             onClick={onClose}
-            className="cursor-pointer rounded-lg p-1 text-[#756e60] transition hover:bg-[#f4efe6] hover:text-[#1c1f24]"
+            className="flex min-h-[44px] min-w-[44px] cursor-pointer items-center justify-center rounded-lg text-[#756e60] transition hover:bg-[#f4efe6] hover:text-[#1c1f24]"
+            aria-label="Đóng dialog"
           >
             <X className="h-5 w-5" />
           </button>
@@ -93,7 +95,7 @@ export const AddSourceModal: React.FC<AddSourceModalProps> = ({
               value={newSourceName}
               onChange={(e) => setNewSourceName(e.target.value)}
               required
-              className="w-full rounded-lg border border-[#dcd5c7] bg-white p-2.5 text-[#1e293b] focus:border-[#7c7465] focus:outline-none"
+              className="h-11 w-full rounded-xl border border-[#dcd5c7] bg-white px-3 text-[16px] text-[#1e293b] focus:border-[#7c7465] focus:outline-none sm:h-9 sm:text-xs"
             />
           </div>
 
@@ -108,13 +110,13 @@ export const AddSourceModal: React.FC<AddSourceModalProps> = ({
                 value={newSourceUrl}
                 onChange={(e) => setNewSourceUrl(e.target.value)}
                 required
-                className="flex-1 rounded-lg border border-[#dcd5c7] bg-white p-2.5 text-[#1e293b] focus:border-[#7c7465] focus:outline-none"
+                className="h-11 flex-1 rounded-xl border border-[#dcd5c7] bg-white px-3 text-[16px] text-[#1e293b] focus:border-[#7c7465] focus:outline-none sm:h-9 sm:text-xs"
               />
               <button
                 type="button"
                 onClick={handleTestSource}
                 disabled={testingSource || !newSourceUrl}
-                className="cursor-pointer rounded-lg border border-[#ded7ca] bg-[#f4efe6] px-3.5 py-2 font-medium text-[#2c313a] transition hover:bg-[#eae4d7] disabled:opacity-50"
+                className="flex min-h-[44px] cursor-pointer items-center justify-center rounded-xl border border-[#ded7ca] bg-[#f4efe6] px-3.5 py-2 font-medium text-[#2c313a] transition hover:bg-[#eae4d7] disabled:opacity-50 sm:min-h-9"
               >
                 {testingSource ? 'Đang test...' : 'Kiểm tra'}
               </button>
@@ -123,7 +125,7 @@ export const AddSourceModal: React.FC<AddSourceModalProps> = ({
 
           {testResult && (
             <div
-              className={`rounded-lg border p-3.5 ${
+              className={`rounded-xl border p-3.5 ${
                 testResult.success
                   ? 'border-emerald-200 bg-emerald-50 text-emerald-900'
                   : 'border-rose-200 bg-rose-50 text-rose-900'
@@ -136,7 +138,7 @@ export const AddSourceModal: React.FC<AddSourceModalProps> = ({
                     {testResult.items_count} bài viết.
                   </div>
                   {testResult.sample_titles && testResult.sample_titles.length > 0 && (
-                    <div className="mt-1 text-[11px] text-[#475569]">
+                    <div className="mt-1 text-[11px] break-words text-[#475569]">
                       Bài mẫu: "{testResult.sample_titles[0]}"
                     </div>
                   )}
@@ -144,7 +146,7 @@ export const AddSourceModal: React.FC<AddSourceModalProps> = ({
               ) : (
                 <div className="flex items-start gap-1.5">
                   <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" />
-                  <div>Lỗi kiểm tra: {testResult.error}</div>
+                  <div className="break-words">Lỗi kiểm tra: {testResult.error}</div>
                 </div>
               )}
             </div>
@@ -155,7 +157,7 @@ export const AddSourceModal: React.FC<AddSourceModalProps> = ({
             <select
               value={newSourceCategory}
               onChange={(e) => setNewSourceCategory(e.target.value)}
-              className="w-full rounded-lg border border-[#dcd5c7] bg-white p-2.5 text-[#1e293b] focus:border-[#7c7465] focus:outline-none"
+              className="h-11 w-full rounded-xl border border-[#dcd5c7] bg-white px-3 text-[16px] text-[#1e293b] focus:border-[#7c7465] focus:outline-none sm:h-9 sm:text-xs"
             >
               <option value="AI & Future Tech">🤖 AI & Công nghệ tương lai</option>
               <option value="Backend & Architecture">⚙️ Backend & Kiến trúc hệ thống</option>
@@ -168,13 +170,13 @@ export const AddSourceModal: React.FC<AddSourceModalProps> = ({
             <button
               type="button"
               onClick={onClose}
-              className="cursor-pointer rounded-lg bg-[#f4efe6] px-4 py-2 font-medium text-[#475569] hover:bg-[#eae4d7]"
+              className="flex min-h-[44px] cursor-pointer items-center justify-center rounded-xl bg-[#f4efe6] px-4 py-2 font-medium text-[#475569] transition hover:bg-[#eae4d7] sm:min-h-9"
             >
               Hủy
             </button>
             <button
               type="submit"
-              className="cursor-pointer rounded-lg bg-emerald-700 px-4 py-2 font-semibold text-white hover:bg-emerald-800"
+              className="flex min-h-[44px] cursor-pointer items-center justify-center rounded-xl bg-emerald-700 px-4 py-2 font-semibold text-white transition hover:bg-emerald-800 sm:min-h-9"
             >
               Lưu nguồn tin
             </button>
