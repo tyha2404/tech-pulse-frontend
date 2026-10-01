@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, lazy, Suspense } from 'react';
 import {
   Sparkles,
   Scale,
@@ -13,8 +13,12 @@ import {
   Link2,
 } from 'lucide-react';
 import type { Article, RelatedArticleItem } from '../types';
-import { ArticleChatCopilot } from './ArticleChatCopilot';
 import { apiClient } from '../api';
+
+const ArticleChatCopilot = lazy(() =>
+  import('./ArticleChatCopilot').then((m) => ({ default: m.ArticleChatCopilot }))
+);
+
 
 interface ArticleModalTabsProps {
   article: Article;
@@ -358,11 +362,21 @@ export const ArticleModalTabs: React.FC<ArticleModalTabsProps> = ({
 
         {/* TAB 4: CHAT COPILOT */}
         {tab === 'chat' && (
-          <ArticleChatCopilot
-            articleId={article.id}
-            articleTitle={article.vietnamese_title || article.title}
-          />
+          <Suspense
+            fallback={
+              <div className="flex items-center justify-center p-8 text-sm text-[#756e60]">
+                <Sparkles className="mr-2 h-4 w-4 animate-spin text-amber-600" />
+                Đang tải AI Chat Copilot...
+              </div>
+            }
+          >
+            <ArticleChatCopilot
+              articleId={article.id}
+              articleTitle={article.vietnamese_title || article.title}
+            />
+          </Suspense>
         )}
+
 
         {/* TAB 5: LEARNING PATH & RELATED */}
         {tab === 'learning' && (

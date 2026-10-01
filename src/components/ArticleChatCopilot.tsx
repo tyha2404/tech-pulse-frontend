@@ -50,7 +50,7 @@ export const ArticleChatCopilot: React.FC<ArticleChatCopilotProps> = ({ articleI
 
       setMessages([...newHistory, assistantMsg]);
       setFollowups(res.data.suggested_followups || []);
-    } catch (err) {
+    } catch {
       const errorMsg: ChatMessage = {
         role: 'assistant',
         content:

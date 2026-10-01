@@ -44,7 +44,9 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = () => {
   };
 
   useEffect(() => {
-    loadData();
+    setTimeout(() => {
+      loadData();
+    }, 0);
     const interval = setInterval(loadData, 30000); // Auto poll every 30s
     return () => clearInterval(interval);
   }, []);

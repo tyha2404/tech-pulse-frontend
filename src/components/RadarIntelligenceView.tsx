@@ -45,7 +45,9 @@ export const RadarIntelligenceView: React.FC<RadarIntelligenceViewProps> = ({
   };
 
   useEffect(() => {
-    fetchRadarDigest(false);
+    setTimeout(() => {
+      fetchRadarDigest(false);
+    }, 0);
   }, []);
 
   const handleDispatch = async () => {
@@ -54,7 +56,7 @@ export const RadarIntelligenceView: React.FC<RadarIntelligenceViewProps> = ({
       setDispatchMsg(null);
       const res = await apiClient.post('/intelligence/dispatch-digest?channel=all');
       setDispatchMsg(res.data.message || 'Đã gửi bản tin tổng hợp thành công!');
-    } catch (err: any) {
+    } catch {
       setDispatchMsg('Lỗi gửi bản tin hoặc chưa cấu hình webhook.');
     } finally {
       setDispatching(false);

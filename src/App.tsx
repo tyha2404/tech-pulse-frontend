@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback, useRef, lazy, Suspense } from 'react';
 import {
   Sparkles,
   ExternalLink,
@@ -28,10 +28,18 @@ import {
 } from 'lucide-react';
 import { apiClient, getPersonalizedArticles, sendArticleFeedback } from './api';
 import type { Article, Source, CrawlTestResult } from './types';
-import { ArticleModalTabs } from './components/ArticleModalTabs';
-import { RadarIntelligenceView } from './components/RadarIntelligenceView';
-import { AdminDashboard } from './components/AdminDashboard';
 import { SemanticSearchBar } from './components/SemanticSearchBar';
+
+const ArticleModalTabs = lazy(() =>
+  import('./components/ArticleModalTabs').then((m) => ({ default: m.ArticleModalTabs }))
+);
+const RadarIntelligenceView = lazy(() =>
+  import('./components/RadarIntelligenceView').then((m) => ({ default: m.RadarIntelligenceView }))
+);
+const AdminDashboard = lazy(() =>
+  import('./components/AdminDashboard').then((m) => ({ default: m.AdminDashboard }))
+);
+
 
 export default function App() {
   const [activeTab, setActiveTab] = useState<
@@ -74,60 +82,78 @@ export default function App() {
   const [testResult, setTestResult] = useState<CrawlTestResult | null>(null);
 
   const PAGE_SIZE = 20;
+  const articlesLengthRef = useRef(articles.length);
+  useEffect(() => {
+    articlesLengthRef.current = articles.length;
+  }, [articles.length]);
 
-  const fetchArticles = async (reset: boolean = true) => {
-    try {
-      if (reset) {
-        setLoading(true);
-      } else {
-        setLoadingMore(true);
-      }
+  const fetchArticles = useCallback(
+    async (reset: boolean = true) => {
+      try {
+        if (reset) {
+          setLoading(true);
+        } else {
+          setLoadingMore(true);
+        }
 
-      if (activeTab === 'personalized') {
-        const data = await getPersonalizedArticles('default_user', 30);
-        setArticles(data);
-        setHasMore(false);
-        return;
-      }
+        if (activeTab === 'personalized') {
+          const data = await getPersonalizedArticles('default_user', 30);
+          setArticles(data);
+          setHasMore(false);
+          return;
+        }
 
-      const currentOffset = reset ? 0 : articles.length;
-      const params: any = {
-        sort_by: sortBy,
-        read_status: readStatus,
-        bookmarked_only: bookmarkedOnly,
-        include_hidden: viewHidden,
-        group_duplicates: groupDuplicates,
-        limit: PAGE_SIZE,
-        offset: currentOffset,
-      };
-      if (selectedSourceId) params.source_id = selectedSourceId;
-      if (selectedCategory !== 'all') params.category = selectedCategory;
-      if (topOnly) params.top_only = true;
-      if (searchQuery) params.query = searchQuery;
-      const res = await apiClient.get('/articles', { params });
-      const newItems: Article[] = res.data;
+        const currentOffset = reset ? 0 : articlesLengthRef.current;
+        const params: any = {
+          sort_by: sortBy,
+          read_status: readStatus,
+          bookmarked_only: bookmarkedOnly,
+          include_hidden: viewHidden,
+          group_duplicates: groupDuplicates,
+          limit: PAGE_SIZE,
+          offset: currentOffset,
+        };
+        if (selectedSourceId) params.source_id = selectedSourceId;
+        if (selectedCategory !== 'all') params.category = selectedCategory;
+        if (topOnly) params.top_only = true;
+        if (searchQuery) params.query = searchQuery;
+        const res = await apiClient.get('/articles', { params });
+        const newItems: Article[] = res.data;
 
-      if (reset) {
-        setArticles(newItems);
-      } else {
-        // Prevent duplicate keys if items shifted
-        setArticles((prev) => {
-          const existingIds = new Set(prev.map((a) => a.id));
-          const uniqueNew = newItems.filter((a) => !existingIds.has(a.id));
-          return [...prev, ...uniqueNew];
-        });
+        if (reset) {
+          setArticles(newItems);
+        } else {
+          // Prevent duplicate keys if items shifted
+          setArticles((prev) => {
+            const existingIds = new Set(prev.map((a) => a.id));
+            const uniqueNew = newItems.filter((a) => !existingIds.has(a.id));
+            return [...prev, ...uniqueNew];
+          });
+        }
+        setHasMore(newItems.length === PAGE_SIZE);
+      } catch (err) {
+        console.error('Error loading articles', err);
+      } finally {
+        if (reset) {
+          setLoading(false);
+        } else {
+          setLoadingMore(false);
+        }
       }
-      setHasMore(newItems.length === PAGE_SIZE);
-    } catch (err) {
-      console.error('Error loading articles', err);
-    } finally {
-      if (reset) {
-        setLoading(false);
-      } else {
-        setLoadingMore(false);
-      }
-    }
-  };
+    },
+    [
+      activeTab,
+      sortBy,
+      readStatus,
+      bookmarkedOnly,
+      viewHidden,
+      groupDuplicates,
+      selectedSourceId,
+      selectedCategory,
+      topOnly,
+      searchQuery,
+    ]
+  );
 
   const handleFeedback = async (
     e: React.MouseEvent,
@@ -154,7 +180,9 @@ export default function App() {
 
   useEffect(() => {
     if (activeTab === 'feed' || activeTab === 'personalized') {
-      fetchArticles(true);
+      setTimeout(() => {
+        fetchArticles(true);
+      }, 0);
     }
   }, [
     activeTab,
@@ -166,6 +194,7 @@ export default function App() {
     bookmarkedOnly,
     viewHidden,
     groupDuplicates,
+    fetchArticles,
   ]);
 
   // Infinite Scroll Listener
@@ -195,6 +224,7 @@ export default function App() {
     viewHidden,
     groupDuplicates,
     searchQuery,
+    fetchArticles,
   ]);
 
   // Handlers for mark read / unread and hide / unhide
@@ -289,7 +319,9 @@ export default function App() {
   };
 
   useEffect(() => {
-    fetchSources();
+    setTimeout(() => {
+      fetchSources();
+    }, 0);
   }, []);
 
   useEffect(() => {
@@ -457,6 +489,7 @@ export default function App() {
   const getLocalDateKey = (dateStr?: string) => {
     if (!dateStr) return 'unknown';
     const d = new Date(dateStr);
+    if (isNaN(d.getTime())) return 'unknown';
     const y = d.getFullYear();
     const m = String(d.getMonth() + 1).padStart(2, '0');
     const day = String(d.getDate()).padStart(2, '0');
@@ -465,8 +498,9 @@ export default function App() {
 
   const groupedArticles = articles.reduce<{ label: string; dateKey: string; items: Article[] }[]>(
     (acc, art) => {
-      const dateKey = getLocalDateKey(art.published_at);
-      const label = formatGroupDate(art.published_at);
+      const targetDate = art.published_at || art.created_at;
+      const dateKey = getLocalDateKey(targetDate);
+      const label = formatGroupDate(targetDate);
       const existingGroup = acc.find((g) => g.dateKey === dateKey);
       if (existingGroup) {
         existingGroup.items.push(art);
@@ -1180,14 +1214,25 @@ export default function App() {
         {/* ================= VIEW 2: RADAR TECH & INTELLIGENCE ================= */}
         {activeTab === 'radar' && (
           <div className="space-y-8">
-            <RadarIntelligenceView
-              sourcesCount={sources.length}
-              onSelectArticle={(art) => {
-                // Find full article from list if present, else set it directly
-                const found = articles.find((a) => a.id === art.id);
-                setSelectedArticle(found || (art as any));
-              }}
-            />
+            <Suspense
+              fallback={
+                <div className="flex h-64 items-center justify-center rounded-2xl border border-[#e7e2d9] bg-white p-8 text-sm text-[#756e60]">
+                  <Sparkles className="mr-2 h-5 w-5 animate-spin text-amber-600" />
+                  Đang tải Radar Tech Intelligence...
+                </div>
+              }
+            >
+              <RadarIntelligenceView
+                sourcesCount={sources.length}
+                onSelectArticle={(art) => {
+                  // Find full article from list if present, else set it directly
+                  const found = articles.find((a) => a.id === art.id);
+                  setSelectedArticle(found || (art as any));
+                }}
+              />
+            </Suspense>
+
+
 
             <div>
               <div className="mb-4 flex items-center justify-between">
@@ -1388,7 +1433,19 @@ export default function App() {
         )}
 
         {/* ================= VIEW 5: ADMIN OBSERVABILITY DASHBOARD ================= */}
-        {activeTab === 'admin' && <AdminDashboard onRefreshFeed={fetchArticles} />}
+        {activeTab === 'admin' && (
+          <Suspense
+            fallback={
+              <div className="flex h-64 items-center justify-center rounded-2xl border border-[#e7e2d9] bg-white p-8 text-sm text-[#756e60]">
+                <Activity className="mr-2 h-5 w-5 animate-spin text-indigo-700" />
+                Đang tải Admin Observability Dashboard...
+              </div>
+            }
+          >
+            <AdminDashboard onRefreshFeed={fetchArticles} />
+          </Suspense>
+        )}
+
       </main>
 
       {/* ================= READING DRAWER / MODAL (EDITORIAL STYLE) ================= */}
@@ -1481,20 +1538,30 @@ export default function App() {
 
             {/* Reading Content with Deep AI Tabs */}
             <div className="safe-pb flex-1 overflow-y-auto overscroll-contain">
-              <ArticleModalTabs
-                article={selectedArticle}
-                onSummarize={async (id) => {
-                  await handleSummarizeArticle(id);
-                }}
-                summarizing={summarizingArticleId === selectedArticle.id}
-                onSelectRelatedArticle={async (relatedId) => {
-                  const target = articles.find((a) => a.id === relatedId);
-                  if (target) {
-                    setSelectedArticle(target);
-                  }
-                }}
-              />
+              <Suspense
+                fallback={
+                  <div className="flex h-64 items-center justify-center p-8 text-sm text-[#756e60]">
+                    <Sparkles className="mr-2 h-5 w-5 animate-spin text-amber-600" />
+                    Đang tải chi tiết phân tích AI & kịch bản kỹ thuật...
+                  </div>
+                }
+              >
+                <ArticleModalTabs
+                  article={selectedArticle}
+                  onSummarize={async (id) => {
+                    await handleSummarizeArticle(id);
+                  }}
+                  summarizing={summarizingArticleId === selectedArticle.id}
+                  onSelectRelatedArticle={async (relatedId) => {
+                    const target = articles.find((a) => a.id === relatedId);
+                    if (target) {
+                      setSelectedArticle(target);
+                    }
+                  }}
+                />
+              </Suspense>
             </div>
+
           </div>
         </div>
       )}
