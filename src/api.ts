@@ -72,3 +72,50 @@ export async function sendArticleFeedback(
   );
   return res.data;
 }
+
+// Markdown Export API
+export async function exportArticleMarkdown(articleId: number): Promise<string> {
+  try {
+    const res = await apiClient.post<{ markdown?: string } | string>(
+      `/articles/${articleId}/export-markdown`
+    );
+    if (typeof res.data === 'string') return res.data;
+    if (res.data && typeof res.data === 'object' && res.data.markdown) return res.data.markdown;
+  } catch (err) {
+    // Try fallback GET /articles/{id}/markdown
+    try {
+      const getRes = await apiClient.get<string>(`/articles/${articleId}/markdown`, {
+        responseType: 'text',
+      });
+      if (typeof getRes.data === 'string') return getRes.data;
+    } catch {
+      // Re-throw to allow client-side generation
+      throw err;
+    }
+  }
+  throw new Error('No markdown content returned');
+}
+
+// On-demand Blueprint API
+export async function generateArticleBlueprint(articleId: number): Promise<Article> {
+  try {
+    const res = await apiClient.post<Article>(
+      `/articles/${articleId}/generate-blueprint`,
+      {},
+      {
+        timeout: 180000,
+      }
+    );
+    return res.data;
+  } catch {
+    // Fallback to summarize endpoint
+    const res = await apiClient.post<Article>(
+      `/articles/${articleId}/summarize`,
+      {},
+      {
+        timeout: 180000,
+      }
+    );
+    return res.data;
+  }
+}

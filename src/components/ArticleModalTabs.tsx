@@ -1,7 +1,6 @@
 import React, { useState, useEffect, lazy, Suspense } from 'react';
 import {
   Sparkles,
-  Scale,
   Code2,
   MessageSquare,
   Compass,
@@ -11,20 +10,25 @@ import {
   AlertTriangle,
   CheckCircle2,
   Link2,
+  Download,
+  FileText,
+  RefreshCw,
+  Cpu,
 } from 'lucide-react';
 import type { Article, RelatedArticleItem } from '../types';
-import { apiClient } from '../api';
+import { apiClient, generateArticleBlueprint, exportArticleMarkdown } from '../api';
+import { generateArticleMarkdown, downloadMarkdownFile } from '../utils/markdownExport';
 
 const ArticleChatCopilot = lazy(() =>
   import('./ArticleChatCopilot').then((m) => ({ default: m.ArticleChatCopilot }))
 );
-
 
 interface ArticleModalTabsProps {
   article: Article;
   onSummarize: (id: number) => Promise<void>;
   summarizing: boolean;
   onSelectRelatedArticle?: (articleId: number) => void;
+  onArticleUpdated?: (updated: Article) => void;
 }
 
 export const ArticleModalTabs: React.FC<ArticleModalTabsProps> = ({
@@ -32,12 +36,14 @@ export const ArticleModalTabs: React.FC<ArticleModalTabsProps> = ({
   onSummarize,
   summarizing,
   onSelectRelatedArticle,
+  onArticleUpdated,
 }) => {
-  const [tab, setTab] = useState<'overview' | 'tradeoffs' | 'blueprint' | 'chat' | 'learning'>(
-    'overview'
-  );
+  const [tab, setTab] = useState<'briefing' | 'chat' | 'learning'>('briefing');
   const [copiedCode, setCopiedCode] = useState(false);
   const [copiedSummary, setCopiedSummary] = useState(false);
+  const [copiedMarkdown, setCopiedMarkdown] = useState(false);
+  const [exportingMarkdown, setExportingMarkdown] = useState(false);
+  const [generatingBlueprint, setGeneratingBlueprint] = useState(false);
   const [relatedArticles, setRelatedArticles] = useState<RelatedArticleItem[]>([]);
   const [loadingRelated, setLoadingRelated] = useState(false);
 
@@ -62,91 +68,185 @@ export const ArticleModalTabs: React.FC<ArticleModalTabsProps> = ({
     };
   }, [article.id]);
 
-  const handleCopy = (text: string, type: 'code' | 'summary') => {
+  const handleCopy = (text: string, type: 'code' | 'summary' | 'markdown') => {
     navigator.clipboard.writeText(text);
     if (type === 'code') {
       setCopiedCode(true);
       setTimeout(() => setCopiedCode(false), 2000);
-    } else {
+    } else if (type === 'summary') {
       setCopiedSummary(true);
       setTimeout(() => setCopiedSummary(false), 2000);
+    } else if (type === 'markdown') {
+      setCopiedMarkdown(true);
+      setTimeout(() => setCopiedMarkdown(false), 2000);
+    }
+  };
+
+  const handleExportMarkdown = async () => {
+    setExportingMarkdown(true);
+    try {
+      let mdText = '';
+      try {
+        mdText = await exportArticleMarkdown(article.id);
+      } catch {
+        // Fallback to client-side Markdown generator
+        mdText = generateArticleMarkdown(article);
+      }
+      const filename = `${article.vietnamese_title || article.title || 'article'}`;
+      downloadMarkdownFile(filename, mdText);
+    } catch (err) {
+      console.error('Export markdown error:', err);
+      // Fallback
+      const mdText = generateArticleMarkdown(article);
+      downloadMarkdownFile(article.vietnamese_title || article.title, mdText);
+    } finally {
+      setExportingMarkdown(false);
+    }
+  };
+
+  const handleCopyMarkdown = async () => {
+    try {
+      let mdText = '';
+      try {
+        mdText = await exportArticleMarkdown(article.id);
+      } catch {
+        mdText = generateArticleMarkdown(article);
+      }
+      handleCopy(mdText, 'markdown');
+    } catch {
+      handleCopy(generateArticleMarkdown(article), 'markdown');
+    }
+  };
+
+  const handleGenerateBlueprint = async () => {
+    setGeneratingBlueprint(true);
+    try {
+      const updatedArticle = await generateArticleBlueprint(article.id);
+      if (onArticleUpdated) {
+        onArticleUpdated(updatedArticle);
+      }
+    } catch (err: any) {
+      console.error('Lỗi tạo blueprint:', err);
+      alert(
+        'Không thể tạo blueprint: ' + (err?.response?.data?.detail || err?.message || String(err))
+      );
+    } finally {
+      setGeneratingBlueprint(false);
     }
   };
 
   const tradeoffs = article.architectural_tradeoffs;
   const blueprint = article.nestjs_blueprint;
+  const hasBlueprint = Boolean(
+    blueprint &&
+    (blueprint.code_snippet ||
+      blueprint.suggested_module_structure ||
+      blueprint.architectural_pattern)
+  );
   const learning = article.learning_path;
 
   return (
     <div className="flex flex-col">
-      {/* Sub-Navigation Tabs - Horizontal Swipe on Mobile */}
-      <div className="no-scrollbar flex items-center gap-1.5 overflow-x-auto border-b border-[#e7e2d9] bg-[#fbf9f5] px-2.5 py-2 font-sans text-xs sm:px-6">
-        <button
-          onClick={() => setTab('overview')}
-          className={`flex cursor-pointer items-center gap-1.5 rounded-lg px-2.5 py-1.5 font-medium whitespace-nowrap transition sm:px-3 ${
-            tab === 'overview'
-              ? 'bg-white font-semibold text-[#1c1f24] shadow-xs'
-              : 'text-[#6b6456] hover:bg-[#eee8dc]/60 hover:text-[#1c1f24]'
-          }`}
-        >
-          <Sparkles className="h-3.5 w-3.5 text-amber-600" />
-          Tổng quan
-        </button>
+      {/* Modernized Streamlined Navigation Tabs */}
+      <div className="no-scrollbar flex items-center justify-between border-b border-[#e7e2d9] bg-[#fbf9f5] px-2.5 py-2 font-sans text-xs sm:px-6">
+        <div className="flex items-center gap-1.5 overflow-x-auto">
+          <button
+            onClick={() => setTab('briefing')}
+            className={`flex cursor-pointer items-center gap-1.5 rounded-lg px-2.5 py-1.5 font-medium whitespace-nowrap transition sm:px-3 ${
+              tab === 'briefing'
+                ? 'bg-white font-semibold text-[#1c1f24] shadow-xs ring-1 ring-[#e7e2d9]'
+                : 'text-[#6b6456] hover:bg-[#eee8dc]/60 hover:text-[#1c1f24]'
+            }`}
+          >
+            <Sparkles className="h-3.5 w-3.5 text-amber-600" />
+            Tổng quan & Kiến trúc
+          </button>
 
-        <button
-          onClick={() => setTab('tradeoffs')}
-          className={`flex cursor-pointer items-center gap-1.5 rounded-lg px-2.5 py-1.5 font-medium whitespace-nowrap transition sm:px-3 ${
-            tab === 'tradeoffs'
-              ? 'bg-white font-semibold text-[#1c1f24] shadow-xs'
-              : 'text-[#6b6456] hover:bg-[#eee8dc]/60 hover:text-[#1c1f24]'
-          }`}
-        >
-          <Scale className="h-3.5 w-3.5 text-emerald-700" />
-          Đánh đổi kiến trúc
-        </button>
+          <button
+            onClick={() => setTab('chat')}
+            className={`flex cursor-pointer items-center gap-1.5 rounded-lg px-2.5 py-1.5 font-medium whitespace-nowrap transition sm:px-3 ${
+              tab === 'chat'
+                ? 'bg-white font-semibold text-indigo-900 shadow-xs ring-1 ring-indigo-200'
+                : 'font-medium text-indigo-800 hover:bg-indigo-50/70 hover:text-indigo-950'
+            }`}
+          >
+            <MessageSquare className="h-3.5 w-3.5 text-indigo-600" />
+            Chat Copilot
+          </button>
 
-        <button
-          onClick={() => setTab('blueprint')}
-          className={`flex cursor-pointer items-center gap-1.5 rounded-lg px-2.5 py-1.5 font-medium whitespace-nowrap transition sm:px-3 ${
-            tab === 'blueprint'
-              ? 'bg-white font-semibold text-[#1c1f24] shadow-xs'
-              : 'text-[#6b6456] hover:bg-[#eee8dc]/60 hover:text-[#1c1f24]'
-          }`}
-        >
-          <Code2 className="h-3.5 w-3.5 text-indigo-700" />
-          NestJS Blueprint
-        </button>
+          <button
+            onClick={() => setTab('learning')}
+            className={`flex cursor-pointer items-center gap-1.5 rounded-lg px-2.5 py-1.5 font-medium whitespace-nowrap transition sm:px-3 ${
+              tab === 'learning'
+                ? 'bg-white font-semibold text-[#1c1f24] shadow-xs ring-1 ring-[#e7e2d9]'
+                : 'text-[#6b6456] hover:bg-[#eee8dc]/60 hover:text-[#1c1f24]'
+            }`}
+          >
+            <Compass className="h-3.5 w-3.5 text-purple-700" />
+            Lộ trình & Liên quan
+          </button>
+        </div>
 
-        <button
-          onClick={() => setTab('chat')}
-          className={`flex cursor-pointer items-center gap-1.5 rounded-lg px-2.5 py-1.5 font-medium whitespace-nowrap transition sm:px-3 ${
-            tab === 'chat'
-              ? 'bg-white font-semibold text-indigo-900 shadow-xs ring-1 ring-indigo-200'
-              : 'font-medium text-indigo-800 hover:bg-indigo-50/70 hover:text-indigo-950'
-          }`}
-        >
-          <MessageSquare className="h-3.5 w-3.5 text-indigo-600" />
-          Chat Copilot
-        </button>
-
-        <button
-          onClick={() => setTab('learning')}
-          className={`flex cursor-pointer items-center gap-1.5 rounded-lg px-2.5 py-1.5 font-medium whitespace-nowrap transition sm:px-3 ${
-            tab === 'learning'
-              ? 'bg-white font-semibold text-[#1c1f24] shadow-xs'
-              : 'text-[#6b6456] hover:bg-[#eee8dc]/60 hover:text-[#1c1f24]'
-          }`}
-        >
-          <Compass className="h-3.5 w-3.5 text-purple-700" />
-          Lộ trình & Liên quan
-        </button>
+        {/* Global Markdown / Obsidian Action Buttons */}
+        <div className="hidden items-center gap-2 sm:flex">
+          <button
+            onClick={handleCopyMarkdown}
+            className="flex cursor-pointer items-center gap-1 rounded-lg border border-[#e2dcd0] bg-white px-2.5 py-1 text-[11px] font-medium text-[#554e42] shadow-2xs transition hover:bg-[#eee9df] hover:text-[#1c1f24]"
+            title="Sao chép toàn bộ bài dưới dạng Markdown (Frontmatter) cho Obsidian / Notion"
+          >
+            {copiedMarkdown ? (
+              <Check className="h-3 w-3 text-emerald-600" />
+            ) : (
+              <Copy className="h-3 w-3 text-[#756e60]" />
+            )}
+            <span>{copiedMarkdown ? 'Đã sao chép MD' : 'Copy Markdown'}</span>
+          </button>
+          <button
+            onClick={handleExportMarkdown}
+            disabled={exportingMarkdown}
+            className="flex cursor-pointer items-center gap-1.5 rounded-lg border border-purple-200 bg-purple-50/80 px-2.5 py-1 text-[11px] font-medium text-purple-900 shadow-2xs transition hover:bg-purple-100 disabled:opacity-50"
+            title="Tải file .md chuẩn Obsidian kèm YAML Frontmatter"
+          >
+            <Download
+              className={`h-3 w-3 text-purple-700 ${exportingMarkdown ? 'animate-bounce' : ''}`}
+            />
+            <span>{exportingMarkdown ? 'Đang xuất...' : 'Xuất Obsidian .md'}</span>
+          </button>
+        </div>
       </div>
 
       {/* Main Tab Content Area */}
       <div className="p-3.5 text-[#2c313a] sm:p-6">
-        {/* TAB 1: OVERVIEW */}
-        {tab === 'overview' && (
+        {/* ================= TAB 1: EXECUTIVE BRIEFING (TỔNG QUAN + TRADEOFFS + ON-DEMAND BLUEPRINT) ================= */}
+        {tab === 'briefing' && (
           <div className="space-y-6">
+            {/* Top Toolbar for Mobile / Quick Action */}
+            <div className="flex flex-wrap items-center justify-between gap-2 rounded-xl border border-[#ede7dc] bg-[#fbf9f5] p-2 sm:hidden">
+              <div className="text-[11px] font-medium text-[#756e60]">Second Brain / PKM:</div>
+              <div className="flex items-center gap-1.5">
+                <button
+                  onClick={handleCopyMarkdown}
+                  className="flex items-center gap-1 rounded bg-white px-2 py-1 text-[10px] font-medium text-[#554e42] shadow-2xs"
+                >
+                  {copiedMarkdown ? (
+                    <Check className="h-3 w-3 text-emerald-600" />
+                  ) : (
+                    <Copy className="h-3 w-3" />
+                  )}
+                  <span>{copiedMarkdown ? 'Đã chép MD' : 'Copy MD'}</span>
+                </button>
+                <button
+                  onClick={handleExportMarkdown}
+                  disabled={exportingMarkdown}
+                  className="flex items-center gap-1 rounded bg-purple-100 px-2 py-1 text-[10px] font-medium text-purple-900"
+                >
+                  <Download className="h-3 w-3" />
+                  <span>Tải .md</span>
+                </button>
+              </div>
+            </div>
+
+            {/* Section 1: Executive Summary */}
             <div>
               <div className="mb-2 flex items-center justify-between">
                 <h3 className="flex items-center gap-1.5 font-sans text-xs font-bold tracking-wider text-[#756e60] uppercase">
@@ -182,7 +282,7 @@ export const ArticleModalTabs: React.FC<ArticleModalTabsProps> = ({
               </div>
             </div>
 
-            {/* Key Takeaways */}
+            {/* Section 2: Key Takeaways */}
             {article.key_takeaways && article.key_takeaways.length > 0 && (
               <div>
                 <h3 className="mb-2 flex items-center gap-1.5 font-sans text-xs font-bold tracking-wider text-[#756e60] uppercase">
@@ -196,7 +296,7 @@ export const ArticleModalTabs: React.FC<ArticleModalTabsProps> = ({
               </div>
             )}
 
-            {/* Tech Stack Box */}
+            {/* Section 3: Tech Stack Box */}
             {article.new_tech_stacks && article.new_tech_stacks.length > 0 && (
               <div>
                 <h3 className="mb-2 flex items-center gap-1.5 font-sans text-xs font-bold tracking-wider text-[#756e60] uppercase">
@@ -212,155 +312,202 @@ export const ArticleModalTabs: React.FC<ArticleModalTabsProps> = ({
                 </div>
               </div>
             )}
-          </div>
-        )}
 
-        {/* TAB 2: ARCHITECTURAL TRADEOFFS */}
-        {tab === 'tradeoffs' && (
-          <div className="space-y-4 font-sans text-xs">
-            <div className="rounded-xl border border-blue-200 bg-blue-50/60 p-3.5 text-blue-900">
-              <p className="font-medium">
-                ⚖️ <strong>Đánh giá phản biện (Critical Review):</strong> Mọi quyết định kỹ thuật
-                đều có sự đánh đổi giữa hiệu năng, độ phức tạp và chi phí vận hành. Dưới đây là phân
-                tích khách quan cho hệ thống thực tế:
-              </p>
-            </div>
-
-            <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-              {/* Pros */}
-              <div className="rounded-xl border border-emerald-200 bg-emerald-50/40 p-4">
-                <h4 className="flex items-center gap-1.5 font-bold text-emerald-900">
-                  <CheckCircle2 className="h-4 w-4 text-emerald-700" /> Ưu điểm & Điểm vượt trội
-                </h4>
-                <ul className="mt-2.5 list-inside list-disc space-y-1.5 text-[#2c313a]">
-                  {tradeoffs?.pros && tradeoffs.pros.length > 0 ? (
-                    tradeoffs.pros.map((p, i) => <li key={i}>{p}</li>)
-                  ) : (
-                    <li className="text-[#756e60] italic">
-                      Bấm "Phân tích lại bằng AI" để trích xuất đầy đủ ưu điểm.
-                    </li>
-                  )}
-                </ul>
+            {/* Section 4: Architectural Tradeoffs (INLINE SEAMLESS VIEW) */}
+            <div className="space-y-4 pt-2 font-sans text-xs">
+              <div className="flex items-center justify-between border-t border-[#ede7dc] pt-5">
+                <h3 className="flex items-center gap-1.5 text-xs font-bold tracking-wider text-[#756e60] uppercase">
+                  ⚖️ Đánh giá phản biện & Đánh đổi kiến trúc (Architectural Tradeoffs):
+                </h3>
               </div>
 
-              {/* Cons */}
-              <div className="rounded-xl border border-rose-200 bg-rose-50/40 p-4">
-                <h4 className="flex items-center gap-1.5 font-bold text-rose-900">
-                  <AlertTriangle className="h-4 w-4 text-rose-700" /> Nhược điểm & Chi phí phải trả
-                </h4>
-                <ul className="mt-2.5 list-inside list-disc space-y-1.5 text-[#2c313a]">
-                  {tradeoffs?.cons && tradeoffs.cons.length > 0 ? (
-                    tradeoffs.cons.map((c, i) => <li key={i}>{c}</li>)
-                  ) : (
-                    <li className="text-[#756e60] italic">
-                      Bấm "Phân tích lại bằng AI" để xem các nhược điểm kỹ thuật.
-                    </li>
-                  )}
-                </ul>
-              </div>
-            </div>
-
-            {/* When NOT to use */}
-            <div className="rounded-xl border border-amber-300 bg-amber-50/60 p-4">
-              <h4 className="flex items-center gap-1.5 font-bold text-amber-950">
-                🛑 Khi nào KHÔNG NÊN áp dụng? (Tránh Over-engineering)
-              </h4>
-              <ul className="mt-2.5 list-inside list-disc space-y-1.5 text-[#3b3223]">
-                {tradeoffs?.when_not_to_use && tradeoffs.when_not_to_use.length > 0 ? (
-                  tradeoffs.when_not_to_use.map((w, i) => <li key={i}>{w}</li>)
-                ) : (
-                  <li className="text-[#756e60] italic">
-                    Chưa có dữ liệu chống lạm dụng kiến trúc. Hãy bấm phân tích lại.
-                  </li>
-                )}
-              </ul>
-            </div>
-
-            {/* Scalability Bottlenecks */}
-            <div className="rounded-xl border border-purple-200 bg-purple-50/40 p-4">
-              <h4 className="flex items-center gap-1.5 font-bold text-purple-950">
-                ⚡ Điểm nghẽn khi Scale (Scalability Bottlenecks)
-              </h4>
-              <ul className="mt-2.5 list-inside list-disc space-y-1.5 text-[#2c313a]">
-                {tradeoffs?.scalability_bottlenecks &&
-                tradeoffs.scalability_bottlenecks.length > 0 ? (
-                  tradeoffs.scalability_bottlenecks.map((b, i) => <li key={i}>{b}</li>)
-                ) : (
-                  <li className="text-[#756e60] italic">
-                    Chưa phát hiện điểm nghẽn. Hãy bấm phân tích lại.
-                  </li>
-                )}
-              </ul>
-            </div>
-          </div>
-        )}
-
-        {/* TAB 3: NESTJS BLUEPRINT */}
-        {tab === 'blueprint' && (
-          <div className="space-y-4 font-sans text-xs">
-            <div className="flex items-center justify-between rounded-xl border border-indigo-200 bg-indigo-50/60 p-3.5 text-indigo-900">
-              <div>
-                <p className="font-bold">🧱 Kiến trúc đề xuất cho NestJS:</p>
-                <p className="mt-0.5 text-[11px] text-indigo-800">
-                  {blueprint?.architectural_pattern ||
-                    'Hexagonal Architecture / Modular Service Pattern'}
+              <div className="rounded-xl border border-blue-200 bg-blue-50/60 p-3.5 text-blue-900">
+                <p className="font-medium">
+                  Mọi quyết định kỹ thuật đều có sự đánh đổi giữa hiệu năng, độ phức tạp và chi phí
+                  vận hành:
                 </p>
               </div>
-              {blueprint?.code_snippet && (
-                <button
-                  onClick={() => handleCopy(blueprint.code_snippet || '', 'code')}
-                  className="flex cursor-pointer items-center gap-1 rounded bg-white px-2.5 py-1 text-xs font-medium text-indigo-900 shadow-2xs transition hover:bg-indigo-100"
-                >
-                  {copiedCode ? (
-                    <Check className="h-3.5 w-3.5 text-emerald-600" />
-                  ) : (
-                    <Copy className="h-3.5 w-3.5" />
-                  )}
-                  {copiedCode ? 'Đã sao chép' : 'Sao chép mã'}
-                </button>
-              )}
+
+              <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                {/* Pros */}
+                <div className="rounded-xl border border-emerald-200 bg-emerald-50/40 p-4">
+                  <h4 className="flex items-center gap-1.5 font-bold text-emerald-900">
+                    <CheckCircle2 className="h-4 w-4 text-emerald-700" /> Ưu điểm & Điểm vượt trội
+                  </h4>
+                  <ul className="mt-2.5 list-inside list-disc space-y-1.5 text-[#2c313a]">
+                    {tradeoffs?.pros && tradeoffs.pros.length > 0 ? (
+                      tradeoffs.pros.map((p, i) => <li key={i}>{p}</li>)
+                    ) : (
+                      <li className="text-[#756e60] italic">
+                        Bấm "Phân tích lại bằng AI" để trích xuất đầy đủ ưu điểm.
+                      </li>
+                    )}
+                  </ul>
+                </div>
+
+                {/* Cons */}
+                <div className="rounded-xl border border-rose-200 bg-rose-50/40 p-4">
+                  <h4 className="flex items-center gap-1.5 font-bold text-rose-900">
+                    <AlertTriangle className="h-4 w-4 text-rose-700" /> Nhược điểm & Chi phí phải
+                    trả
+                  </h4>
+                  <ul className="mt-2.5 list-inside list-disc space-y-1.5 text-[#2c313a]">
+                    {tradeoffs?.cons && tradeoffs.cons.length > 0 ? (
+                      tradeoffs.cons.map((c, i) => <li key={i}>{c}</li>)
+                    ) : (
+                      <li className="text-[#756e60] italic">
+                        Bấm "Phân tích lại bằng AI" để xem các nhược điểm kỹ thuật.
+                      </li>
+                    )}
+                  </ul>
+                </div>
+              </div>
+
+              {/* When NOT to use & Scalability Bottlenecks */}
+              <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                <div className="rounded-xl border border-amber-300 bg-amber-50/60 p-4">
+                  <h4 className="flex items-center gap-1.5 font-bold text-amber-950">
+                    🛑 Khi nào KHÔNG NÊN áp dụng?
+                  </h4>
+                  <ul className="mt-2.5 list-inside list-disc space-y-1.5 text-[#3b3223]">
+                    {tradeoffs?.when_not_to_use && tradeoffs.when_not_to_use.length > 0 ? (
+                      tradeoffs.when_not_to_use.map((w, i) => <li key={i}>{w}</li>)
+                    ) : (
+                      <li className="text-[#756e60] italic">
+                        Chưa có dữ liệu chống lạm dụng kiến trúc. Hãy bấm phân tích lại.
+                      </li>
+                    )}
+                  </ul>
+                </div>
+
+                <div className="rounded-xl border border-purple-200 bg-purple-50/40 p-4">
+                  <h4 className="flex items-center gap-1.5 font-bold text-purple-950">
+                    ⚡ Điểm nghẽn khi Scale (Scalability)
+                  </h4>
+                  <ul className="mt-2.5 list-inside list-disc space-y-1.5 text-[#2c313a]">
+                    {tradeoffs?.scalability_bottlenecks &&
+                    tradeoffs.scalability_bottlenecks.length > 0 ? (
+                      tradeoffs.scalability_bottlenecks.map((b, i) => <li key={i}>{b}</li>)
+                    ) : (
+                      <li className="text-[#756e60] italic">
+                        Chưa phát hiện điểm nghẽn. Hãy bấm phân tích lại.
+                      </li>
+                    )}
+                  </ul>
+                </div>
+              </div>
             </div>
 
-            {blueprint?.suggested_module_structure && (
-              <div className="rounded-xl border border-[#e7e2d9] bg-white p-3.5">
-                <span className="font-bold text-[#475569]">📁 Cấu trúc Module gợi ý:</span>
-                <code className="mt-1 block rounded bg-[#f4efe6] px-2 py-1 font-mono text-[11px] text-[#2c313a]">
-                  {blueprint.suggested_module_structure}
-                </code>
-              </div>
-            )}
-
-            {blueprint?.database_integration && (
-              <div className="rounded-xl border border-[#e7e2d9] bg-white p-3.5">
-                <span className="font-bold text-[#475569]">
-                  🗄️ Tích hợp Cơ sở dữ liệu (Prisma / pgvector / Cache):
-                </span>
-                <p className="mt-1 text-[#2c313a]">{blueprint.database_integration}</p>
-              </div>
-            )}
-
-            {/* Code Snippet Box */}
-            <div className="rounded-xl border border-[#24292f] bg-[#1e2329] p-4 text-white">
-              <div className="mb-2 flex items-center justify-between text-[11px] text-[#9ca3af]">
-                <span>typescript (NestJS Service / Module)</span>
-                {blueprint?.code_snippet && (
+            {/* Section 5: ON-DEMAND ARCHITECTURAL BLUEPRINT */}
+            <div className="border-t border-[#ede7dc] pt-6 font-sans">
+              <div className="mb-3 flex items-center justify-between">
+                <h3 className="flex items-center gap-1.5 text-xs font-bold tracking-wider text-[#756e60] uppercase">
+                  <Code2 className="h-3.5 w-3.5 text-indigo-700" /> Kịch bản Kiến trúc & Blueprint
+                  (On-Demand):
+                </h3>
+                {hasBlueprint && (
                   <button
-                    onClick={() => handleCopy(blueprint.code_snippet || '', 'code')}
-                    className="cursor-pointer hover:text-white"
+                    onClick={handleGenerateBlueprint}
+                    disabled={generatingBlueprint}
+                    className="flex cursor-pointer items-center gap-1 rounded-lg border border-indigo-200 bg-indigo-50 px-2.5 py-1 text-[11px] font-medium text-indigo-900 transition hover:bg-indigo-100 disabled:opacity-50"
                   >
-                    {copiedCode ? 'Copied!' : 'Copy Code'}
+                    <RefreshCw className={`h-3 w-3 ${generatingBlueprint ? 'animate-spin' : ''}`} />
+                    <span>{generatingBlueprint ? 'Đang tạo lại...' : 'Làm mới Blueprint'}</span>
                   </button>
                 )}
               </div>
-              <pre className="max-h-96 overflow-x-auto overflow-y-auto font-mono text-[11px] leading-relaxed text-[#e5e7eb]">
-                {blueprint?.code_snippet ||
-                  `// Bấm "Phân tích lại bằng AI" để AI sinh code mẫu NestJS chuyên biệt cho bài viết này.\n@Injectable()\nexport class ExampleService {\n  // Implementation pattern\n}`}
-              </pre>
+
+              {hasBlueprint ? (
+                <div className="space-y-4 text-xs">
+                  <div className="flex items-center justify-between rounded-xl border border-indigo-200 bg-indigo-50/60 p-3.5 text-indigo-900">
+                    <div>
+                      <p className="font-bold">🧱 Kiến trúc đề xuất:</p>
+                      <p className="mt-0.5 text-[11px] text-indigo-800">
+                        {blueprint?.architectural_pattern ||
+                          'Hexagonal Architecture / Modular Service Pattern'}
+                      </p>
+                    </div>
+                    {blueprint?.code_snippet && (
+                      <button
+                        onClick={() => handleCopy(blueprint.code_snippet || '', 'code')}
+                        className="flex cursor-pointer items-center gap-1 rounded bg-white px-2.5 py-1 text-xs font-medium text-indigo-900 shadow-2xs transition hover:bg-indigo-100"
+                      >
+                        {copiedCode ? (
+                          <Check className="h-3.5 w-3.5 text-emerald-600" />
+                        ) : (
+                          <Copy className="h-3.5 w-3.5" />
+                        )}
+                        {copiedCode ? 'Đã sao chép' : 'Sao chép mã'}
+                      </button>
+                    )}
+                  </div>
+
+                  {blueprint?.suggested_module_structure && (
+                    <div className="rounded-xl border border-[#e7e2d9] bg-white p-3.5">
+                      <span className="font-bold text-[#475569]">📁 Cấu trúc Module gợi ý:</span>
+                      <code className="mt-1 block rounded bg-[#f4efe6] px-2 py-1 font-mono text-[11px] text-[#2c313a]">
+                        {blueprint.suggested_module_structure}
+                      </code>
+                    </div>
+                  )}
+
+                  {blueprint?.database_integration && (
+                    <div className="rounded-xl border border-[#e7e2d9] bg-white p-3.5">
+                      <span className="font-bold text-[#475569]">🗄️ Tích hợp Cơ sở dữ liệu:</span>
+                      <p className="mt-1 text-[#2c313a]">{blueprint.database_integration}</p>
+                    </div>
+                  )}
+
+                  {blueprint?.code_snippet && (
+                    <div className="rounded-xl border border-[#24292f] bg-[#1e2329] p-4 text-white">
+                      <div className="mb-2 flex items-center justify-between text-[11px] text-[#9ca3af]">
+                        <span>typescript (Module Implementation)</span>
+                        <button
+                          onClick={() => handleCopy(blueprint.code_snippet || '', 'code')}
+                          className="cursor-pointer hover:text-white"
+                        >
+                          {copiedCode ? 'Copied!' : 'Copy Code'}
+                        </button>
+                      </div>
+                      <pre className="max-h-96 overflow-x-auto overflow-y-auto font-mono text-[11px] leading-relaxed text-[#e5e7eb]">
+                        {blueprint.code_snippet}
+                      </pre>
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <div className="rounded-xl border border-dashed border-indigo-200 bg-gradient-to-r from-indigo-50/50 to-purple-50/50 p-6 text-center">
+                  <div className="mx-auto mb-2.5 flex h-11 w-11 items-center justify-center rounded-xl bg-white text-indigo-700 shadow-xs">
+                    <Cpu className="h-6 w-6" />
+                  </div>
+                  <h4 className="font-semibold text-[#1c1f24]">
+                    Tạo Blueprint Kiến trúc Thực Chiến theo Yêu Cầu
+                  </h4>
+                  <p className="mx-auto mt-1 max-w-md text-xs leading-relaxed text-[#64748b]">
+                    Tiết kiệm tài nguyên AI: Blueprint và mã nguồn mẫu NestJS/TypeScript chỉ được
+                    tạo khi bạn chủ động yêu cầu cho bài viết này.
+                  </p>
+                  <div className="mt-4">
+                    <button
+                      onClick={handleGenerateBlueprint}
+                      disabled={generatingBlueprint}
+                      className="inline-flex cursor-pointer items-center gap-2 rounded-xl bg-indigo-900 px-4 py-2.5 text-xs font-semibold text-white shadow-xs transition hover:bg-indigo-950 disabled:opacity-50"
+                    >
+                      <Code2 className={`h-4 w-4 ${generatingBlueprint ? 'animate-spin' : ''}`} />
+                      <span>
+                        {generatingBlueprint
+                          ? 'AI đang tổng hợp mã nguồn kiến trúc...'
+                          : 'Tạo kiến trúc / Blueprint ngay'}
+                      </span>
+                    </button>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         )}
 
-        {/* TAB 4: CHAT COPILOT */}
+        {/* ================= TAB 2: CHAT COPILOT ================= */}
         {tab === 'chat' && (
           <Suspense
             fallback={
@@ -377,8 +524,7 @@ export const ArticleModalTabs: React.FC<ArticleModalTabsProps> = ({
           </Suspense>
         )}
 
-
-        {/* TAB 5: LEARNING PATH & RELATED */}
+        {/* ================= TAB 3: LEARNING PATH & RELATED ================= */}
         {tab === 'learning' && (
           <div className="space-y-5 font-sans text-xs">
             <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
@@ -467,7 +613,7 @@ export const ArticleModalTabs: React.FC<ArticleModalTabsProps> = ({
         )}
 
         {/* Source link footer */}
-        <div className="mt-6 border-t border-[#e7e2d9] pt-3 font-sans">
+        <div className="mt-6 flex flex-wrap items-center justify-between gap-3 border-t border-[#e7e2d9] pt-3 font-sans">
           <a
             href={article.url}
             target="_blank"
@@ -477,6 +623,14 @@ export const ArticleModalTabs: React.FC<ArticleModalTabsProps> = ({
             <span>Đọc bài gốc tại {article.source_name}</span>
             <ExternalLink className="h-3 w-3 shrink-0" />
           </a>
+
+          <button
+            onClick={handleExportMarkdown}
+            className="inline-flex cursor-pointer items-center gap-1 text-xs font-medium text-purple-900 hover:underline"
+          >
+            <FileText className="h-3.5 w-3.5" />
+            <span>Tải Markdown cho Obsidian</span>
+          </button>
         </div>
       </div>
     </div>

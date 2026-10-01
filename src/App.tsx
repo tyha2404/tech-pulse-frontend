@@ -9,37 +9,25 @@ import {
   AlertCircle,
   Clock,
   ShieldCheck,
-  Flame,
-  Layers,
-  X,
-  Search,
   BookOpen,
   ArrowUpRight,
-  HelpCircle,
-  EyeOff,
-  Eye,
-  ArrowUpDown,
-  ArrowDown,
-  Bookmark,
-  Activity,
-  ThumbsUp,
-  ThumbsDown,
-  Compass,
 } from 'lucide-react';
 import { apiClient, getPersonalizedArticles, sendArticleFeedback } from './api';
-import type { Article, Source, CrawlTestResult } from './types';
+import type { Article, Source } from './types';
+import { FeedHeader } from './components/FeedHeader';
+import { FilterToolbar } from './components/FilterToolbar';
+import { ArticleCard } from './components/ArticleCard';
+import { ArticleModal } from './components/ArticleModal';
+import { ExplanationModal } from './components/ExplanationModal';
+import { AddSourceModal } from './components/AddSourceModal';
 import { SemanticSearchBar } from './components/SemanticSearchBar';
 
-const ArticleModalTabs = lazy(() =>
-  import('./components/ArticleModalTabs').then((m) => ({ default: m.ArticleModalTabs }))
-);
 const RadarIntelligenceView = lazy(() =>
   import('./components/RadarIntelligenceView').then((m) => ({ default: m.RadarIntelligenceView }))
 );
 const AdminDashboard = lazy(() =>
   import('./components/AdminDashboard').then((m) => ({ default: m.AdminDashboard }))
 );
-
 
 export default function App() {
   const [activeTab, setActiveTab] = useState<
@@ -68,18 +56,11 @@ export default function App() {
   const [viewHidden, setViewHidden] = useState<boolean>(false);
   const [groupDuplicates, setGroupDuplicates] = useState<boolean>(true);
 
-  // Modals & Details
+  // Modals
   const [selectedArticle, setSelectedArticle] = useState<Article | null>(null);
   const [summarizingArticleId, setSummarizingArticleId] = useState<number | null>(null);
   const [showExplanationModal, setShowExplanationModal] = useState(false);
-
-  // New source modal state
   const [isAddSourceOpen, setIsAddSourceOpen] = useState(false);
-  const [newSourceName, setNewSourceName] = useState('');
-  const [newSourceUrl, setNewSourceUrl] = useState('');
-  const [newSourceCategory, setNewSourceCategory] = useState('Backend & Tech');
-  const [testingSource, setTestingSource] = useState(false);
-  const [testResult, setTestResult] = useState<CrawlTestResult | null>(null);
 
   const PAGE_SIZE = 20;
   const articlesLengthRef = useRef(articles.length);
@@ -123,7 +104,6 @@ export default function App() {
         if (reset) {
           setArticles(newItems);
         } else {
-          // Prevent duplicate keys if items shifted
           setArticles((prev) => {
             const existingIds = new Set(prev.map((a) => a.id));
             const uniqueNew = newItems.filter((a) => !existingIds.has(a.id));
@@ -155,19 +135,18 @@ export default function App() {
     ]
   );
 
-  const handleFeedback = async (
-    e: React.MouseEvent,
-    articleId: number,
-    type: 'like' | 'dislike'
-  ) => {
-    e.stopPropagation();
-    try {
-      setFeedbackMap((prev) => ({ ...prev, [articleId]: type }));
-      await sendArticleFeedback(articleId, type);
-    } catch (err) {
-      console.error('Feedback error:', err);
-    }
-  };
+  const handleFeedback = useCallback(
+    async (e: React.MouseEvent, articleId: number, type: 'like' | 'dislike') => {
+      e.stopPropagation();
+      try {
+        setFeedbackMap((prev) => ({ ...prev, [articleId]: type }));
+        await sendArticleFeedback(articleId, type);
+      } catch (err) {
+        console.error('Feedback error:', err);
+      }
+    },
+    []
+  );
 
   const fetchSources = async () => {
     try {
@@ -201,7 +180,6 @@ export default function App() {
   useEffect(() => {
     const handleScroll = () => {
       if (activeTab !== 'feed' || loading || loadingMore || !hasMore) return;
-      // When scrolled near the bottom (within 250px)
       if (window.innerHeight + window.scrollY >= document.documentElement.scrollHeight - 250) {
         fetchArticles(false);
       }
@@ -209,25 +187,8 @@ export default function App() {
 
     window.addEventListener('scroll', handleScroll, { passive: true });
     return () => window.removeEventListener('scroll', handleScroll);
-  }, [
-    activeTab,
-    loading,
-    loadingMore,
-    hasMore,
-    articles.length,
-    selectedCategory,
-    selectedSourceId,
-    topOnly,
-    sortBy,
-    readStatus,
-    bookmarkedOnly,
-    viewHidden,
-    groupDuplicates,
-    searchQuery,
-    fetchArticles,
-  ]);
+  }, [activeTab, loading, loadingMore, hasMore, fetchArticles]);
 
-  // Handlers for mark read / unread and hide / unhide
   const handleToggleRead = async (
     articleId: number,
     currentRead: boolean,
@@ -235,7 +196,6 @@ export default function App() {
   ) => {
     if (e) e.stopPropagation();
     const nextRead = !currentRead;
-    // Optimistic UI
     setArticles((prev) => prev.map((a) => (a.id === articleId ? { ...a, is_read: nextRead } : a)));
     if (selectedArticle && selectedArticle.id === articleId) {
       setSelectedArticle({ ...selectedArticle, is_read: nextRead });
@@ -247,26 +207,41 @@ export default function App() {
     }
   };
 
-  const handleToggleBookmark = async (
-    articleId: number,
-    currentBookmarked: boolean,
-    e?: React.MouseEvent
-  ) => {
-    if (e) e.stopPropagation();
-    const nextBookmarked = !currentBookmarked;
-    // Optimistic UI
-    setArticles((prev) =>
-      prev.map((a) => (a.id === articleId ? { ...a, is_bookmarked: nextBookmarked } : a))
-    );
-    if (selectedArticle && selectedArticle.id === articleId) {
-      setSelectedArticle({ ...selectedArticle, is_bookmarked: nextBookmarked });
-    }
-    try {
-      await apiClient.patch(`/articles/${articleId}`, { is_bookmarked: nextBookmarked });
-    } catch (err) {
-      console.error('Lỗi cập nhật trạng thái bookmark:', err);
-    }
-  };
+  const handleToggleBookmark = useCallback(
+    async (articleId: number, currentBookmarked: boolean, e?: React.MouseEvent) => {
+      if (e) e.stopPropagation();
+      const nextBookmarked = !currentBookmarked;
+      setArticles((prev) =>
+        prev.map((a) => (a.id === articleId ? { ...a, is_bookmarked: nextBookmarked } : a))
+      );
+      if (selectedArticle && selectedArticle.id === articleId) {
+        setSelectedArticle((curr) => (curr ? { ...curr, is_bookmarked: nextBookmarked } : null));
+      }
+      try {
+        await apiClient.patch(`/articles/${articleId}`, { is_bookmarked: nextBookmarked });
+      } catch (err) {
+        console.error('Lỗi cập nhật trạng thái bookmark:', err);
+      }
+    },
+    [selectedArticle]
+  );
+
+  const handleToggleHidden = useCallback(
+    async (articleId: number, currentHidden: boolean, e?: React.MouseEvent) => {
+      if (e) e.stopPropagation();
+      const nextHidden = !currentHidden;
+      setArticles((prev) => prev.filter((a) => a.id !== articleId));
+      if (selectedArticle && selectedArticle.id === articleId) {
+        setSelectedArticle(null);
+      }
+      try {
+        await apiClient.patch(`/articles/${articleId}`, { is_hidden: nextHidden });
+      } catch (err) {
+        console.error('Lỗi cập nhật trạng thái ẩn bài:', err);
+      }
+    },
+    [selectedArticle]
+  );
 
   const handleSummarizeArticle = async (articleId: number) => {
     try {
@@ -275,7 +250,7 @@ export default function App() {
         `/articles/${articleId}/summarize`,
         {},
         {
-          timeout: 180000, // 3 minutes specifically for AI generation
+          timeout: 180000,
         }
       );
       const updated: Article = res.data;
@@ -289,25 +264,6 @@ export default function App() {
       alert('Lỗi khi tóm tắt lại bằng AI: ' + errMsg);
     } finally {
       setSummarizingArticleId(null);
-    }
-  };
-
-  const handleToggleHidden = async (
-    articleId: number,
-    currentHidden: boolean,
-    e?: React.MouseEvent
-  ) => {
-    if (e) e.stopPropagation();
-    const nextHidden = !currentHidden;
-    // Optimistic UI: remove from current view
-    setArticles((prev) => prev.filter((a) => a.id !== articleId));
-    if (selectedArticle && selectedArticle.id === articleId) {
-      setSelectedArticle(null);
-    }
-    try {
-      await apiClient.patch(`/articles/${articleId}`, { is_hidden: nextHidden });
-    } catch (err) {
-      console.error('Lỗi cập nhật trạng thái ẩn bài:', err);
     }
   };
 
@@ -354,7 +310,7 @@ export default function App() {
     }
   };
 
-  // Pull to refresh gesture logic
+  // Pull to refresh gestures
   const handleTouchStart = (e: React.TouchEvent | React.MouseEvent) => {
     if (window.scrollY === 0) {
       const clientY = 'touches' in e ? e.touches[0].clientY : (e as React.MouseEvent).clientY;
@@ -368,7 +324,6 @@ export default function App() {
     const clientY = 'touches' in e ? e.touches[0].clientY : (e as React.MouseEvent).clientY;
     const diff = clientY - pullStartY;
     if (diff > 0 && window.scrollY === 0) {
-      // Elastic damping effect
       setPullDistance(Math.min(diff * 0.45, 90));
     }
   };
@@ -380,7 +335,6 @@ export default function App() {
       setPullDistance(50);
       try {
         await handleCrawlAll(true);
-        // Refresh articles
         await fetchArticles();
       } finally {
         setTimeout(() => setPullDistance(0), 400);
@@ -411,48 +365,6 @@ export default function App() {
     }
   };
 
-  const handleTestSource = async () => {
-    if (!newSourceUrl) return;
-    setTestingSource(true);
-    setTestResult(null);
-    try {
-      const res = await apiClient.post('/sources/test', null, {
-        params: { target_url: newSourceUrl },
-      });
-      setTestResult(res.data);
-    } catch (err: any) {
-      setTestResult({
-        success: false,
-        detected_type: 'unknown',
-        items_count: 0,
-        sample_titles: [],
-        error: err?.response?.data?.detail || err.message,
-      });
-    } finally {
-      setTestingSource(false);
-    }
-  };
-
-  const handleCreateSource = async (e: React.FormEvent) => {
-    e.preventDefault();
-    try {
-      await apiClient.post('/sources', {
-        name: newSourceName,
-        url: newSourceUrl,
-        category: newSourceCategory,
-        is_active: true,
-      });
-      setIsAddSourceOpen(false);
-      setNewSourceName('');
-      setNewSourceUrl('');
-      setTestResult(null);
-      await fetchSources();
-    } catch (err: any) {
-      alert('Lỗi: ' + (err?.response?.data?.detail || err.message));
-    }
-  };
-
-  // Group articles by published date
   const formatGroupDate = (dateStr?: string) => {
     if (!dateStr) return 'Mới cập nhật / Khác';
     const d = new Date(dateStr);
@@ -480,12 +392,10 @@ export default function App() {
     });
   };
 
-  // Group tech stacks with articles
   const allTechStacks = articles
     .flatMap((a) => (a.new_tech_stacks || []).map((ts) => ({ ...ts, article: a })))
     .filter((ts) => ts.name);
 
-  // Group current articles into ordered date sections based on local timezone
   const getLocalDateKey = (dateStr?: string) => {
     if (!dateStr) return 'unknown';
     const d = new Date(dateStr);
@@ -514,415 +424,51 @@ export default function App() {
 
   return (
     <div className="min-h-screen bg-[#fbf9f5] font-serif text-[#2c313a] selection:bg-amber-100 selection:text-amber-900">
-      {/* Top Header - Book / Newspaper Masthead Style */}
-      <header className="header-safe-pt sticky top-0 z-30 border-b border-[#e7e2d9] bg-[#fbf9f5]/95 px-3.5 pb-3 sm:px-6 sm:pb-3.5">
-        <div className="mx-auto flex max-w-5xl items-center justify-between gap-2">
-          <div className="flex min-w-0 items-center gap-2 sm:gap-3">
-            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-[#24292f] font-serif text-base font-bold text-white shadow-sm">
-              TP
-            </div>
-            <div className="min-w-0">
-              <div className="flex items-center gap-1.5 sm:gap-2">
-                <span className="font-serif text-lg font-bold tracking-tight text-[#1c1f24] sm:text-xl">
-                  TechPulse
-                </span>
-              </div>
-            </div>
-          </div>
+      {/* Sub-component: Modular Feed Header */}
+      <FeedHeader
+        activeTab={activeTab}
+        setActiveTab={setActiveTab}
+        techStacksCount={allTechStacks.length}
+        sourcesCount={sources.length}
+        crawlingAll={crawlingAll}
+        onCrawlAll={() => handleCrawlAll()}
+        onOpenExplanation={() => setShowExplanationModal(true)}
+        pullDistance={pullDistance}
+      />
 
-          {/* Desktop Navigation Bar */}
-          <div className="hidden items-center rounded-lg border border-[#e2dcd0] bg-[#eee9df]/80 p-1 font-sans md:flex">
-            <button
-              onClick={() => setActiveTab('feed')}
-              className={`flex items-center gap-1.5 rounded-md px-3 py-1.5 text-xs font-medium transition ${
-                activeTab === 'feed'
-                  ? 'bg-white font-semibold text-[#1c1f24] shadow-xs'
-                  : 'text-[#6b6456] hover:text-[#1c1f24]'
-              }`}
-            >
-              <BookOpen className="h-3.5 w-3.5" /> Bài đọc
-            </button>
-            <button
-              onClick={() => setActiveTab('semantic')}
-              className={`flex items-center gap-1.5 rounded-md px-3 py-1.5 text-xs font-medium transition ${
-                activeTab === 'semantic'
-                  ? 'bg-white font-semibold text-indigo-950 shadow-xs'
-                  : 'text-[#6b6456] hover:text-[#1c1f24]'
-              }`}
-            >
-              <Search className="h-3.5 w-3.5 text-indigo-600" /> Semantic Search
-            </button>
-            <button
-              onClick={() => setActiveTab('personalized')}
-              className={`flex items-center gap-1.5 rounded-md px-3 py-1.5 text-xs font-medium transition ${
-                activeTab === 'personalized'
-                  ? 'bg-white font-semibold text-rose-950 shadow-xs'
-                  : 'text-[#6b6456] hover:text-[#1c1f24]'
-              }`}
-            >
-              <Compass className="h-3.5 w-3.5 text-rose-500" /> Dành cho bạn
-            </button>
-            <button
-              onClick={() => setActiveTab('radar')}
-              className={`flex items-center gap-1.5 rounded-md px-3 py-1.5 text-xs font-medium transition ${
-                activeTab === 'radar'
-                  ? 'bg-white font-semibold text-[#1c1f24] shadow-xs'
-                  : 'text-[#6b6456] hover:text-[#1c1f24]'
-              }`}
-            >
-              <Sparkles className="h-3.5 w-3.5 text-amber-600" /> Radar Tech ({allTechStacks.length}
-              )
-            </button>
-            <button
-              onClick={() => setActiveTab('sources')}
-              className={`flex items-center gap-1.5 rounded-md px-3 py-1.5 text-xs font-medium transition ${
-                activeTab === 'sources'
-                  ? 'bg-white font-semibold text-[#1c1f24] shadow-xs'
-                  : 'text-[#6b6456] hover:text-[#1c1f24]'
-              }`}
-            >
-              <Layers className="h-3.5 w-3.5" /> Nguồn ({sources.length})
-            </button>
-            <button
-              onClick={() => setActiveTab('admin')}
-              className={`flex items-center gap-1.5 rounded-md px-3.5 py-1.5 text-xs font-medium transition ${
-                activeTab === 'admin'
-                  ? 'bg-white font-semibold text-[#1c1f24] shadow-xs'
-                  : 'text-[#6b6456] hover:text-[#1c1f24]'
-              }`}
-            >
-              <Activity className="h-3.5 w-3.5 text-emerald-600" /> Admin Health
-            </button>
-          </div>
-
-          {/* Top Actions */}
-          <div className="flex shrink-0 items-center gap-1.5 font-sans sm:gap-2">
-            <button
-              onClick={() => setShowExplanationModal(true)}
-              className="cursor-pointer rounded-lg border border-[#e2dcd0] p-1.5 text-[#756e60] transition hover:bg-[#eee9df] hover:text-[#1c1f24] sm:p-2"
-              title="Tìm hiểu về Điểm AI & Radar Tech Stack"
-            >
-              <HelpCircle className="h-4 w-4" />
-            </button>
-            <button
-              onClick={() => handleCrawlAll()}
-              disabled={crawlingAll}
-              className="flex cursor-pointer items-center gap-1 rounded-lg bg-[#2c313a] px-2.5 py-1.5 text-xs font-medium text-white shadow-xs transition hover:bg-[#1a1d23] disabled:opacity-50 sm:gap-1.5 sm:px-3.5"
-            >
-              <RefreshCw className={`h-3.5 w-3.5 ${crawlingAll ? 'animate-spin' : ''}`} />
-              <span className="hidden sm:inline">
-                {crawlingAll ? 'Đang cập nhật...' : 'Cập nhật tin mới'}
-              </span>
-              <span className="sm:hidden">{crawlingAll ? 'Đang cào' : 'Cập nhật'}</span>
-            </button>
-          </div>
-        </div>
-
-        {/* Mobile Navigation Tabs */}
-        <div className="no-scrollbar mt-2.5 flex items-center justify-around gap-1 overflow-x-auto border-t border-[#e7e2d9]/60 pt-2 font-sans text-[11px] md:hidden">
-          <button
-            onClick={() => setActiveTab('feed')}
-            className={`flex shrink-0 items-center justify-center gap-1 rounded px-2.5 py-1.5 text-center font-medium ${
-              activeTab === 'feed' ? 'bg-[#eee9df] font-bold text-[#1c1f24]' : 'text-[#6b6456]'
-            }`}
-          >
-            <BookOpen className="h-3.5 w-3.5" /> Bài đọc
-          </button>
-          <button
-            onClick={() => setActiveTab('semantic')}
-            className={`flex shrink-0 items-center justify-center gap-1 rounded px-2.5 py-1.5 text-center font-medium ${
-              activeTab === 'semantic' ? 'bg-[#eee9df] font-bold text-[#1c1f24]' : 'text-[#6b6456]'
-            }`}
-          >
-            <Search className="h-3.5 w-3.5 text-indigo-600" /> Search
-          </button>
-          <button
-            onClick={() => setActiveTab('personalized')}
-            className={`flex shrink-0 items-center justify-center gap-1 rounded px-2.5 py-1.5 text-center font-medium ${
-              activeTab === 'personalized'
-                ? 'bg-[#eee9df] font-bold text-[#1c1f24]'
-                : 'text-[#6b6456]'
-            }`}
-          >
-            <Compass className="h-3.5 w-3.5 text-rose-500" /> Gợi ý
-          </button>
-          <button
-            onClick={() => setActiveTab('radar')}
-            className={`flex shrink-0 items-center justify-center gap-1 rounded px-2.5 py-1.5 text-center font-medium ${
-              activeTab === 'radar' ? 'bg-[#eee9df] font-bold text-[#1c1f24]' : 'text-[#6b6456]'
-            }`}
-          >
-            <Sparkles className="h-3.5 w-3.5 text-amber-600" /> Radar
-          </button>
-          <button
-            onClick={() => setActiveTab('sources')}
-            className={`flex shrink-0 items-center justify-center gap-1 rounded px-2.5 py-1.5 text-center font-medium ${
-              activeTab === 'sources' ? 'bg-[#eee9df] font-bold text-[#1c1f24]' : 'text-[#6b6456]'
-            }`}
-          >
-            <Layers className="h-3.5 w-3.5" /> Nguồn
-          </button>
-          <button
-            onClick={() => setActiveTab('admin')}
-            className={`flex shrink-0 items-center justify-center gap-1 rounded px-2.5 py-1.5 text-center font-medium ${
-              activeTab === 'admin' ? 'bg-[#eee9df] font-bold text-[#1c1f24]' : 'text-[#6b6456]'
-            }`}
-          >
-            <Activity className="h-3.5 w-3.5 text-emerald-600" /> Admin
-          </button>
-        </div>
-      </header>
-
-      {/* Main Reading Container */}
+      {/* Main Container */}
       <main
         onTouchStart={handleTouchStart}
         onTouchMove={handleTouchMove}
         onTouchEnd={handleTouchEnd}
         className="mx-auto max-w-5xl px-3 py-4 sm:px-6 sm:py-8"
       >
-        {/* Pull-To-Refresh Indicator */}
-        {(pullDistance > 0 || crawlingAll) && activeTab === 'feed' && (
-          <div
-            style={{ height: `${crawlingAll ? 48 : pullDistance}px` }}
-            className="flex items-center justify-center overflow-hidden transition-all duration-200"
-          >
-            <div className="flex items-center gap-2 rounded-full border border-[#ded7ca] bg-white px-3.5 py-1.5 font-sans text-xs font-medium text-[#2c313a] shadow-xs">
-              {crawlingAll ? (
-                <>
-                  <RefreshCw className="h-3.5 w-3.5 animate-spin text-[#4b5563]" />
-                  <span>Đang cào & cập nhật bài mới từ các nguồn...</span>
-                </>
-              ) : pullDistance >= 60 ? (
-                <>
-                  <RefreshCw className="h-3.5 w-3.5 text-emerald-600" />
-                  <span>Thả tay để kích hoạt cào bài mới ngay</span>
-                </>
-              ) : (
-                <>
-                  <ArrowDown className="h-3.5 w-3.5 text-[#8c8475]" />
-                  <span>Kéo xuống để cập nhật tin mới</span>
-                </>
-              )}
-            </div>
-          </div>
-        )}
-
         {/* ================= VIEW 1: BÀI ĐỌC (FEED & PERSONALIZED) ================= */}
         {(activeTab === 'feed' || activeTab === 'personalized') && (
           <div>
-            {/* Filter & Sort Bar */}
-            <div className="mb-5 space-y-2.5 border-b border-[#e7e2d9] pb-3.5 font-sans">
-              {/* Row 1: Categories scrollable full-bleed & Search full-width on mobile */}
-              <div className="flex flex-col items-stretch gap-2.5 sm:flex-row sm:items-center sm:justify-between">
-                <div className="no-scrollbar -mx-3 flex items-center gap-1.5 overflow-x-auto px-3 pb-0.5 sm:mx-0 sm:px-0">
-                  {[
-                    { id: 'all', label: 'Tất cả' },
-                    { id: 'AI', label: 'Trí tuệ nhân tạo (AI)' },
-                    { id: 'Backend', label: 'Backend & Kiến trúc' },
-                    { id: 'Vietnam', label: 'Tin Việt Nam' },
-                    { id: 'Global', label: 'Báo Quốc tế' },
-                  ].map((tab) => (
-                    <button
-                      key={tab.id}
-                      onClick={() => setSelectedCategory(tab.id)}
-                      className={`cursor-pointer rounded-full px-3 py-1 text-xs font-medium whitespace-nowrap transition ${
-                        selectedCategory === tab.id
-                          ? 'bg-[#2c313a] text-white shadow-xs'
-                          : 'bg-[#eee9df] text-[#554e42] hover:bg-[#e4ded2]'
-                      }`}
-                    >
-                      {tab.label}
-                    </button>
-                  ))}
-
-                  <button
-                    onClick={() => setTopOnly(!topOnly)}
-                    className={`flex cursor-pointer items-center gap-1.5 rounded-full border px-3 py-1 text-xs whitespace-nowrap transition ${
-                      topOnly
-                        ? 'border-amber-300 bg-amber-100 font-semibold text-amber-900 shadow-xs'
-                        : 'border-[#dcd5c7] bg-transparent text-[#6b6456] hover:bg-[#eee9df]'
-                    }`}
-                  >
-                    <Flame className="h-3.5 w-3.5 text-amber-600" />
-                    <span>Bài tinh tuyển (≥7.5)</span>
-                  </button>
-                </div>
-
-                {/* Search Box - Full width on mobile, fixed width on tablet/desktop */}
-                <div className="relative w-full sm:w-60 sm:shrink-0">
-                  <Search className="absolute top-2.5 left-3 h-3.5 w-3.5 text-[#8c8475]" />
-                  <input
-                    type="text"
-                    placeholder="Tìm chủ đề, công nghệ..."
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    onKeyDown={(e) => e.key === 'Enter' && fetchArticles(true)}
-                    className="w-full rounded-full border border-[#dcd5c7] bg-white py-1.5 pr-4 pl-8.5 text-xs text-[#2c313a] placeholder-[#9c9485] focus:border-[#7c7465] focus:outline-none"
-                  />
-                </div>
-              </div>
-
-              {/* Row 2: Read Status Segmented Control (Full width on mobile) */}
-              <div className="flex w-full items-center rounded-lg border border-[#e2dcd0] bg-[#eee9df]/80 p-0.5 text-xs">
-                <button
-                  onClick={() => {
-                    setViewHidden(false);
-                    setBookmarkedOnly(false);
-                    setReadStatus('all');
-                  }}
-                  className={`flex-1 rounded py-1.5 text-center transition ${
-                    !viewHidden && !bookmarkedOnly && readStatus === 'all'
-                      ? 'bg-white font-semibold text-[#1c1f24] shadow-xs'
-                      : 'text-[#6b6456] hover:text-[#1c1f24]'
-                  }`}
-                >
-                  Tất cả bài
-                </button>
-                <button
-                  onClick={() => {
-                    setViewHidden(false);
-                    setBookmarkedOnly(false);
-                    setReadStatus('unread');
-                  }}
-                  className={`flex-1 rounded py-1.5 text-center transition ${
-                    !viewHidden && !bookmarkedOnly && readStatus === 'unread'
-                      ? 'bg-white font-semibold text-[#1c1f24] shadow-xs'
-                      : 'text-[#6b6456] hover:text-[#1c1f24]'
-                  }`}
-                >
-                  Chưa đọc
-                </button>
-                <button
-                  onClick={() => {
-                    setViewHidden(false);
-                    setBookmarkedOnly(false);
-                    setReadStatus('read');
-                  }}
-                  className={`flex-1 rounded py-1.5 text-center transition ${
-                    !viewHidden && !bookmarkedOnly && readStatus === 'read'
-                      ? 'bg-white font-semibold text-[#1c1f24] shadow-xs'
-                      : 'text-[#6b6456] hover:text-[#1c1f24]'
-                  }`}
-                >
-                  Đã đọc
-                </button>
-                <button
-                  onClick={() => {
-                    setViewHidden(false);
-                    setBookmarkedOnly(true);
-                  }}
-                  className={`flex flex-1 items-center justify-center gap-1 rounded py-1.5 text-center transition ${
-                    !viewHidden && bookmarkedOnly
-                      ? 'bg-amber-100 font-semibold text-amber-900 shadow-xs'
-                      : 'text-[#6b6456] hover:text-[#1c1f24]'
-                  }`}
-                >
-                  <Bookmark
-                    className="h-3 w-3 text-amber-700"
-                    fill={bookmarkedOnly ? 'currentColor' : 'none'}
-                  />
-                  <span>Đã lưu</span>
-                </button>
-              </div>
-
-              {/* Row 3: Secondary Filters Grid (Fit 100% width on mobile) */}
-              <div className="grid grid-cols-2 gap-2 text-xs sm:flex sm:flex-wrap sm:items-center sm:justify-between sm:gap-3 sm:pt-0.5">
-                {/* Source Selector Dropdown */}
-                <div className="col-span-1 flex items-center rounded-lg border border-[#ded7ca] bg-white px-2 py-1 text-[#6b6456]">
-                  <Layers className="mr-1.5 h-3.5 w-3.5 shrink-0 text-[#8c8475]" />
-                  <select
-                    value={selectedSourceId || ''}
-                    onChange={(e) =>
-                      setSelectedSourceId(e.target.value ? Number(e.target.value) : null)
-                    }
-                    className="w-full cursor-pointer bg-transparent text-xs font-medium text-[#2c313a] focus:outline-none"
-                  >
-                    <option value="">Tất cả nguồn ({sources.length})</option>
-                    {sources.map((s) => (
-                      <option key={s.id} value={s.id}>
-                        {s.name} ({s.articles_count || 0})
-                      </option>
-                    ))}
-                  </select>
-                </div>
-
-                {/* Sort Selector */}
-                <div className="col-span-1 flex items-center rounded-lg border border-[#ded7ca] bg-white px-2 py-1 text-[#6b6456]">
-                  <ArrowUpDown className="mr-1.5 h-3.5 w-3.5 shrink-0 text-[#8c8475]" />
-                  <select
-                    value={sortBy}
-                    onChange={(e: any) => setSortBy(e.target.value)}
-                    className="w-full cursor-pointer bg-transparent text-xs font-medium text-[#2c313a] focus:outline-none"
-                  >
-                    <option value="newest">Mới nhất</option>
-                    <option value="oldest">Cũ nhất</option>
-                    <option value="score">Điểm AI cao</option>
-                  </select>
-                </div>
-
-                {/* Group Duplicates Toggle */}
-                <button
-                  onClick={() => setGroupDuplicates(!groupDuplicates)}
-                  className={`col-span-1 flex items-center justify-center gap-1.5 rounded-lg border px-2.5 py-1.5 text-center transition sm:py-1 ${
-                    groupDuplicates
-                      ? 'border-indigo-200 bg-indigo-50/80 font-medium text-indigo-900 shadow-xs'
-                      : 'border-[#ded7ca] bg-white text-[#6b6456] hover:bg-[#eee9df]'
-                  }`}
-                  title={
-                    groupDuplicates
-                      ? 'Đang gộp bài viết trùng từ nhiều báo khác nhau'
-                      : 'Đang hiển thị dạng phẳng (không gộp tin trùng)'
-                  }
-                >
-                  <Layers className="h-3.5 w-3.5 shrink-0 text-indigo-600" />
-                  <span className="truncate">
-                    {groupDuplicates ? 'Gộp tin trùng' : 'Hiện tất cả'}
-                  </span>
-                </button>
-
-                {/* View Hidden Toggle */}
-                <button
-                  onClick={() => setViewHidden(!viewHidden)}
-                  className={`col-span-1 flex items-center justify-center gap-1.5 rounded-lg border px-2.5 py-1.5 text-center transition sm:py-1 ${
-                    viewHidden
-                      ? 'border-rose-300 bg-rose-50 font-semibold text-rose-800 shadow-xs'
-                      : 'border-[#ded7ca] bg-white text-[#6b6456] hover:bg-[#eee9df]'
-                  }`}
-                  title={
-                    viewHidden ? 'Quay lại bản tin bình thường' : 'Xem danh sách bài bạn đã ẩn'
-                  }
-                >
-                  {viewHidden ? (
-                    <>
-                      <Eye className="h-3.5 w-3.5 shrink-0 text-rose-700" />
-                      <span className="truncate">Xem bài ẩn</span>
-                    </>
-                  ) : (
-                    <>
-                      <EyeOff className="h-3.5 w-3.5 shrink-0 text-[#8c8475]" />
-                      <span className="truncate">Bài đã ẩn</span>
-                    </>
-                  )}
-                </button>
-              </div>
-
-              {/* Active Source Filter Tag */}
-              {selectedSourceId && (
-                <div className="flex items-center gap-2 pt-1 font-sans">
-                  <span className="text-xs text-[#756e60]">Đang lọc theo:</span>
-                  <span className="inline-flex items-center gap-1.5 rounded-full border border-indigo-200 bg-indigo-50 px-3 py-0.5 text-xs font-semibold text-indigo-900 shadow-xs">
-                    {sources.find((s) => s.id === selectedSourceId)?.name || 'Nguồn tin'}
-                    <button
-                      onClick={() => setSelectedSourceId(null)}
-                      className="cursor-pointer rounded-full p-0.5 hover:bg-indigo-200 hover:text-indigo-950"
-                      title="Bỏ lọc theo nguồn này"
-                    >
-                      <X className="h-3 w-3" />
-                    </button>
-                  </span>
-                </div>
-              )}
-            </div>
+            {/* Sub-component: Modular FilterToolbar */}
+            <FilterToolbar
+              selectedCategory={selectedCategory}
+              setSelectedCategory={setSelectedCategory}
+              topOnly={topOnly}
+              setTopOnly={setTopOnly}
+              searchQuery={searchQuery}
+              setSearchQuery={setSearchQuery}
+              onSearchSubmit={() => fetchArticles(true)}
+              readStatus={readStatus}
+              setReadStatus={setReadStatus}
+              bookmarkedOnly={bookmarkedOnly}
+              setBookmarkedOnly={setBookmarkedOnly}
+              viewHidden={viewHidden}
+              setViewHidden={setViewHidden}
+              selectedSourceId={selectedSourceId}
+              setSelectedSourceId={setSelectedSourceId}
+              sources={sources}
+              sortBy={sortBy}
+              setSortBy={setSortBy}
+              groupDuplicates={groupDuplicates}
+              setGroupDuplicates={setGroupDuplicates}
+            />
 
             {/* Articles Reading List */}
             {loading ? (
@@ -961,232 +507,25 @@ export default function App() {
                       <span className="text-[11px] text-[#8c8475]">{group.items.length} bài</span>
                     </div>
 
-                    {/* Articles in Date Group */}
+                    {/* Sub-component: Modular ArticleCard List */}
                     <div className="space-y-5">
                       {group.items.map((art) => (
-                        <article
+                        <ArticleCard
                           key={art.id}
-                          onClick={() => handleOpenArticle(art)}
-                          className={`group relative cursor-pointer rounded-xl border p-4 shadow-xs transition sm:p-6 ${
-                            art.is_read
-                              ? 'border-[#ede7dc] bg-[#faf8f4] opacity-80 hover:border-[#cfc7b8] hover:opacity-100'
-                              : 'border-[#e7e2d9] bg-white hover:border-[#cfc7b8] hover:bg-[#fcfbf9]'
-                          }`}
-                        >
-                          {/* Header meta */}
-                          <div className="mb-2.5 flex items-center justify-between gap-3 font-sans">
-                            <div className="flex flex-wrap items-center gap-2">
-                              <span
-                                onClick={(e) => {
-                                  if (art.source_id) {
-                                    e.stopPropagation();
-                                    setSelectedSourceId(art.source_id);
-                                  }
-                                }}
-                                className="cursor-pointer rounded bg-[#f4efe6] px-2.5 py-0.5 text-[11px] font-semibold tracking-wide text-[#756e60] uppercase transition hover:bg-[#e7e1d5] hover:text-[#1c1f24]"
-                                title={`Bấm để chỉ xem các bài từ ${art.source_name || 'nguồn này'}`}
-                              >
-                                {art.source_name || 'Bản tin'}
-                              </span>
-                              <span className="text-[11px] text-[#8c8475]">
-                                {art.published_at
-                                  ? new Date(art.published_at).toLocaleTimeString('vi-VN', {
-                                      hour: '2-digit',
-                                      minute: '2-digit',
-                                    })
-                                  : 'Mới cập nhật'}
-                              </span>
-                              <span className="text-[11px] text-[#a8a193]">·</span>
-                              <span className="flex items-center gap-0.5 text-[11px] text-[#8c8475]">
-                                <Clock className="inline h-3 w-3" />{' '}
-                                {art.reading_time_minutes ||
-                                  Math.max(
-                                    1,
-                                    Math.ceil((art.vietnamese_summary?.length || 300) / 350)
-                                  )}{' '}
-                                phút đọc
-                              </span>
-                            </div>
-
-                            <div className="flex items-center gap-1.5">
-                              {art.relevance_score > 0 && (
-                                <span
-                                  className={`rounded px-2 py-0.5 text-[11px] font-bold ${
-                                    art.relevance_score >= 8.0
-                                      ? 'border border-emerald-200 bg-emerald-50 text-emerald-800'
-                                      : art.relevance_score >= 6.0
-                                        ? 'border border-amber-200 bg-amber-50 text-amber-800'
-                                        : 'bg-stone-100 text-stone-600'
-                                  }`}
-                                >
-                                  Điểm: {art.relevance_score.toFixed(1)}/10
-                                </span>
-                              )}
-
-                              {/* Quick Feedback Actions */}
-                              <button
-                                onClick={(e) => handleFeedback(e, art.id, 'like')}
-                                className={`cursor-pointer rounded-md p-1.5 transition ${
-                                  feedbackMap[art.id] === 'like'
-                                    ? 'bg-emerald-100 text-emerald-800'
-                                    : 'text-[#8c8475] hover:bg-emerald-50 hover:text-emerald-700'
-                                }`}
-                                title="Đánh giá bài viết hay / hữu ích"
-                              >
-                                <ThumbsUp className="h-3.5 w-3.5" />
-                              </button>
-
-                              <button
-                                onClick={(e) => handleFeedback(e, art.id, 'dislike')}
-                                className={`cursor-pointer rounded-md p-1.5 transition ${
-                                  feedbackMap[art.id] === 'dislike'
-                                    ? 'bg-rose-100 text-rose-800'
-                                    : 'text-[#8c8475] hover:bg-rose-50 hover:text-rose-700'
-                                }`}
-                                title="Bài viết không liên quan / chất lượng thấp"
-                              >
-                                <ThumbsDown className="h-3.5 w-3.5" />
-                              </button>
-
-                              {/* Quick action: Bookmark */}
-                              <button
-                                onClick={(e) => handleToggleBookmark(art.id, art.is_bookmarked, e)}
-                                className={`cursor-pointer rounded-md p-1.5 transition ${
-                                  art.is_bookmarked
-                                    ? 'bg-amber-100 text-amber-800 hover:bg-amber-200'
-                                    : 'text-[#8c8475] hover:bg-amber-50 hover:text-amber-700'
-                                }`}
-                                title={
-                                  art.is_bookmarked ? 'Bỏ lưu bài viết' : 'Lưu bài viết vào đọc sau'
-                                }
-                              >
-                                <Bookmark
-                                  className="h-4 w-4"
-                                  fill={art.is_bookmarked ? 'currentColor' : 'none'}
-                                />
-                              </button>
-
-                              {/* Quick action: Hide / Unhide */}
-                              <button
-                                onClick={(e) => handleToggleHidden(art.id, art.is_hidden, e)}
-                                className={`cursor-pointer rounded-md p-1.5 transition ${
-                                  art.is_hidden
-                                    ? 'text-rose-700 hover:bg-rose-100'
-                                    : 'text-[#8c8475] hover:bg-rose-50 hover:text-rose-600'
-                                }`}
-                                title={
-                                  art.is_hidden ? 'Bỏ ẩn bài viết này' : 'Không thích / Ẩn bài viết'
-                                }
-                              >
-                                {art.is_hidden ? (
-                                  <Eye className="h-4 w-4" />
-                                ) : (
-                                  <EyeOff className="h-4 w-4" />
-                                )}
-                              </button>
-                            </div>
-                          </div>
-
-                          {/* Article Title */}
-                          <h2
-                            className={`mb-2.5 font-serif text-lg leading-snug font-bold transition md:text-xl ${
-                              art.is_read
-                                ? 'text-[#474e5a] group-hover:text-indigo-950'
-                                : 'text-[#1a1d20] group-hover:text-indigo-950'
-                            }`}
-                          >
-                            {art.vietnamese_title || art.title}
-                          </h2>
-
-                          {/* Editorial Summary */}
-                          <p
-                            className={`mb-3 font-serif text-[14px] leading-relaxed ${
-                              art.is_read ? 'text-[#646a75]' : 'text-[#4a4f59]'
-                            }`}
-                          >
-                            {art.vietnamese_summary || art.title}
-                          </p>
-
-                          {/* Key Takeaways Preview (3 bullet points) */}
-                          {art.key_takeaways && art.key_takeaways.length > 0 && (
-                            <div className="mb-3 rounded-lg border border-[#eee8dd] bg-[#faf8f5] p-3 text-xs">
-                              <div className="mb-1.5 flex items-center gap-1 font-sans text-[10px] font-bold tracking-wider text-[#635c50] uppercase">
-                                <Sparkles className="h-3 w-3 text-amber-600" /> Điểm cốt lõi kỹ
-                                thuật:
-                              </div>
-                              <ul className="space-y-1 font-serif text-[#3f4651]">
-                                {art.key_takeaways.slice(0, 3).map((point, pIdx) => (
-                                  <li key={pIdx} className="flex items-start gap-1.5">
-                                    <span className="font-bold text-amber-700">•</span>
-                                    <span>{point}</span>
-                                  </li>
-                                ))}
-                              </ul>
-                            </div>
-                          )}
-
-                          {/* Story Cluster Coverage Badges (Google News Style) */}
-                          {art.related_articles && art.related_articles.length > 0 && (
-                            <div
-                              onClick={(e) => e.stopPropagation()}
-                              className="mb-3 rounded-lg border border-indigo-100 bg-indigo-50/50 p-2.5 text-xs"
-                            >
-                              <div className="flex flex-wrap items-center gap-1.5 font-sans">
-                                <span className="flex items-center gap-1 text-[11px] font-semibold text-indigo-900">
-                                  📰 Cùng chủ đề trên {art.related_articles.length} báo khác:
-                                </span>
-                                {art.related_articles.map((rel) => (
-                                  <a
-                                    key={rel.id}
-                                    href={rel.url}
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    title={rel.vietnamese_title || rel.title}
-                                    className="inline-flex items-center gap-1 rounded border border-indigo-200 bg-white px-2 py-0.5 text-[11px] font-medium text-indigo-800 shadow-2xs transition hover:border-indigo-400 hover:bg-indigo-50 hover:text-indigo-950"
-                                  >
-                                    <span>{rel.source_name || 'Nguồn khác'}</span>
-                                    <ArrowUpRight className="h-3 w-3 text-indigo-600" />
-                                  </a>
-                                ))}
-                              </div>
-                            </div>
-                          )}
-
-                          {/* Bottom row: Tech tags & Read CTA */}
-                          <div className="flex flex-wrap items-center justify-between gap-2 border-t border-[#f0ece3] pt-3 font-sans">
-                            <div className="flex flex-wrap items-center gap-1.5">
-                              {art.new_tech_stacks &&
-                                art.new_tech_stacks.length > 0 &&
-                                art.new_tech_stacks.slice(0, 3).map((ts, idx) => (
-                                  <span
-                                    key={idx}
-                                    onClick={(e) => {
-                                      e.stopPropagation();
-                                      handleOpenArticle(art);
-                                    }}
-                                    className="rounded border border-[#e2dcd0] bg-[#f4f1ea] px-2 py-0.5 font-mono text-[11px] text-[#334155] transition hover:bg-[#e9e4d9]"
-                                  >
-                                    ⚡ {ts.name}
-                                  </span>
-                                ))}
-                            </div>
-
-                            <div className="flex items-center gap-3">
-                              {art.is_read && (
-                                <span className="text-[11px] text-[#8c8475] italic">Đã đọc</span>
-                              )}
-                              <span className="flex items-center gap-1 text-xs font-semibold text-[#2c313a] group-hover:text-indigo-800">
-                                Mở chi tiết <ArrowUpRight className="h-3.5 w-3.5" />
-                              </span>
-                            </div>
-                          </div>
-                        </article>
+                          article={art}
+                          onOpen={handleOpenArticle}
+                          onFeedback={handleFeedback}
+                          feedbackState={feedbackMap[art.id]}
+                          onToggleBookmark={handleToggleBookmark}
+                          onToggleHidden={handleToggleHidden}
+                          onFilterSource={(sId) => setSelectedSourceId(sId)}
+                        />
                       ))}
                     </div>
                   </section>
                 ))}
 
-                {/* Lazyload & Infinite Scroll Indicator / Manual Load More */}
+                {/* Lazyload & Infinite Scroll / Manual Load More */}
                 <div className="pt-4 pb-8 text-center font-sans">
                   {loadingMore ? (
                     <div className="flex items-center justify-center gap-2 text-xs text-[#756e60]">
@@ -1225,14 +564,11 @@ export default function App() {
               <RadarIntelligenceView
                 sourcesCount={sources.length}
                 onSelectArticle={(art) => {
-                  // Find full article from list if present, else set it directly
                   const found = articles.find((a) => a.id === art.id);
                   setSelectedArticle(found || (art as any));
                 }}
               />
             </Suspense>
-
-
 
             <div>
               <div className="mb-4 flex items-center justify-between">
@@ -1325,7 +661,7 @@ export default function App() {
                   <button
                     key={c.id}
                     onClick={() => setSourceCategoryFilter(c.id)}
-                    className={`rounded-full px-3 py-1 text-xs whitespace-nowrap transition ${
+                    className={`cursor-pointer rounded-full px-3 py-1 text-xs whitespace-nowrap transition ${
                       sourceCategoryFilter === c.id
                         ? 'bg-[#2c313a] font-medium text-white'
                         : 'bg-[#eee9df] text-[#554e42] hover:bg-[#e4ded2]'
@@ -1437,7 +773,7 @@ export default function App() {
           <Suspense
             fallback={
               <div className="flex h-64 items-center justify-center rounded-2xl border border-[#e7e2d9] bg-white p-8 text-sm text-[#756e60]">
-                <Activity className="mr-2 h-5 w-5 animate-spin text-indigo-700" />
+                <RefreshCw className="mr-2 h-5 w-5 animate-spin text-indigo-700" />
                 Đang tải Admin Observability Dashboard...
               </div>
             }
@@ -1445,322 +781,42 @@ export default function App() {
             <AdminDashboard onRefreshFeed={fetchArticles} />
           </Suspense>
         )}
-
       </main>
 
-      {/* ================= READING DRAWER / MODAL (EDITORIAL STYLE) ================= */}
+      {/* Sub-component: Modular Article Modal */}
       {selectedArticle && (
-        <div
-          onClick={() => setSelectedArticle(null)}
-          className="fixed inset-0 z-50 flex cursor-pointer items-end justify-center bg-black/60 p-0 backdrop-blur-xs sm:items-center sm:p-4"
-        >
-          <div
-            onClick={(e) => e.stopPropagation()}
-            className="animate-in fade-in slide-in-from-bottom-2 sm:slide-in-from-bottom-0 flex h-[100dvh] w-full max-w-4xl cursor-default flex-col overflow-hidden rounded-none border-0 border-[#e7e2d9] bg-[#fbf9f5] shadow-2xl sm:h-auto sm:max-h-[90vh] sm:rounded-2xl sm:border"
-          >
-            {/* Masthead Header with Safe Area Top */}
-            <div className="header-safe-pt flex shrink-0 items-start justify-between gap-2.5 border-b border-[#e7e2d9] bg-white px-3.5 pb-3 sm:px-6 sm:pb-5">
-              <div className="min-w-0 flex-1 pr-1">
-                <div className="mb-1 flex flex-wrap items-center gap-1.5 font-sans">
-                  <span className="rounded bg-[#f4efe6] px-2 py-0.5 text-[10px] font-semibold text-[#635d52] sm:text-[11px]">
-                    {selectedArticle.source_name}
-                  </span>
-                  <span
-                    className={`rounded px-2 py-0.5 text-[10px] font-bold sm:text-[11px] ${
-                      selectedArticle.relevance_score >= 8.0
-                        ? 'border border-emerald-200 bg-emerald-50 text-emerald-800'
-                        : selectedArticle.relevance_score >= 6.0
-                          ? 'border border-amber-200 bg-amber-50 text-amber-800'
-                          : 'bg-stone-100 text-stone-600'
-                    }`}
-                  >
-                    Điểm AI: {selectedArticle.relevance_score.toFixed(1)}/10
-                  </span>
-                </div>
-                <h2 className="font-serif text-base leading-snug font-bold text-[#1c1f24] sm:text-xl">
-                  {selectedArticle.vietnamese_title || selectedArticle.title}
-                </h2>
-              </div>
-              <div className="flex shrink-0 items-center gap-1 font-sans sm:gap-1.5">
-                {/* Bookmark Button */}
-                <button
-                  onClick={() =>
-                    handleToggleBookmark(selectedArticle.id, selectedArticle.is_bookmarked)
-                  }
-                  className={`flex cursor-pointer items-center gap-1 rounded-lg border p-1.5 text-xs font-medium transition sm:px-2.5 sm:py-1.5 ${
-                    selectedArticle.is_bookmarked
-                      ? 'border-amber-300 bg-amber-50 text-amber-900'
-                      : 'border-[#ded7ca] bg-white text-[#6b6456] hover:bg-amber-50 hover:text-amber-800'
-                  }`}
-                  title={selectedArticle.is_bookmarked ? 'Bỏ lưu bài này' : 'Lưu bài vào đọc sau'}
-                >
-                  <Bookmark
-                    className="h-3.5 w-3.5"
-                    fill={selectedArticle.is_bookmarked ? 'currentColor' : 'none'}
-                  />
-                  <span className="hidden sm:inline">
-                    {selectedArticle.is_bookmarked ? 'Đã lưu' : 'Lưu bài'}
-                  </span>
-                </button>
-
-                {/* Hide Button */}
-                <button
-                  onClick={() => handleToggleHidden(selectedArticle.id, selectedArticle.is_hidden)}
-                  className={`flex cursor-pointer items-center gap-1 rounded-lg border p-1.5 text-xs font-medium transition sm:px-2.5 sm:py-1.5 ${
-                    selectedArticle.is_hidden
-                      ? 'border-rose-300 bg-rose-50 text-rose-800'
-                      : 'border-[#ded7ca] bg-white text-[#6b6456] hover:bg-rose-50 hover:text-rose-700'
-                  }`}
-                  title={selectedArticle.is_hidden ? 'Bỏ ẩn bài này' : 'Ẩn bài viết này'}
-                >
-                  {selectedArticle.is_hidden ? (
-                    <>
-                      <Eye className="h-3.5 w-3.5" />
-                      <span className="hidden sm:inline">Bỏ ẩn</span>
-                    </>
-                  ) : (
-                    <>
-                      <EyeOff className="h-3.5 w-3.5" />
-                      <span className="hidden sm:inline">Ẩn bài</span>
-                    </>
-                  )}
-                </button>
-
-                <button
-                  onClick={() => setSelectedArticle(null)}
-                  className="cursor-pointer rounded-lg p-1.5 text-[#756e60] transition hover:bg-[#f4efe6] hover:text-[#1c1f24]"
-                  title="Đóng trang đọc"
-                >
-                  <X className="h-5 w-5" />
-                </button>
-              </div>
-            </div>
-
-            {/* Reading Content with Deep AI Tabs */}
-            <div className="safe-pb flex-1 overflow-y-auto overscroll-contain">
-              <Suspense
-                fallback={
-                  <div className="flex h-64 items-center justify-center p-8 text-sm text-[#756e60]">
-                    <Sparkles className="mr-2 h-5 w-5 animate-spin text-amber-600" />
-                    Đang tải chi tiết phân tích AI & kịch bản kỹ thuật...
-                  </div>
-                }
-              >
-                <ArticleModalTabs
-                  article={selectedArticle}
-                  onSummarize={async (id) => {
-                    await handleSummarizeArticle(id);
-                  }}
-                  summarizing={summarizingArticleId === selectedArticle.id}
-                  onSelectRelatedArticle={async (relatedId) => {
-                    const target = articles.find((a) => a.id === relatedId);
-                    if (target) {
-                      setSelectedArticle(target);
-                    }
-                  }}
-                />
-              </Suspense>
-            </div>
-
-          </div>
-        </div>
+        <ArticleModal
+          article={selectedArticle}
+          onClose={() => setSelectedArticle(null)}
+          onToggleBookmark={(id, current) => handleToggleBookmark(id, current)}
+          onToggleHidden={(id, current) => handleToggleHidden(id, current)}
+          onSummarize={handleSummarizeArticle}
+          summarizing={summarizingArticleId === selectedArticle.id}
+          onSelectRelatedArticle={(relatedId) => {
+            const target = articles.find((a) => a.id === relatedId);
+            if (target) {
+              setSelectedArticle(target);
+            }
+          }}
+          onArticleUpdated={(updated) => {
+            setArticles((prev) => prev.map((a) => (a.id === updated.id ? updated : a)));
+            setSelectedArticle(updated);
+          }}
+        />
       )}
 
-      {/* ================= EXPLANATION MODAL ================= */}
-      {showExplanationModal && (
-        <div
-          onClick={() => setShowExplanationModal(false)}
-          className="fixed inset-0 z-50 flex cursor-pointer items-center justify-center bg-black/40 p-4 font-sans backdrop-blur-xs"
-        >
-          <div
-            onClick={(e) => e.stopPropagation()}
-            className="animate-in fade-in w-full max-w-lg cursor-default rounded-2xl border border-[#e7e2d9] bg-white p-6 shadow-xl"
-          >
-            <div className="mb-4 flex items-center justify-between border-b border-[#e7e2d9] pb-3">
-              <h3 className="flex items-center gap-2 font-serif text-base font-bold text-[#1c1f24]">
-                <HelpCircle className="h-5 w-5 text-indigo-900" /> Về Điểm AI & Radar Tech Stack
-              </h3>
-              <button
-                onClick={() => setShowExplanationModal(false)}
-                className="cursor-pointer rounded-lg p-1 text-[#756e60] transition hover:bg-[#f4efe6] hover:text-[#1c1f24]"
-              >
-                <X className="h-5 w-5" />
-              </button>
-            </div>
+      {/* Sub-component: Modular Explanation Modal */}
+      <ExplanationModal
+        isOpen={showExplanationModal}
+        onClose={() => setShowExplanationModal(false)}
+      />
 
-            <div className="space-y-4 text-xs leading-relaxed text-[#475569]">
-              <div className="rounded-xl border border-[#e7e2d9] bg-[#fcfbf9] p-4">
-                <h4 className="mb-1.5 flex items-center gap-1 text-xs font-bold text-[#1e293b]">
-                  ⭐ Điểm AI (1.0 đến 10.0) là gì?
-                </h4>
-                <p>
-                  AI đọc toàn bộ bài báo và chấm điểm theo tiêu chí: chiều sâu kỹ thuật, tính thực
-                  tiễn và bài học giá trị cho kỹ sư Backend & AI.
-                </p>
-                <div className="mt-2 space-y-1">
-                  <div>
-                    • <strong className="text-emerald-800">Từ 8.0 - 10.0:</strong> Bài xuất sắc
-                    (System Architecture, DB Sharding, Nghiên cứu AI mới).
-                  </div>
-                  <div>
-                    • <strong className="text-amber-800">Từ 6.0 - 7.9:</strong> Bài đáng đọc (Tin
-                    công nghệ đáng chú ý).
-                  </div>
-                  <div>
-                    • <strong className="text-stone-600">Dưới 5.0:</strong> Bài quảng cáo PR hoặc
-                    tin giật gân không có chiều sâu.
-                  </div>
-                </div>
-              </div>
-
-              <div className="rounded-xl border border-[#e7e2d9] bg-[#fcfbf9] p-4">
-                <h4 className="mb-1.5 flex items-center gap-1 text-xs font-bold text-[#1e293b]">
-                  ⚡ Radar Tech Stack là gì?
-                </h4>
-                <p>
-                  Tự động trích xuất các công nghệ, framework, library, database mới xuất hiện để
-                  dev không bị outdate.
-                </p>
-                <p className="mt-2 font-semibold text-[#0f172a]">
-                  👉 Bấm vào bất kỳ thẻ công nghệ nào sẽ mở ngay bài viết và phân tích chi tiết liên
-                  quan đến công nghệ đó.
-                </p>
-              </div>
-            </div>
-
-            <div className="flex justify-end border-t border-[#e7e2d9] pt-4">
-              <button
-                onClick={() => setShowExplanationModal(false)}
-                className="cursor-pointer rounded-lg bg-[#2c313a] px-4 py-2 text-xs font-semibold text-white hover:bg-[#1a1d23]"
-              >
-                Đã hiểu
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* ================= MODAL: THÊM NGUỒN ================= */}
-      {isAddSourceOpen && (
-        <div
-          onClick={() => setShowExplanationModal(false)}
-          className="fixed inset-0 z-50 flex cursor-pointer items-center justify-center bg-black/40 p-4 font-sans backdrop-blur-xs"
-        >
-          <div
-            onClick={(e) => e.stopPropagation()}
-            className="animate-in fade-in w-full max-w-lg cursor-default rounded-2xl border border-[#e7e2d9] bg-white p-6 shadow-xl"
-          >
-            <div className="mb-4 flex items-center justify-between border-b border-[#e7e2d9] pb-3">
-              <h3 className="flex items-center gap-2 font-serif text-base font-bold text-[#1c1f24]">
-                <Plus className="h-5 w-5 text-emerald-700" /> Thêm Nguồn Tin Bằng URL
-              </h3>
-              <button
-                onClick={() => setIsAddSourceOpen(false)}
-                className="cursor-pointer rounded-lg p-1 text-[#756e60] transition hover:bg-[#f4efe6] hover:text-[#1c1f24]"
-              >
-                <X className="h-5 w-5" />
-              </button>
-            </div>
-
-            <form onSubmit={handleCreateSource} className="space-y-4 text-xs">
-              <div>
-                <label className="mb-1 block font-medium text-[#475569]">Tên nguồn tin:</label>
-                <input
-                  type="text"
-                  placeholder="Ví dụ: Netflix Engineering Blog"
-                  value={newSourceName}
-                  onChange={(e) => setNewSourceName(e.target.value)}
-                  required
-                  className="w-full rounded-lg border border-[#dcd5c7] bg-white p-2.5 text-[#1e293b] focus:border-[#7c7465] focus:outline-none"
-                />
-              </div>
-
-              <div>
-                <label className="mb-1 block font-medium text-[#475569]">
-                  URL Trang web hoặc RSS Feed:
-                </label>
-                <div className="flex gap-2">
-                  <input
-                    type="url"
-                    placeholder="https://netflixtechblog.com"
-                    value={newSourceUrl}
-                    onChange={(e) => setNewSourceUrl(e.target.value)}
-                    required
-                    className="flex-1 rounded-lg border border-[#dcd5c7] bg-white p-2.5 text-[#1e293b] focus:border-[#7c7465] focus:outline-none"
-                  />
-                  <button
-                    type="button"
-                    onClick={handleTestSource}
-                    disabled={testingSource || !newSourceUrl}
-                    className="cursor-pointer rounded-lg border border-[#ded7ca] bg-[#f4efe6] px-3.5 py-2 font-medium text-[#2c313a] transition hover:bg-[#eae4d7] disabled:opacity-50"
-                  >
-                    {testingSource ? 'Đang test...' : 'Kiểm tra'}
-                  </button>
-                </div>
-              </div>
-
-              {testResult && (
-                <div
-                  className={`rounded-lg border p-3.5 ${
-                    testResult.success
-                      ? 'border-emerald-200 bg-emerald-50 text-emerald-900'
-                      : 'border-rose-200 bg-rose-50 text-rose-900'
-                  }`}
-                >
-                  {testResult.success ? (
-                    <div>
-                      <div className="mb-1 flex items-center gap-1 font-semibold">
-                        <CheckCircle2 className="h-4 w-4" /> Kết nối thành công! Tìm thấy{' '}
-                        {testResult.items_count} bài viết.
-                      </div>
-                      {testResult.sample_titles && testResult.sample_titles.length > 0 && (
-                        <div className="mt-1 text-[11px] text-[#475569]">
-                          Bài mẫu: "{testResult.sample_titles[0]}"
-                        </div>
-                      )}
-                    </div>
-                  ) : (
-                    <div className="flex items-start gap-1.5">
-                      <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" />
-                      <div>Lỗi kiểm tra: {testResult.error}</div>
-                    </div>
-                  )}
-                </div>
-              )}
-
-              <div>
-                <label className="mb-1 block font-medium text-[#475569]">Chủ đề:</label>
-                <select
-                  value={newSourceCategory}
-                  onChange={(e) => setNewSourceCategory(e.target.value)}
-                  className="w-full rounded-lg border border-[#dcd5c7] bg-white p-2.5 text-[#1e293b] focus:border-[#7c7465] focus:outline-none"
-                >
-                  <option value="AI & Future Tech">🤖 AI & Công nghệ tương lai</option>
-                  <option value="Backend & Architecture">⚙️ Backend & Kiến trúc hệ thống</option>
-                  <option value="Vietnam Tech">🇻🇳 Tin công nghệ Việt Nam</option>
-                  <option value="Global Tech">🌐 Báo công nghệ quốc tế</option>
-                </select>
-              </div>
-
-              <div className="flex justify-end gap-2 border-t border-[#e7e2d9] pt-3">
-                <button
-                  type="button"
-                  onClick={() => setIsAddSourceOpen(false)}
-                  className="cursor-pointer rounded-lg bg-[#f4efe6] px-4 py-2 font-medium text-[#475569] hover:bg-[#eae4d7]"
-                >
-                  Hủy
-                </button>
-                <button
-                  type="submit"
-                  className="cursor-pointer rounded-lg bg-emerald-700 px-4 py-2 font-semibold text-white hover:bg-emerald-800"
-                >
-                  Lưu nguồn tin
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
+      {/* Sub-component: Modular Add Source Modal */}
+      <AddSourceModal
+        isOpen={isAddSourceOpen}
+        onClose={() => setIsAddSourceOpen(false)}
+        onSourceAdded={fetchSources}
+      />
     </div>
   );
 }
