@@ -423,7 +423,7 @@ export default function App() {
   );
 
   return (
-    <div className="min-h-screen w-full max-w-full overflow-x-hidden bg-[#fbf9f5] font-serif text-[#2c313a] selection:bg-amber-100 selection:text-amber-900">
+    <div className="min-h-screen w-full max-w-full overflow-x-clip bg-[#fbf9f5] font-serif text-[#2c313a] selection:bg-amber-100 selection:text-amber-900">
       {/* Sub-component: Modular Feed Header */}
       <FeedHeader
         activeTab={activeTab}
@@ -498,7 +498,10 @@ export default function App() {
                 {groupedArticles.map((group) => (
                   <section key={group.dateKey} className="space-y-4">
                     {/* Date Section Header */}
-                    <div className="sticky top-[57px] z-20 flex items-center gap-3 bg-[#fbf9f5]/95 py-2 font-sans backdrop-blur-xs">
+                    <div
+                      style={{ top: 'var(--app-header-h, 72px)' }}
+                      className="sticky z-20 flex items-center gap-3 bg-[#fbf9f5]/95 py-2 font-sans backdrop-blur-xs"
+                    >
                       <div className="flex items-center gap-1.5 rounded-full border border-[#ded7ca] bg-[#f4efe6] px-3 py-0.5 text-xs font-bold text-[#554e42] shadow-xs">
                         <Clock className="h-3 w-3 text-amber-700" />
                         <span>{group.label}</span>

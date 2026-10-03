@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useLayoutEffect, useRef } from 'react';
 import {
   BookOpen,
   Search,
@@ -32,21 +32,48 @@ export const FeedHeader: React.FC<FeedHeaderProps> = ({
   onOpenExplanation,
   pullDistance,
 }) => {
+  const headerRef = useRef<HTMLElement>(null);
+
+  // Chiều cao header thay đổi theo breakpoint (mobile có thêm nav tab, và cộng safe-area inset).
+  // Đo thật rồi publish ra --app-header-h để các date group header sticky bám đúng ngay dưới header.
+  useLayoutEffect(() => {
+    const el = headerRef.current;
+    if (!el) return;
+
+    const apply = () => {
+      const h = Math.round(el.getBoundingClientRect().height);
+      if (h > 0) {
+        document.documentElement.style.setProperty('--app-header-h', `${h}px`);
+      }
+    };
+
+    apply();
+
+    const ro = new ResizeObserver(apply);
+    ro.observe(el);
+
+    window.addEventListener('resize', apply);
+    return () => {
+      ro.disconnect();
+      window.removeEventListener('resize', apply);
+    };
+  }, []);
+
   return (
     <>
-      <header className="header-safe-pt sticky top-0 z-30 border-b border-[#e7e2d9] bg-[#fbf9f5]/95 px-3.5 pb-2.5 backdrop-blur-md sm:px-6 sm:pb-3.5">
+      <header
+        ref={headerRef}
+        className="header-safe-pt sticky top-0 z-30 border-b border-[#e7e2d9] bg-[#fbf9f5]/95 px-3.5 pb-2.5 backdrop-blur-md sm:px-6 sm:pb-3.5"
+      >
         <div className="mx-auto flex max-w-5xl items-center justify-between gap-2">
           {/* Logo & Brand */}
-          <div className="flex min-w-0 items-center gap-2 sm:gap-3">
-            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-[#24292f] font-serif text-base font-bold text-white shadow-sm">
+          <div className="flex min-w-0 items-center">
+            <div
+              aria-label="TechPulse"
+              title="TechPulse"
+              className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-[#24292f] font-serif text-base font-bold text-white shadow-sm"
+            >
               TP
-            </div>
-            <div className="min-w-0">
-              <div className="flex items-center gap-1.5 sm:gap-2">
-                <span className="font-serif text-lg font-bold tracking-tight text-[#1c1f24] sm:text-xl">
-                  TechPulse
-                </span>
-              </div>
             </div>
           </div>
 

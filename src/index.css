@@ -6,6 +6,9 @@
   --sab: env(safe-area-inset-bottom, 0px);
   --sal: env(safe-area-inset-left, 0px);
   --sar: env(safe-area-inset-right, 0px);
+  /* Chiều cao thực tế của header, được FeedHeader cập nhật bằng ResizeObserver.
+     Dùng làm `top` cho các sticky group header bên dưới. */
+  --app-header-h: 72px;
 }
 
 html,
@@ -16,7 +19,10 @@ body {
   min-height: 100dvh;
   background-color: #fcfbf9; /* Tone giấy ấm dịu mắt cho người đọc sách */
   color: #1f2937;
-  overflow-x: hidden;
+  /* `clip` thay cho `hidden`: hidden sẽ biến body thành scroll container và phá vỡ
+     position:sticky của header + các group header. `clip` vẫn chặn tràn ngang mà
+     không tạo scroll container. */
+  overflow-x: clip;
   max-width: 100vw;
   -webkit-text-size-adjust: 100%;
 }
