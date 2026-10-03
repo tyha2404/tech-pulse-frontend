@@ -20,6 +20,7 @@ interface FeedHeaderProps {
   onCrawlAll: () => void;
   onOpenExplanation: () => void;
   pullDistance: number;
+  headerRef?: React.Ref<HTMLElement>;
 }
 
 export const FeedHeader: React.FC<FeedHeaderProps> = ({
@@ -31,10 +32,14 @@ export const FeedHeader: React.FC<FeedHeaderProps> = ({
   onCrawlAll,
   onOpenExplanation,
   pullDistance,
+  headerRef,
 }) => {
   return (
     <>
-      <header className="header-safe-pt sticky top-0 z-30 border-b border-[#e7e2d9] bg-[#fbf9f5]/95 px-3.5 pb-2.5 backdrop-blur-md sm:px-6 sm:pb-3.5">
+      <header
+        ref={headerRef}
+        className="header-safe-pt sticky top-0 z-30 border-b border-[#e7e2d9] bg-[#fbf9f5]/95 px-3.5 pb-2.5 backdrop-blur-md sm:px-6 sm:pb-3.5"
+      >
         <div className="mx-auto flex max-w-5xl items-center justify-between gap-2">
           {/* Logo & Brand */}
           <div className="flex min-w-0 items-center gap-2 sm:gap-3">

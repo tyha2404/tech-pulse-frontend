@@ -62,6 +62,31 @@ export default function App() {
   const [showExplanationModal, setShowExplanationModal] = useState(false);
   const [isAddSourceOpen, setIsAddSourceOpen] = useState(false);
 
+  const [headerHeight, setHeaderHeight] = useState<number>(57);
+  const headerRef = useRef<HTMLElement | null>(null);
+
+  useEffect(() => {
+    const updateHeaderHeight = () => {
+      if (headerRef.current) {
+        setHeaderHeight(headerRef.current.offsetHeight);
+      }
+    };
+    updateHeaderHeight();
+
+    let resizeObserver: ResizeObserver | null = null;
+    if (headerRef.current && window.ResizeObserver) {
+      resizeObserver = new ResizeObserver(() => {
+        updateHeaderHeight();
+      });
+      resizeObserver.observe(headerRef.current);
+    }
+    window.addEventListener('resize', updateHeaderHeight);
+    return () => {
+      if (resizeObserver) resizeObserver.disconnect();
+      window.removeEventListener('resize', updateHeaderHeight);
+    };
+  }, []);
+
   const PAGE_SIZE = 20;
   const articlesLengthRef = useRef(articles.length);
   useEffect(() => {
@@ -408,7 +433,7 @@ export default function App() {
 
   const groupedArticles = articles.reduce<{ label: string; dateKey: string; items: Article[] }[]>(
     (acc, art) => {
-      const targetDate = art.published_at || art.created_at;
+      const targetDate = art.created_at;
       const dateKey = getLocalDateKey(targetDate);
       const label = formatGroupDate(targetDate);
       const existingGroup = acc.find((g) => g.dateKey === dateKey);
@@ -434,6 +459,7 @@ export default function App() {
         onCrawlAll={() => handleCrawlAll()}
         onOpenExplanation={() => setShowExplanationModal(true)}
         pullDistance={pullDistance}
+        headerRef={headerRef}
       />
 
       {/* Main Container with Safe Area Bottom */}
@@ -498,7 +524,10 @@ export default function App() {
                 {groupedArticles.map((group) => (
                   <section key={group.dateKey} className="space-y-4">
                     {/* Date Section Header */}
-                    <div className="sticky top-[57px] z-20 flex items-center gap-3 bg-[#fbf9f5]/95 py-2 font-sans backdrop-blur-xs">
+                    <div
+                      style={{ top: `${headerHeight}px` }}
+                      className="sticky z-20 flex items-center gap-3 bg-[#fbf9f5]/95 py-2 font-sans backdrop-blur-xs"
+                    >
                       <div className="flex items-center gap-1.5 rounded-full border border-[#ded7ca] bg-[#f4efe6] px-3 py-0.5 text-xs font-bold text-[#554e42] shadow-xs">
                         <Clock className="h-3 w-3 text-amber-700" />
                         <span>{group.label}</span>
