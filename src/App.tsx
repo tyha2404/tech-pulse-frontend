@@ -431,8 +431,8 @@ export default function App() {
     return `${y}-${m}-${day}`;
   };
 
-  const groupedArticles = articles.reduce<{ label: string; dateKey: string; items: Article[] }[]>(
-    (acc, art) => {
+  const groupedArticles = articles
+    .reduce<{ label: string; dateKey: string; items: Article[] }[]>((acc, art) => {
       const targetDate = art.created_at;
       const dateKey = getLocalDateKey(targetDate);
       const label = formatGroupDate(targetDate);
@@ -443,12 +443,15 @@ export default function App() {
         acc.push({ label, dateKey, items: [art] });
       }
       return acc;
-    },
-    []
-  );
+    }, [])
+    .map((g) => ({
+      ...g,
+      items: [...g.items].sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()),
+    }))
+    .sort((a, b) => (a.dateKey < b.dateKey ? 1 : a.dateKey > b.dateKey ? -1 : 0));
 
   return (
-    <div className="min-h-screen w-full max-w-full overflow-x-hidden bg-[#fbf9f5] font-serif text-[#2c313a] selection:bg-amber-100 selection:text-amber-900">
+    <div className="min-h-screen w-full max-w-full bg-[#fbf9f5] font-serif text-[#2c313a] selection:bg-amber-100 selection:text-amber-900">
       {/* Sub-component: Modular Feed Header */}
       <FeedHeader
         activeTab={activeTab}
