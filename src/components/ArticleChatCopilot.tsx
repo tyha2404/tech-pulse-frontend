@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Send, Bot, User, Copy, Check, MessageSquare } from 'lucide-react';
+import { Send, Copy, Check, Loader2 } from 'lucide-react';
 import { apiClient } from '../api';
 import type { ChatMessage } from '../types';
 
@@ -9,10 +9,10 @@ interface ArticleChatCopilotProps {
 }
 
 const QUICK_PROMPTS = [
-  '🧱 Viết code NestJS Service chuẩn mẫu',
-  '⚠️ Các điểm nghẽn hiệu năng khi scale?',
-  '🔄 So sánh giải pháp này với công nghệ khác',
-  '📐 Thiết kế schema Prisma / database phù hợp',
+  'Viết NestJS service áp dụng ý tưởng này',
+  'Điểm nghẽn khi scale là gì?',
+  'So sánh với các giải pháp thay thế',
+  'Gợi ý schema Prisma phù hợp',
 ];
 
 export const ArticleChatCopilot: React.FC<ArticleChatCopilotProps> = ({ articleId }) => {
@@ -54,7 +54,7 @@ export const ArticleChatCopilot: React.FC<ArticleChatCopilotProps> = ({ articleI
       const errorMsg: ChatMessage = {
         role: 'assistant',
         content:
-          'Xin lỗi, đã xảy ra lỗi khi trao đổi với AI Copilot. Vui lòng thử lại sau ít phút.',
+          'Không nhận được câu trả lời: AI gateway không phản hồi. Gửi lại câu hỏi sau ít phút.',
       };
       setMessages([...newHistory, errorMsg]);
     } finally {
@@ -69,40 +69,24 @@ export const ArticleChatCopilot: React.FC<ArticleChatCopilotProps> = ({ articleI
   };
 
   return (
-    <div className="flex h-[420px] flex-col rounded-xl border border-[#e7e2d9] bg-[#fdfcfa] font-sans sm:h-[520px]">
-      {/* Header */}
-      <div className="flex items-center justify-between border-b border-[#e7e2d9] bg-[#f7f4ee] px-3 py-2 sm:px-4 sm:py-2.5">
-        <div className="flex items-center gap-1.5 sm:gap-2">
-          <Bot className="h-4 w-4 text-indigo-700" />
-          <span className="max-w-[200px] truncate text-[11px] font-bold text-[#1c1f24] sm:max-w-none sm:text-xs">
-            AI Copilot (Principal Architect)
-          </span>
-        </div>
-        <span className="shrink-0 rounded bg-indigo-100/70 px-1.5 py-0.5 text-[9px] font-semibold text-indigo-800 sm:text-[10px]">
-          Backend & AI
-        </span>
-      </div>
-
-      {/* Messages Scroll Area */}
-      <div className="flex-1 space-y-3 overflow-y-auto p-4 text-xs">
+    <div className="flex h-[min(560px,calc(100dvh-16rem))] min-h-[380px] flex-col">
+      <div
+        className="-mx-4 flex-1 space-y-5 overflow-y-auto px-4 pb-4 sm:-mx-7 sm:px-7"
+        aria-live="polite"
+      >
         {messages.length === 0 ? (
-          <div className="flex h-full flex-col items-center justify-center text-center text-[#756e60]">
-            <MessageSquare className="mb-2 h-8 w-8 text-[#a8a193]" />
-            <p className="font-medium text-[#2c313a]">
-              Hỏi đáp chuyên sâu về kiến trúc & code với bài viết này
+          <div className="flex h-full flex-col justify-end">
+            <p className="text-ink text-[16px] font-semibold">Hỏi AI về bài này</p>
+            <p className="text-muted mt-1 max-w-prose text-[14px] leading-relaxed">
+              AI đã đọc bài và trả lời như một kiến trúc sư backend: viết code, phân tích rủi ro
+              hoặc so sánh giải pháp.
             </p>
-            <p className="mt-1 max-w-sm text-[11px] text-[#756e60]">
-              Bạn có thể yêu cầu AI sinh mã nguồn NestJS Module/Service, phân tích rủi ro khi scale,
-              hoặc đề xuất cấu trúc Prisma DB.
-            </p>
-
-            {/* Quick Prompts */}
-            <div className="mt-4 flex flex-wrap justify-center gap-1.5">
-              {QUICK_PROMPTS.map((prompt, idx) => (
+            <div className="mt-4 flex flex-wrap gap-1.5">
+              {QUICK_PROMPTS.map((prompt) => (
                 <button
-                  key={idx}
+                  key={prompt}
                   onClick={() => sendMessage(prompt)}
-                  className="cursor-pointer rounded-full border border-[#d8d2c4] bg-white px-3 py-1 text-[11px] font-medium text-[#4a4439] shadow-2xs transition hover:border-indigo-400 hover:bg-indigo-50 hover:text-indigo-900"
+                  className="border-rule text-ink-2 hover:bg-wash hover:text-ink h-9 cursor-pointer rounded-full border px-3.5 text-[13px] transition-colors"
                 >
                   {prompt}
                 </button>
@@ -110,73 +94,51 @@ export const ArticleChatCopilot: React.FC<ArticleChatCopilotProps> = ({ articleI
             </div>
           </div>
         ) : (
-          messages.map((m, idx) => (
-            <div
-              key={idx}
-              className={`flex gap-2.5 ${m.role === 'user' ? 'justify-end' : 'justify-start'}`}
-            >
-              {m.role === 'assistant' && (
-                <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-indigo-100 text-indigo-800">
-                  <Bot className="h-3.5 w-3.5" />
-                </div>
-              )}
-              <div
-                className={`max-w-[85%] rounded-2xl p-3 shadow-2xs ${
-                  m.role === 'user'
-                    ? 'bg-[#24292f] text-white'
-                    : 'border border-[#e7e2d9] bg-white text-[#2c313a]'
-                }`}
-              >
-                <div className="font-sans text-xs leading-relaxed whitespace-pre-wrap">
+          messages.map((m, idx) =>
+            m.role === 'user' ? (
+              <div key={idx} className="flex justify-end">
+                <div className="bg-ink max-w-[85%] rounded-2xl rounded-br-md px-4 py-2.5 text-[15px] leading-relaxed whitespace-pre-wrap text-white">
                   {m.content}
                 </div>
-                {m.role === 'assistant' && (
-                  <div className="mt-2 flex justify-end">
-                    <button
-                      onClick={() => handleCopyCode(m.content, idx)}
-                      className="flex cursor-pointer items-center gap-1 text-[10px] text-[#756e60] hover:text-indigo-700"
-                    >
-                      {copiedIndex === idx ? (
-                        <>
-                          <Check className="h-3 w-3 text-emerald-600" /> Đã chép
-                        </>
-                      ) : (
-                        <>
-                          <Copy className="h-3 w-3" /> Sao chép
-                        </>
-                      )}
-                    </button>
-                  </div>
-                )}
               </div>
-              {m.role === 'user' && (
-                <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-[#eee9df] text-[#4a4439]">
-                  <User className="h-3.5 w-3.5" />
+            ) : (
+              <div key={idx} className="max-w-[95%]">
+                <div className="text-ink text-[15px] leading-[1.65] whitespace-pre-wrap">
+                  {m.content}
                 </div>
-              )}
-            </div>
-          ))
+                <button
+                  onClick={() => handleCopyCode(m.content, idx)}
+                  className="text-muted hover:bg-wash hover:text-ink mt-1 -ml-2 inline-flex h-8 cursor-pointer items-center gap-1.5 rounded-full px-2 text-[13px]"
+                >
+                  {copiedIndex === idx ? (
+                    <>
+                      <Check className="text-signal-600 h-3.5 w-3.5" /> Đã sao chép
+                    </>
+                  ) : (
+                    <>
+                      <Copy className="h-3.5 w-3.5" /> Sao chép
+                    </>
+                  )}
+                </button>
+              </div>
+            )
+          )
         )}
 
         {loading && (
-          <div className="flex items-center gap-2 text-[#756e60]">
-            <Bot className="h-4 w-4 animate-bounce text-indigo-600" />
-            <span className="text-[11px] italic">
-              AI Architect đang phân tích và soạn câu trả lời...
-            </span>
-          </div>
+          <p role="status" className="text-muted flex items-center gap-2 text-[14px]">
+            <Loader2 className="h-4 w-4 animate-spin" /> AI đang soạn câu trả lời…
+          </p>
         )}
       </div>
 
-      {/* Suggested Followups */}
       {followups.length > 0 && !loading && (
-        <div className="flex flex-wrap gap-1 border-t border-[#ede7dc] bg-[#fbf9f5] px-4 py-2">
-          <span className="text-[10px] font-bold text-[#756e60] uppercase">Gợi ý:</span>
+        <div className="border-rule flex flex-wrap gap-1.5 border-t py-3">
           {followups.map((f, i) => (
             <button
               key={i}
               onClick={() => sendMessage(f)}
-              className="cursor-pointer rounded-md border border-[#dfd8ca] bg-white px-2 py-0.5 text-[10px] text-indigo-900 transition hover:bg-indigo-50"
+              className="border-rule text-ink-2 hover:bg-wash hover:text-ink h-8 cursor-pointer rounded-full border px-3 text-[13px] transition-colors"
             >
               {f}
             </button>
@@ -184,33 +146,34 @@ export const ArticleChatCopilot: React.FC<ArticleChatCopilotProps> = ({ articleI
         </div>
       )}
 
-      {/* Input Area with Safe Area Bottom */}
-      <div className="border-t border-[#e7e2d9] bg-white p-2.5 pb-[max(env(safe-area-inset-bottom,0px),0.75rem)]">
-        <form
-          onSubmit={(e) => {
-            e.preventDefault();
-            sendMessage(input);
-          }}
-          className="flex items-center gap-2"
+      <form
+        onSubmit={(e) => {
+          e.preventDefault();
+          sendMessage(input);
+        }}
+        className="border-rule bg-surface focus-within:border-ink-2 flex items-center gap-2 rounded-full border py-1.5 pr-1.5 pl-4"
+      >
+        <label htmlFor={`chat-${articleId}`} className="sr-only">
+          Câu hỏi cho AI
+        </label>
+        <input
+          id={`chat-${articleId}`}
+          type="text"
+          value={input}
+          onChange={(e) => setInput(e.target.value)}
+          placeholder="Hỏi về kiến trúc, đánh đổi, hoặc nhờ viết code…"
+          className="text-ink placeholder:text-faint h-10 min-w-0 flex-1 bg-transparent text-[16px] focus:outline-none sm:text-[15px]"
+          disabled={loading}
+        />
+        <button
+          type="submit"
+          disabled={loading || !input.trim()}
+          className="bg-ink hover:bg-ink-deep flex h-10 w-10 shrink-0 cursor-pointer items-center justify-center rounded-full text-white transition-colors disabled:cursor-not-allowed disabled:opacity-30"
+          aria-label="Gửi câu hỏi"
         >
-          <input
-            type="text"
-            value={input}
-            onChange={(e) => setInput(e.target.value)}
-            placeholder="Hỏi về kiến trúc, trade-offs hoặc yêu cầu code NestJS..."
-            className="h-11 flex-1 rounded-xl border border-[#dcd5c7] bg-[#fcfbf9] px-3.5 py-2 text-[16px] text-[#1c1f24] focus:border-indigo-500 focus:bg-white focus:outline-none sm:h-9 sm:text-xs"
-            disabled={loading}
-          />
-          <button
-            type="submit"
-            disabled={loading || !input.trim()}
-            className="flex min-h-[44px] min-w-[44px] cursor-pointer items-center justify-center rounded-xl bg-indigo-900 px-3.5 py-2 text-xs font-medium text-white transition hover:bg-indigo-950 disabled:opacity-40 sm:min-h-9 sm:min-w-0"
-            aria-label="Gửi tin nhắn"
-          >
-            <Send className="h-4 w-4" />
-          </button>
-        </form>
-      </div>
+          <Send className="h-4 w-4" />
+        </button>
+      </form>
     </div>
   );
 };

@@ -1,20 +1,14 @@
 import React, { useEffect, useState } from 'react';
-import {
-  Activity,
-  RefreshCw,
-  CheckCircle2,
-  AlertTriangle,
-  XCircle,
-  Cpu,
-  Database,
-  Layers,
-  ShieldAlert,
-  Clock,
-  Flame,
-  Globe,
-  Radio,
-  ArrowUpRight,
-} from 'lucide-react';
+import { RefreshCw } from 'lucide-react';
+import { PageHeader } from './PageHeader';
+import { primaryButton, secondaryButton, sectionHeading } from '../utils/ui';
+import { formatRelativeTime } from '../utils/format';
+
+const BREAKER_STATE: Record<string, { label: string; tone: string }> = {
+  CLOSED: { label: 'Hoạt động', tone: 'text-signal-800' },
+  HALF_OPEN: { label: 'Đang thử lại', tone: 'text-ochre-800' },
+  OPEN: { label: 'Đang bị ngắt', tone: 'text-danger-700' },
+};
 import type { AdminMetrics } from '../types';
 import { getAdminMetrics, resetCircuitBreakers, apiClient } from '../api';
 
@@ -55,13 +49,11 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = () => {
     try {
       setResettingBreakers(true);
       await resetCircuitBreakers();
-      setMessage(
-        '✅ Đã reset toàn bộ Circuit Breaker về trạng thái hoạt động bình thường (CLOSED)!'
-      );
+      setMessage('Đã mở lại tất cả mô hình AI.');
       setTimeout(() => setMessage(null), 4000);
       await loadData();
     } catch (err: any) {
-      setMessage(`❌ Lỗi reset Circuit Breaker: ${err.message}`);
+      setMessage(`Không mở lại được mô hình: ${err.message}`);
     } finally {
       setResettingBreakers(false);
     }
@@ -71,11 +63,11 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = () => {
     try {
       setCrawlingSourceId(sourceId);
       await apiClient.post(`/sources/${sourceId}/crawl`);
-      setMessage(`🚀 Đã kích hoạt cào dữ liệu cho nguồn "${sourceName}"!`);
+      setMessage(`Đang lấy lại bài từ ${sourceName}.`);
       setTimeout(() => setMessage(null), 4000);
       setTimeout(loadData, 3000);
     } catch (err: any) {
-      setMessage(`❌ Lỗi cào nguồn: ${err.message}`);
+      setMessage(`Không lấy được bài: ${err.message}`);
     } finally {
       setCrawlingSourceId(null);
     }
@@ -83,356 +75,257 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = () => {
 
   if (loading) {
     return (
-      <div className="flex flex-col items-center justify-center py-20 font-sans text-[#756e60]">
-        <RefreshCw className="mb-2.5 h-6 w-6 animate-spin text-[#4b5563]" />
-        <p className="text-xs font-medium">Đang tải dữ liệu giám sát hệ thống...</p>
+      <p
+        role="status"
+        className="text-muted flex items-center justify-center gap-2 py-24 text-[14px]"
+      >
+        <RefreshCw className="h-4 w-4 animate-spin" /> Đang tải tình trạng hệ thống…
+      </p>
+    );
+  }
+
+  if (!metrics) {
+    return (
+      <div role="alert" className="py-20 text-center">
+        <p className="text-danger-700 text-[15px]">
+          Không tải được số liệu: backend không phản hồi.
+        </p>
+        <button onClick={loadData} className={`${secondaryButton} mt-4`}>
+          <RefreshCw className="h-4 w-4" /> Thử lại
+        </button>
       </div>
     );
   }
 
-  return (
-    <div className="animate-fadeIn mx-auto max-w-5xl space-y-6 pb-12 font-serif">
-      {/* Header Banner */}
-      <div className="flex flex-col justify-between gap-4 rounded-2xl border border-[#e7e2d9] bg-gradient-to-r from-[#fbf9f5] via-[#f7f3ea] to-[#f4eee2] p-6 shadow-2xs md:flex-row md:items-center">
-        <div>
-          <div className="mb-2 inline-flex items-center gap-1.5 rounded-full border border-emerald-200 bg-emerald-50/80 px-2.5 py-0.5 font-sans text-[11px] font-semibold text-emerald-900">
-            <Activity className="h-3.5 w-3.5 text-emerald-700" />
-            Admin Observability & System Health
-          </div>
-          <h2 className="font-serif text-xl font-bold text-[#1c1f24] sm:text-2xl">
-            Giám Sát Vận Hành & Sức Khỏe Nguồn Tin
-          </h2>
-          <p className="mt-1 font-sans text-xs text-[#635c50]">
-            Theo dõi trạng thái từng nguồn tin, độ trễ pipeline AI, trạng thái Circuit Breakers và
-            nhật ký cào tin thời gian thực.
-          </p>
-        </div>
+  const sourceNames = Object.fromEntries(metrics.source_health.map((s) => [s.id, s.name]));
+  const failingSources = metrics.source_health.filter((s) => s.status === 'error');
+  const models = Array.from(
+    new Set([
+      ...Object.keys(metrics.circuit_breakers_status || {}),
+      ...Object.keys(metrics.ai_model_distribution || {}),
+    ])
+  );
+  const totalProcessed = Object.values(metrics.ai_model_distribution || {}).reduce(
+    (a, b) => a + b,
+    0
+  );
+  const highShare = metrics.total_articles
+    ? Math.round((metrics.high_score_articles / metrics.total_articles) * 100)
+    : 0;
 
-        <div className="flex shrink-0 items-center gap-2 font-sans">
-          <button
-            onClick={loadData}
-            disabled={refreshing}
-            className="flex cursor-pointer items-center gap-1.5 rounded-lg border border-[#ded7ca] bg-white px-3 py-2 text-xs font-semibold text-[#2c313a] shadow-xs transition hover:bg-[#eee9df]"
-          >
-            <RefreshCw className={`h-3.5 w-3.5 ${refreshing ? 'animate-spin' : ''}`} />
-            Làm mới
-          </button>
-          <button
-            onClick={handleResetBreakers}
-            disabled={resettingBreakers}
-            className="flex cursor-pointer items-center gap-1.5 rounded-lg bg-[#2c313a] px-3.5 py-2 text-xs font-semibold text-white shadow-xs transition hover:bg-[#1a1d23] disabled:opacity-50"
-          >
-            <ShieldAlert className="h-3.5 w-3.5" />
-            Reset Breakers
-          </button>
-        </div>
-      </div>
+  const stats = [
+    {
+      label: 'Bài viết',
+      value: metrics.total_articles,
+      note: `${metrics.analyzed_articles} đã được AI phân tích`,
+    },
+    {
+      label: 'Điểm từ 8 trở lên',
+      value: metrics.high_score_articles,
+      note: `${highShare}% tổng số bài`,
+      tone: 'text-signal-700',
+    },
+    {
+      label: 'Nguồn đang bật',
+      value: `${metrics.active_sources}/${metrics.total_sources}`,
+      note: `${metrics.healthy_sources} ổn định`,
+    },
+    {
+      label: 'Nguồn lỗi',
+      value: metrics.error_sources,
+      note: metrics.error_sources ? 'Xem chi tiết bên dưới' : 'Không có',
+      tone: metrics.error_sources ? 'text-danger-700' : undefined,
+    },
+  ];
+
+  return (
+    <div>
+      <PageHeader
+        title="Hệ thống"
+        description="Tình trạng lấy bài và các mô hình AI. Tự làm mới mỗi 30 giây."
+        actions={
+          <>
+            <button onClick={loadData} disabled={refreshing} className={secondaryButton}>
+              <RefreshCw className={`h-4 w-4 ${refreshing ? 'animate-spin' : ''}`} />
+              Làm mới
+            </button>
+            <button
+              onClick={handleResetBreakers}
+              disabled={resettingBreakers}
+              title="Cho phép gọi lại các mô hình AI đang bị circuit breaker ngắt"
+              className={primaryButton}
+            >
+              Mở lại mô hình bị ngắt
+            </button>
+          </>
+        }
+      />
 
       {message && (
-        <div className="flex items-center gap-2 rounded-xl border border-indigo-200 bg-indigo-50/80 p-3.5 font-sans text-xs font-medium text-indigo-900 shadow-2xs">
-          <Radio className="h-4 w-4 shrink-0 animate-pulse text-indigo-700" />
-          <span>{message}</span>
-        </div>
+        <p role="status" className="text-muted -mt-4 mb-6 text-[14px]">
+          {message}
+        </p>
       )}
 
-      {/* KPI Overview Cards */}
-      <div className="grid grid-cols-2 gap-4 font-sans md:grid-cols-4">
-        <div className="rounded-xl border border-[#e7e2d9] bg-white p-4 shadow-xs">
-          <div className="mb-1.5 flex items-center justify-between text-[#756e60]">
-            <span className="text-[11px] font-bold tracking-wider uppercase">Tổng Bài Viết</span>
-            <Database className="h-4 w-4 text-sky-700" />
+      <dl className="border-rule md:divide-rule grid grid-cols-2 gap-y-6 border-y py-5 md:grid-cols-4 md:divide-x">
+        {stats.map((st) => (
+          <div key={st.label} className="md:px-5 md:first:pl-0">
+            <dt className="text-muted text-[13px]">{st.label}</dt>
+            <dd
+              className={`score-numeral mt-1 text-[30px] leading-none font-semibold ${st.tone || 'text-ink'}`}
+            >
+              {st.value}
+            </dd>
+            <dd className="text-muted mt-1.5 text-[13px]">{st.note}</dd>
           </div>
-          <div className="font-serif text-2xl font-bold text-[#1c1f24]">
-            {metrics?.total_articles.toLocaleString()}
-          </div>
-          <div className="mt-1 text-[11px] text-[#8c8475]">
-            <strong className="text-emerald-800">{metrics?.analyzed_articles}</strong> bài đã phân
-            tích AI
-          </div>
-        </div>
+        ))}
+      </dl>
 
-        <div className="rounded-xl border border-[#e7e2d9] bg-white p-4 shadow-xs">
-          <div className="mb-1.5 flex items-center justify-between text-[#756e60]">
-            <span className="text-[11px] font-bold tracking-wider uppercase">
-              Bài Tinh Tuyển (≥8.0)
-            </span>
-            <Flame className="h-4 w-4 text-rose-600" />
-          </div>
-          <div className="font-serif text-2xl font-bold text-rose-800">
-            {metrics?.high_score_articles.toLocaleString()}
-          </div>
-          <div className="mt-1 text-[11px] text-[#8c8475]">
-            {metrics?.total_articles
-              ? Math.round(((metrics.high_score_articles || 0) / metrics.total_articles) * 100)
-              : 0}
-            % trên tổng volume
-          </div>
-        </div>
-
-        <div className="rounded-xl border border-[#e7e2d9] bg-white p-4 shadow-xs">
-          <div className="mb-1.5 flex items-center justify-between text-[#756e60]">
-            <span className="text-[11px] font-bold tracking-wider uppercase">Nguồn Hoạt Động</span>
-            <Globe className="h-4 w-4 text-emerald-700" />
-          </div>
-          <div className="font-serif text-2xl font-bold text-[#1c1f24]">
-            {metrics?.active_sources}{' '}
-            <span className="font-sans text-xs font-normal text-[#8c8475]">
-              / {metrics?.total_sources}
-            </span>
-          </div>
-          <div className="mt-1 flex items-center gap-1 text-[11px] font-semibold text-emerald-800">
-            <CheckCircle2 className="h-3 w-3 text-emerald-700" /> {metrics?.healthy_sources} nguồn
-            khỏe mạnh
-          </div>
-        </div>
-
-        <div className="rounded-xl border border-[#e7e2d9] bg-white p-4 shadow-xs">
-          <div className="mb-1.5 flex items-center justify-between text-[#756e60]">
-            <span className="text-[11px] font-bold tracking-wider uppercase">Nguồn Gặp Sự Cố</span>
-            <AlertTriangle className="h-4 w-4 text-amber-600" />
-          </div>
-          <div
-            className={`font-serif text-2xl font-bold ${(metrics?.error_sources || 0) > 0 ? 'text-amber-800' : 'text-[#1c1f24]'}`}
-          >
-            {metrics?.error_sources}
-          </div>
-          <div className="mt-1 text-[11px] text-[#8c8475]">Cần kiểm tra định dạng hoặc domain</div>
-        </div>
-      </div>
-
-      {/* Circuit Breakers & AI Model Distribution */}
-      <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
-        {/* Circuit Breakers */}
-        <div className="rounded-xl border border-[#e7e2d9] bg-white p-5 shadow-xs">
-          <h3 className="mb-3 flex items-center gap-2 font-serif text-sm font-bold text-[#1c1f24]">
-            <Cpu className="h-4 w-4 text-indigo-700" />
-            Trạng Thái AI Circuit Breakers
-          </h3>
-          <div className="space-y-2.5 font-sans">
-            {metrics?.circuit_breakers_status &&
-            Object.keys(metrics.circuit_breakers_status).length > 0 ? (
-              Object.entries(metrics.circuit_breakers_status).map(([model, status]) => (
-                <div
+      <section aria-labelledby="sys-models" className="mt-12">
+        <h2 id="sys-models" className={`${sectionHeading} mb-1`}>
+          Mô hình AI
+        </h2>
+        <p className="text-muted mb-3 text-[13px]">
+          Thứ tự thử: mô hình chính trước, lỗi thì chuyển sang mô hình dự phòng.
+        </p>
+        {models.length === 0 ? (
+          <p className="text-muted py-4 text-[14px]">Chưa có bài nào được phân tích.</p>
+        ) : (
+          <ul className="divide-rule border-rule divide-y border-y">
+            {models.map((model) => {
+              const count = metrics.ai_model_distribution?.[model] || 0;
+              const pct = totalProcessed ? Math.round((count / totalProcessed) * 100) : 0;
+              const breaker = metrics.circuit_breakers_status?.[model];
+              const state = BREAKER_STATE[breaker?.toUpperCase() || ''] || null;
+              return (
+                <li
                   key={model}
-                  className="flex items-center justify-between rounded-lg border border-[#ede7dc] bg-[#faf8f4] p-2.5"
+                  className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-x-4 gap-y-2 py-3 sm:grid-cols-[minmax(0,1fr)_8rem_12rem]"
                 >
-                  <div className="flex items-center gap-2">
-                    <div
-                      className={`h-2.5 w-2.5 rounded-full ${status === 'CLOSED' ? 'bg-emerald-600' : status === 'HALF_OPEN' ? 'bg-amber-500' : 'animate-pulse bg-rose-600'}`}
-                    />
-                    <span className="font-mono text-xs font-semibold text-[#1c1f24]">{model}</span>
+                  <div className="min-w-0">
+                    <div className="text-ink truncate font-mono text-[13.5px]">{model}</div>
                   </div>
-                  <span
-                    className={`rounded-full px-2 py-0.5 text-[10px] font-bold uppercase ${
-                      status === 'CLOSED'
-                        ? 'bg-emerald-100 text-emerald-800'
-                        : status === 'HALF_OPEN'
-                          ? 'bg-amber-100 text-amber-800'
-                          : 'bg-rose-100 text-rose-800'
-                    }`}
-                  >
-                    {status}
-                  </span>
-                </div>
-              ))
-            ) : (
-              <div className="flex items-center justify-between rounded-lg border border-[#ede7dc] bg-[#faf8f4] p-3 text-xs text-[#756e60]">
-                <span>Tất cả Circuit Breakers đều hoạt động ổn định.</span>
-                <span className="rounded bg-emerald-100 px-2 py-0.5 text-[10px] font-bold text-emerald-800 uppercase">
-                  CLOSED
-                </span>
-              </div>
-            )}
-          </div>
-        </div>
-
-        {/* AI Model Distribution */}
-        <div className="rounded-xl border border-[#e7e2d9] bg-white p-5 shadow-xs">
-          <h3 className="mb-3 flex items-center gap-2 font-serif text-sm font-bold text-[#1c1f24]">
-            <Layers className="h-4 w-4 text-sky-700" />
-            Phân Bổ Xử Lý Của Các Mô Hình AI
-          </h3>
-          <div className="space-y-3 font-sans">
-            {metrics?.ai_model_distribution &&
-            Object.keys(metrics.ai_model_distribution).length > 0 ? (
-              Object.entries(metrics.ai_model_distribution).map(([model, count]) => {
-                const percentage = metrics.analyzed_articles
-                  ? Math.round((count / metrics.analyzed_articles) * 100)
-                  : 0;
-                return (
-                  <div key={model} className="space-y-1">
-                    <div className="flex justify-between text-xs">
-                      <span className="font-mono font-medium text-[#1c1f24]">{model}</span>
-                      <span className="text-[#756e60]">
-                        {count} bài ({percentage}%)
-                      </span>
-                    </div>
-                    <div className="h-1.5 w-full overflow-hidden rounded-full bg-[#eee9df]">
-                      <div
-                        className="h-full rounded-full bg-[#2c313a]"
-                        style={{ width: `${Math.min(100, Math.max(5, percentage))}%` }}
-                      />
-                    </div>
+                  <div className={`text-[13px] font-medium ${state?.tone || 'text-faint'}`}>
+                    {state?.label || (model === 'extractive-fallback' ? 'Không dùng AI' : '–')}
                   </div>
-                );
-              })
-            ) : (
-              <div className="py-4 text-xs text-[#8c8475]">Chưa có dữ liệu phân bổ mô hình AI.</div>
-            )}
-          </div>
-        </div>
-      </div>
-
-      {/* Sources Health Table */}
-      <div className="overflow-hidden rounded-xl border border-[#e7e2d9] bg-white shadow-xs">
-        <div className="flex items-center justify-between border-b border-[#e7e2d9] bg-[#f7f4ed] px-5 py-3.5">
-          <h3 className="flex items-center gap-2 font-serif text-sm font-bold text-[#1c1f24]">
-            <Globe className="h-4 w-4 text-emerald-700" />
-            Chi Tiết Sức Khỏe Từng Nguồn Tin ({metrics?.source_health.length || 0})
-          </h3>
-        </div>
-
-        <div className="overflow-x-auto">
-          <table className="w-full min-w-[640px] border-collapse text-left font-sans text-xs">
-            <thead className="border-b border-[#e7e2d9] bg-[#faf8f4] font-medium text-[#635d52]">
-              <tr>
-                <th className="p-3.5">Tên Nguồn</th>
-                <th className="p-3.5">Định dạng</th>
-                <th className="p-3.5">Trạng Thái</th>
-                <th className="p-3.5">Số Bài</th>
-                <th className="p-3.5">Lần cào gần nhất</th>
-                <th className="p-3.5">Ghi chú lỗi</th>
-                <th className="p-3.5 text-right">Thao Tác</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-[#ede8df]">
-              {metrics?.source_health.map((src) => (
-                <tr key={src.id} className="transition hover:bg-[#fbf9f5]">
-                  <td className="p-3.5 font-semibold text-[#1c1f24]">
-                    <a
-                      href={src.url}
-                      target="_blank"
-                      rel="noreferrer"
-                      className="inline-flex items-center gap-1 hover:text-indigo-900 hover:underline"
-                    >
-                      {src.name} <ArrowUpRight className="h-3 w-3 text-[#8c8475]" />
-                    </a>
-                  </td>
-                  <td className="p-3.5">
-                    <span className="rounded bg-[#f4efe6] px-2 py-0.5 font-mono text-[10px] font-bold text-[#635d52] uppercase">
-                      {src.source_type}
+                  <div className="col-span-2 flex items-center gap-3 sm:col-span-1">
+                    <div className="bg-wash-strong h-1.5 flex-1 overflow-hidden rounded-full">
+                      <div className="bg-ink-2 h-full rounded-full" style={{ width: `${pct}%` }} />
+                    </div>
+                    <span className="score-numeral text-muted w-24 text-right text-[13px]">
+                      {count} bài · {pct}%
                     </span>
-                  </td>
-                  <td className="p-3.5">
-                    {src.status === 'healthy' ? (
-                      <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-emerald-800">
-                        <CheckCircle2 className="h-3.5 w-3.5 text-emerald-700" /> Healthy
-                      </span>
-                    ) : src.status === 'error' ? (
-                      <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-rose-800">
-                        <XCircle className="h-3.5 w-3.5 text-rose-700" /> Error
-                      </span>
-                    ) : (
-                      <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-amber-800">
-                        <Clock className="h-3.5 w-3.5 text-amber-700" /> {src.status}
-                      </span>
-                    )}
-                  </td>
-                  <td className="p-3.5 font-mono font-medium text-[#1c1f24]">
-                    {src.articles_count}
-                  </td>
-                  <td className="p-3.5 text-[#756e60]">
-                    {src.last_crawled_at
-                      ? new Date(src.last_crawled_at).toLocaleTimeString('vi-VN', {
-                          hour: '2-digit',
-                          minute: '2-digit',
-                          second: '2-digit',
-                        })
-                      : '—'}
-                  </td>
-                  <td
-                    className="max-w-[200px] truncate p-3.5 font-mono text-[10px] text-rose-800"
-                    title={src.last_error || ''}
-                  >
-                    {src.last_error || '—'}
-                  </td>
-                  <td className="p-3.5 text-right">
-                    <button
-                      onClick={() => handleCrawlSource(src.id, src.name)}
-                      disabled={crawlingSourceId === src.id}
-                      className="inline-flex cursor-pointer items-center gap-1 rounded border border-[#ded7ca] bg-[#f4efe6] px-2.5 py-1 text-[11px] font-semibold text-[#2c313a] transition hover:bg-[#eae4d7]"
-                    >
-                      <RefreshCw
-                        className={`h-3 w-3 ${crawlingSourceId === src.id ? 'animate-spin' : ''}`}
-                      />
-                      Cào ngay
-                    </button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      </div>
+                  </div>
+                </li>
+              );
+            })}
+          </ul>
+        )}
+      </section>
 
-      {/* Recent Crawl Runs Log */}
-      <div className="overflow-hidden rounded-xl border border-[#e7e2d9] bg-white shadow-xs">
-        <div className="border-b border-[#e7e2d9] bg-[#f7f4ed] px-5 py-3.5">
-          <h3 className="flex items-center gap-2 font-serif text-sm font-bold text-[#1c1f24]">
-            <Clock className="h-4 w-4 text-sky-700" />
-            Nhật Ký Cào Tin Gần Nhất (Crawl Runs)
-          </h3>
-        </div>
+      {failingSources.length > 0 && (
+        <section aria-labelledby="sys-failing" className="mt-12">
+          <h2 id="sys-failing" className={`${sectionHeading} mb-3`}>
+            Nguồn đang lỗi
+          </h2>
+          <ul className="divide-rule border-rule divide-y border-y">
+            {failingSources.map((src) => (
+              <li key={src.id} className="flex items-center justify-between gap-4 py-3">
+                <div className="min-w-0">
+                  <div className="text-ink text-[15px] font-semibold">{src.name}</div>
+                  <p className="text-danger-700 text-[13px]">{src.last_error || 'Không rõ lỗi'}</p>
+                  <p className="text-muted text-[13px]">
+                    Lần cuối: {formatRelativeTime(src.last_crawled_at)}
+                  </p>
+                </div>
+                <button
+                  onClick={() => handleCrawlSource(src.id, src.name)}
+                  disabled={crawlingSourceId === src.id}
+                  className="border-rule text-ink hover:bg-wash h-9 shrink-0 cursor-pointer rounded-full border px-3.5 text-[13px] font-medium transition-colors disabled:opacity-60"
+                >
+                  {crawlingSourceId === src.id ? 'Đang thử…' : 'Thử lại'}
+                </button>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
 
-        <div className="overflow-x-auto">
-          <table className="w-full min-w-[640px] border-collapse text-left font-sans text-xs">
-            <thead className="border-b border-[#e7e2d9] bg-[#faf8f4] font-medium text-[#635d52]">
-              <tr>
-                <th className="p-3.5">Mã Run</th>
-                <th className="p-3.5">Thời gian bắt đầu</th>
-                <th className="p-3.5">Thời lượng</th>
-                <th className="p-3.5">Bài tìm thấy</th>
-                <th className="p-3.5">Bài mới thêm</th>
-                <th className="p-3.5">Trạng thái</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-[#ede8df]">
-              {metrics?.recent_runs && metrics.recent_runs.length > 0 ? (
-                metrics.recent_runs.map((run) => (
-                  <tr key={run.id} className="transition hover:bg-[#fbf9f5]">
-                    <td className="p-3.5 font-mono text-[#756e60]">#{run.id}</td>
-                    <td className="p-3.5 text-[#1c1f24]">
-                      {new Date(run.started_at).toLocaleString('vi-VN')}
-                    </td>
-                    <td className="p-3.5 font-mono text-[#756e60]">{run.duration_ms} ms</td>
-                    <td className="p-3.5 font-mono text-[#1c1f24]">{run.articles_found}</td>
-                    <td className="p-3.5 font-mono font-bold text-emerald-800">
-                      +{run.articles_new}
-                    </td>
-                    <td className="p-3.5">
-                      <span
-                        className={`rounded px-2 py-0.5 text-[10px] font-bold uppercase ${
-                          run.status === 'success'
-                            ? 'bg-emerald-100 text-emerald-800'
-                            : 'bg-rose-100 text-rose-800'
-                        }`}
-                      >
-                        {run.status}
-                      </span>
-                    </td>
-                  </tr>
-                ))
-              ) : (
+      <section aria-labelledby="sys-runs" className="mt-12">
+        <h2 id="sys-runs" className={`${sectionHeading} mb-3`}>
+          Lần lấy bài gần đây
+        </h2>
+        {metrics.recent_runs.length === 0 ? (
+          <p className="text-muted py-4 text-[14px]">Chưa có lần lấy bài nào.</p>
+        ) : (
+          <div className="-mx-4 overflow-x-auto px-4">
+            <table className="w-full min-w-[560px] text-left text-[13.5px]">
+              <thead className="border-rule text-muted border-b text-[13px]">
                 <tr>
-                  <td colSpan={6} className="py-6 text-center text-xs text-[#8c8475]">
-                    Chưa có lịch sử cào tin nào được ghi nhận.
-                  </td>
+                  <th scope="col" className="py-2 pr-4 font-medium">
+                    Nguồn
+                  </th>
+                  <th scope="col" className="py-2 pr-4 font-medium">
+                    Lúc
+                  </th>
+                  <th scope="col" className="py-2 pr-4 text-right font-medium">
+                    Thời gian
+                  </th>
+                  <th scope="col" className="py-2 pr-4 text-right font-medium">
+                    Tìm thấy
+                  </th>
+                  <th scope="col" className="py-2 pr-4 text-right font-medium">
+                    Bài mới
+                  </th>
+                  <th scope="col" className="py-2 font-medium">
+                    Kết quả
+                  </th>
                 </tr>
-              )}
-            </tbody>
-          </table>
-        </div>
-      </div>
+              </thead>
+              <tbody className="divide-rule divide-y">
+                {metrics.recent_runs.map((run) => {
+                  const ok = run.status === 'success';
+                  return (
+                    <tr key={run.id}>
+                      <td className="text-ink py-2.5 pr-4 font-medium">
+                        {sourceNames[run.source_id] || `Nguồn #${run.source_id}`}
+                      </td>
+                      <td
+                        className="text-muted py-2.5 pr-4"
+                        title={new Date(run.started_at).toLocaleString('vi-VN')}
+                      >
+                        {formatRelativeTime(run.started_at)}
+                      </td>
+                      <td className="score-numeral text-ink-2 py-2.5 pr-4 text-right">
+                        {(run.duration_ms / 1000).toFixed(1)} giây
+                      </td>
+                      <td className="score-numeral text-ink-2 py-2.5 pr-4 text-right">
+                        {run.articles_found}
+                      </td>
+                      <td
+                        className={`score-numeral py-2.5 pr-4 text-right font-semibold ${run.articles_new ? 'text-signal-700' : 'text-faint'}`}
+                      >
+                        {run.articles_new ? `+${run.articles_new}` : '0'}
+                      </td>
+                      <td className="py-2.5" title={run.error_message || undefined}>
+                        <span
+                          className={`inline-flex items-center gap-1.5 font-medium ${ok ? 'text-signal-800' : 'text-danger-700'}`}
+                        >
+                          <span
+                            aria-hidden="true"
+                            className={`h-2 w-2 rounded-full ${ok ? 'bg-signal-500' : 'bg-danger-500'}`}
+                          />
+                          {ok ? 'Thành công' : run.http_status ? `Lỗi ${run.http_status}` : 'Lỗi'}
+                        </span>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </section>
     </div>
   );
 };

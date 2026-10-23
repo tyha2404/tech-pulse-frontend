@@ -1,23 +1,9 @@
 import React, { useState, useEffect, lazy, Suspense } from 'react';
-import {
-  Sparkles,
-  Code2,
-  MessageSquare,
-  Compass,
-  Copy,
-  Check,
-  ExternalLink,
-  AlertTriangle,
-  CheckCircle2,
-  Link2,
-  Download,
-  FileText,
-  RefreshCw,
-  Cpu,
-} from 'lucide-react';
+import { Code2, Copy, Check, ExternalLink, Download, RefreshCw } from 'lucide-react';
 import type { Article, RelatedArticleItem } from '../types';
 import { apiClient, generateArticleBlueprint, exportArticleMarkdown } from '../api';
 import { generateArticleMarkdown, downloadMarkdownFile } from '../utils/markdownExport';
+import { scoreTier } from '../utils/score';
 
 const ArticleChatCopilot = lazy(() =>
   import('./ArticleChatCopilot').then((m) => ({ default: m.ArticleChatCopilot }))
@@ -46,6 +32,7 @@ export const ArticleModalTabs: React.FC<ArticleModalTabsProps> = ({
   const [generatingBlueprint, setGeneratingBlueprint] = useState(false);
   const [relatedArticles, setRelatedArticles] = useState<RelatedArticleItem[]>([]);
   const [loadingRelated, setLoadingRelated] = useState(false);
+  const [blueprintError, setBlueprintError] = useState<string | null>(null);
 
   useEffect(() => {
     let isMounted = true;
@@ -118,6 +105,7 @@ export const ArticleModalTabs: React.FC<ArticleModalTabsProps> = ({
 
   const handleGenerateBlueprint = async () => {
     setGeneratingBlueprint(true);
+    setBlueprintError(null);
     try {
       const updatedArticle = await generateArticleBlueprint(article.id);
       if (onArticleUpdated) {
@@ -125,8 +113,8 @@ export const ArticleModalTabs: React.FC<ArticleModalTabsProps> = ({
       }
     } catch (err: any) {
       console.error('Lỗi tạo blueprint:', err);
-      alert(
-        'Không thể tạo blueprint: ' + (err?.response?.data?.detail || err?.message || String(err))
+      setBlueprintError(
+        `Không tạo được blueprint: ${err?.response?.data?.detail || err?.message || String(err)}. Thử lại sau ít phút.`
       );
     } finally {
       setGeneratingBlueprint(false);
@@ -143,397 +131,247 @@ export const ArticleModalTabs: React.FC<ArticleModalTabsProps> = ({
   );
   const learning = article.learning_path;
 
+  const hasTradeoffs = Boolean(
+    tradeoffs &&
+    [
+      tradeoffs.pros,
+      tradeoffs.cons,
+      tradeoffs.when_not_to_use,
+      tradeoffs.scalability_bottlenecks,
+    ].some((list) => list && list.length > 0)
+  );
+  const tradeoffGroups = [
+    { label: 'Ưu điểm', items: tradeoffs?.pros },
+    { label: 'Nhược điểm và chi phí', items: tradeoffs?.cons },
+    { label: 'Không nên dùng khi', items: tradeoffs?.when_not_to_use },
+    { label: 'Điểm nghẽn khi mở rộng', items: tradeoffs?.scalability_bottlenecks },
+  ].filter((g) => g.items && g.items.length > 0);
+
+  const TABS = [
+    { id: 'briefing', label: 'Phân tích' },
+    { id: 'chat', label: 'Hỏi đáp với AI' },
+    { id: 'learning', label: 'Học tiếp' },
+  ] as const;
+
+  const sectionTitle = 'text-[15px] font-semibold text-ink';
+  const quietButton =
+    'inline-flex h-9 cursor-pointer items-center gap-1.5 rounded-full px-3 text-[13px] font-medium text-muted transition-colors hover:bg-wash hover:text-ink disabled:cursor-wait disabled:opacity-60';
+  const bulletList =
+    'space-y-1.5 pl-5 text-[15px] leading-[1.6] text-ink-2 marker:text-faint list-disc';
+
   return (
     <div className="flex flex-col">
-      {/* Modernized Streamlined Navigation Tabs - Horizontal Swipe on Mobile */}
-      <div className="no-scrollbar flex items-center justify-between border-b border-[#e7e2d9] bg-[#fbf9f5] px-2.5 py-2 font-sans text-xs sm:px-6">
-        <div className="no-scrollbar flex items-center gap-1.5 overflow-x-auto pb-0.5">
+      <div
+        role="tablist"
+        aria-label="Nội dung bài"
+        className="border-rule flex gap-1 border-b px-4 sm:px-7"
+      >
+        {TABS.map((t) => (
           <button
-            onClick={() => setTab('briefing')}
-            className={`flex min-h-[40px] shrink-0 cursor-pointer items-center gap-1.5 rounded-lg px-3 py-2 font-medium whitespace-nowrap transition ${
-              tab === 'briefing'
-                ? 'bg-white font-semibold text-[#1c1f24] shadow-xs ring-1 ring-[#e7e2d9]'
-                : 'text-[#6b6456] hover:bg-[#eee8dc]/60 hover:text-[#1c1f24]'
+            key={t.id}
+            role="tab"
+            aria-selected={tab === t.id}
+            onClick={() => setTab(t.id)}
+            className={`-mb-px cursor-pointer border-b-2 px-2 py-3 text-[14px] whitespace-nowrap transition-colors sm:px-3 ${
+              tab === t.id
+                ? 'border-ink text-ink font-semibold'
+                : 'text-muted hover:text-ink border-transparent font-medium'
             }`}
           >
-            <Sparkles className="h-3.5 w-3.5 text-amber-600" />
-            <span>Tổng quan & Kiến trúc</span>
+            {t.label}
           </button>
-
-          <button
-            onClick={() => setTab('chat')}
-            className={`flex min-h-[40px] shrink-0 cursor-pointer items-center gap-1.5 rounded-lg px-3 py-2 font-medium whitespace-nowrap transition ${
-              tab === 'chat'
-                ? 'bg-white font-semibold text-indigo-900 shadow-xs ring-1 ring-indigo-200'
-                : 'font-medium text-indigo-800 hover:bg-indigo-50/70 hover:text-indigo-950'
-            }`}
-          >
-            <MessageSquare className="h-3.5 w-3.5 text-indigo-600" />
-            <span>Chat Copilot</span>
-          </button>
-
-          <button
-            onClick={() => setTab('learning')}
-            className={`flex min-h-[40px] shrink-0 cursor-pointer items-center gap-1.5 rounded-lg px-3 py-2 font-medium whitespace-nowrap transition ${
-              tab === 'learning'
-                ? 'bg-white font-semibold text-[#1c1f24] shadow-xs ring-1 ring-[#e7e2d9]'
-                : 'text-[#6b6456] hover:bg-[#eee8dc]/60 hover:text-[#1c1f24]'
-            }`}
-          >
-            <Compass className="h-3.5 w-3.5 text-purple-700" />
-            <span>Lộ trình & Liên quan</span>
-          </button>
-        </div>
-
-        {/* Global Markdown / Obsidian Action Buttons on Desktop */}
-        <div className="hidden items-center gap-2 sm:flex">
-          <button
-            onClick={handleCopyMarkdown}
-            className="flex min-h-[36px] cursor-pointer items-center gap-1 rounded-lg border border-[#e2dcd0] bg-white px-2.5 py-1 text-[11px] font-medium text-[#554e42] shadow-2xs transition hover:bg-[#eee9df] hover:text-[#1c1f24]"
-            title="Sao chép toàn bộ bài dưới dạng Markdown (Frontmatter) cho Obsidian / Notion"
-          >
-            {copiedMarkdown ? (
-              <Check className="h-3.5 w-3.5 text-emerald-600" />
-            ) : (
-              <Copy className="h-3.5 w-3.5 text-[#756e60]" />
-            )}
-            <span>{copiedMarkdown ? 'Đã sao chép MD' : 'Copy Markdown'}</span>
-          </button>
-          <button
-            onClick={handleExportMarkdown}
-            disabled={exportingMarkdown}
-            className="flex min-h-[36px] cursor-pointer items-center gap-1.5 rounded-lg border border-purple-200 bg-purple-50/80 px-2.5 py-1 text-[11px] font-medium text-purple-900 shadow-2xs transition hover:bg-purple-100 disabled:opacity-50"
-            title="Tải file .md chuẩn Obsidian kèm YAML Frontmatter"
-          >
-            <Download
-              className={`h-3.5 w-3.5 text-purple-700 ${exportingMarkdown ? 'animate-bounce' : ''}`}
-            />
-            <span>{exportingMarkdown ? 'Đang xuất...' : 'Xuất Obsidian .md'}</span>
-          </button>
-        </div>
+        ))}
       </div>
 
-      {/* Main Tab Content Area */}
-      <div className="p-3.5 text-[#2c313a] sm:p-6">
-        {/* ================= TAB 1: EXECUTIVE BRIEFING (TỔNG QUAN + TRADEOFFS + ON-DEMAND BLUEPRINT) ================= */}
+      <div className="text-ink px-4 py-6 sm:px-7">
         {tab === 'briefing' && (
-          <div className="space-y-6">
-            {/* Top Toolbar for Mobile / Quick Action (Min touch target 40px) */}
-            <div className="flex flex-wrap items-center justify-between gap-2 rounded-xl border border-[#ede7dc] bg-[#fbf9f5] p-2.5 sm:hidden">
-              <div className="text-xs font-semibold text-[#756e60]">Second Brain / PKM:</div>
-              <div className="flex items-center gap-1.5">
-                <button
-                  onClick={handleCopyMarkdown}
-                  className="flex min-h-[40px] cursor-pointer items-center gap-1.5 rounded-lg bg-white px-3 py-1.5 text-xs font-medium text-[#554e42] shadow-2xs transition hover:bg-[#eee9df]"
-                >
-                  {copiedMarkdown ? (
-                    <Check className="h-3.5 w-3.5 text-emerald-600" />
-                  ) : (
-                    <Copy className="h-3.5 w-3.5" />
-                  )}
-                  <span>{copiedMarkdown ? 'Đã chép MD' : 'Copy MD'}</span>
-                </button>
-                <button
-                  onClick={handleExportMarkdown}
-                  disabled={exportingMarkdown}
-                  className="flex min-h-[40px] cursor-pointer items-center gap-1.5 rounded-lg bg-purple-100 px-3 py-1.5 text-xs font-semibold text-purple-900 transition hover:bg-purple-200"
-                >
-                  <Download className="h-3.5 w-3.5" />
-                  <span>Tải .md</span>
-                </button>
-              </div>
-            </div>
-
-            {/* Section 1: Executive Summary */}
-            <div>
+          <div className="space-y-9">
+            <section>
               <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
-                <h3 className="flex items-center gap-1.5 font-sans text-xs font-bold tracking-wider text-[#756e60] uppercase">
-                  <Sparkles className="h-3.5 w-3.5 shrink-0 text-amber-600" /> Tóm tắt cốt lõi cho
-                  kỹ sư:
-                </h3>
-                <div className="flex items-center gap-2">
+                <h3 className={sectionTitle}>Tóm tắt</h3>
+                <div className="-mr-3 flex items-center">
+                  <button
+                    onClick={() => handleCopy(article.vietnamese_summary || '', 'summary')}
+                    className={quietButton}
+                  >
+                    {copiedSummary ? (
+                      <Check className="text-signal-600 h-4 w-4" />
+                    ) : (
+                      <Copy className="h-4 w-4" />
+                    )}
+                    {copiedSummary ? 'Đã sao chép' : 'Sao chép'}
+                  </button>
                   <button
                     onClick={() => onSummarize(article.id)}
                     disabled={summarizing}
-                    className="flex min-h-[36px] cursor-pointer items-center gap-1 rounded-lg border border-indigo-200 bg-indigo-50 px-2.5 py-1 font-sans text-xs font-medium text-indigo-900 transition hover:bg-indigo-100 disabled:opacity-50"
+                    className={quietButton}
                   >
-                    <Sparkles
-                      className={`h-3.5 w-3.5 text-indigo-600 ${summarizing ? 'animate-spin' : ''}`}
-                    />
-                    <span>{summarizing ? 'Đang phân tích...' : 'Phân tích lại'}</span>
-                  </button>
-                  <button
-                    onClick={() => handleCopy(article.vietnamese_summary || '', 'summary')}
-                    className="flex min-h-[36px] cursor-pointer items-center gap-1 rounded-lg bg-[#eee9df] px-2.5 py-1 font-sans text-xs text-[#6b6456] transition hover:bg-[#e4ded2] hover:text-[#1c1f24]"
-                  >
-                    {copiedSummary ? (
-                      <Check className="h-3.5 w-3.5 text-emerald-600" />
-                    ) : (
-                      <Copy className="h-3.5 w-3.5" />
-                    )}
-                    <span>{copiedSummary ? 'Đã chép' : 'Sao chép'}</span>
+                    <RefreshCw className={`h-4 w-4 ${summarizing ? 'animate-spin' : ''}`} />
+                    {summarizing ? 'Đang phân tích…' : 'Phân tích lại'}
                   </button>
                 </div>
               </div>
-              <div className="rounded-2xl border border-[#e7e2d9] bg-white p-4 font-serif text-[14px] leading-relaxed break-words text-[#2c313a] sm:text-[15px]">
+              <p className="reading-font text-ink max-w-prose text-[17px] leading-[1.65] break-words">
                 {article.vietnamese_summary ||
-                  'Chưa có tóm tắt. Vui lòng bấm "Phân tích lại bằng AI".'}
-              </div>
-            </div>
+                  'Bài này chưa có tóm tắt. Bấm Phân tích lại để AI đọc và tóm tắt.'}
+              </p>
+            </section>
 
-            {/* Section 2: Key Takeaways */}
             {article.key_takeaways && article.key_takeaways.length > 0 && (
-              <div>
-                <h3 className="mb-2 flex items-center gap-1.5 font-sans text-xs font-bold tracking-wider text-[#756e60] uppercase">
-                  💡 Bài học & Điểm kỹ thuật đáng chú ý:
-                </h3>
-                <ul className="list-inside list-disc space-y-2 rounded-2xl border border-[#e7e2d9] bg-white p-4 font-serif text-[13px] leading-relaxed break-words text-[#333d4b] sm:text-[14px]">
+              <section>
+                <h3 className={`${sectionTitle} mb-3`}>Điểm kỹ thuật đáng chú ý</h3>
+                <ul className="reading-font border-signal-200 text-ink-2 max-w-prose space-y-2 border-l-2 pl-4 text-[16px] leading-[1.6]">
                   {article.key_takeaways.map((item, idx) => (
                     <li key={idx} className="break-words">
                       {item}
                     </li>
                   ))}
                 </ul>
-              </div>
+              </section>
             )}
 
-            {/* Section 3: Tech Stack Box */}
             {article.new_tech_stacks && article.new_tech_stacks.length > 0 && (
-              <div>
-                <h3 className="mb-2 flex items-center gap-1.5 font-sans text-xs font-bold tracking-wider text-[#756e60] uppercase">
-                  ⚡ Công nghệ mới xuất hiện trong bài:
-                </h3>
-                <div className="grid grid-cols-1 gap-2.5 font-sans sm:grid-cols-2">
+              <section>
+                <h3 className={`${sectionTitle} mb-3`}>Công nghệ xuất hiện trong bài</h3>
+                <dl className="grid gap-x-8 gap-y-4 sm:grid-cols-2">
                   {article.new_tech_stacks.map((ts, idx) => (
-                    <div key={idx} className="rounded-xl border border-[#e7e2d9] bg-white p-3.5">
-                      <div className="font-mono text-xs font-bold text-[#0f172a]">{ts.name}</div>
-                      <div className="mt-1 font-serif text-[12px] break-words text-[#64748b]">
-                        {ts.desc}
-                      </div>
+                    <div key={idx}>
+                      <dt className="text-ink text-[14px] font-semibold">
+                        {ts.name}
+                        {ts.category && (
+                          <span className="text-muted ml-2 font-normal">{ts.category}</span>
+                        )}
+                      </dt>
+                      {ts.desc && (
+                        <dd className="text-ink-2 mt-0.5 text-[14px] leading-relaxed">{ts.desc}</dd>
+                      )}
+                    </div>
+                  ))}
+                </dl>
+              </section>
+            )}
+
+            <section>
+              <h3 className={`${sectionTitle} mb-3`}>Đánh đổi kiến trúc</h3>
+              {hasTradeoffs ? (
+                <div className="grid gap-x-8 gap-y-6 sm:grid-cols-2">
+                  {tradeoffGroups.map((g) => (
+                    <div key={g.label}>
+                      <h4 className="text-muted mb-1.5 text-[13px] font-semibold">{g.label}</h4>
+                      <ul className={bulletList}>
+                        {g.items!.map((item, i) => (
+                          <li key={i} className="break-words">
+                            {item}
+                          </li>
+                        ))}
+                      </ul>
                     </div>
                   ))}
                 </div>
-              </div>
-            )}
-
-            {/* Section 4: Architectural Tradeoffs (INLINE SEAMLESS VIEW) */}
-            <div className="space-y-4 pt-2 font-sans text-xs">
-              <div className="flex items-center justify-between border-t border-[#ede7dc] pt-5">
-                <h3 className="flex items-center gap-1.5 text-xs font-bold tracking-wider text-[#756e60] uppercase">
-                  ⚖️ Đánh giá phản biện & Đánh đổi kiến trúc (Tradeoffs):
-                </h3>
-              </div>
-
-              <div className="rounded-xl border border-blue-200 bg-blue-50/60 p-3.5 text-blue-900">
-                <p className="leading-relaxed font-medium">
-                  Mọi quyết định kỹ thuật đều có sự đánh đổi giữa hiệu năng, độ phức tạp và chi phí
-                  vận hành:
+              ) : (
+                <p className="text-muted text-[14px]">
+                  Chưa có phân tích đánh đổi cho bài này. Bấm Phân tích lại ở phần Tóm tắt để tạo.
                 </p>
-              </div>
+              )}
+            </section>
 
-              <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-                {/* Pros */}
-                <div className="rounded-xl border border-emerald-200 bg-emerald-50/40 p-4">
-                  <h4 className="flex items-center gap-1.5 font-bold text-emerald-900">
-                    <CheckCircle2 className="h-4 w-4 shrink-0 text-emerald-700" /> Ưu điểm & Điểm
-                    vượt trội
-                  </h4>
-                  <ul className="mt-2.5 list-inside list-disc space-y-1.5 text-[#2c313a]">
-                    {tradeoffs?.pros && tradeoffs.pros.length > 0 ? (
-                      tradeoffs.pros.map((p, i) => (
-                        <li key={i} className="break-words">
-                          {p}
-                        </li>
-                      ))
-                    ) : (
-                      <li className="text-[#756e60] italic">
-                        Bấm "Phân tích lại" để trích xuất đầy đủ ưu điểm.
-                      </li>
-                    )}
-                  </ul>
-                </div>
-
-                {/* Cons */}
-                <div className="rounded-xl border border-rose-200 bg-rose-50/40 p-4">
-                  <h4 className="flex items-center gap-1.5 font-bold text-rose-900">
-                    <AlertTriangle className="h-4 w-4 shrink-0 text-rose-700" /> Nhược điểm & Chi
-                    phí
-                  </h4>
-                  <ul className="mt-2.5 list-inside list-disc space-y-1.5 text-[#2c313a]">
-                    {tradeoffs?.cons && tradeoffs.cons.length > 0 ? (
-                      tradeoffs.cons.map((c, i) => (
-                        <li key={i} className="break-words">
-                          {c}
-                        </li>
-                      ))
-                    ) : (
-                      <li className="text-[#756e60] italic">
-                        Bấm "Phân tích lại" để xem các nhược điểm kỹ thuật.
-                      </li>
-                    )}
-                  </ul>
-                </div>
-              </div>
-
-              {/* When NOT to use & Scalability Bottlenecks */}
-              <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-                <div className="rounded-xl border border-amber-300 bg-amber-50/60 p-4">
-                  <h4 className="flex items-center gap-1.5 font-bold text-amber-950">
-                    🛑 Khi nào KHÔNG NÊN áp dụng?
-                  </h4>
-                  <ul className="mt-2.5 list-inside list-disc space-y-1.5 text-[#3b3223]">
-                    {tradeoffs?.when_not_to_use && tradeoffs.when_not_to_use.length > 0 ? (
-                      tradeoffs.when_not_to_use.map((w, i) => (
-                        <li key={i} className="break-words">
-                          {w}
-                        </li>
-                      ))
-                    ) : (
-                      <li className="text-[#756e60] italic">
-                        Chưa có dữ liệu chống lạm dụng kiến trúc.
-                      </li>
-                    )}
-                  </ul>
-                </div>
-
-                <div className="rounded-xl border border-purple-200 bg-purple-50/40 p-4">
-                  <h4 className="flex items-center gap-1.5 font-bold text-purple-950">
-                    ⚡ Điểm nghẽn khi Scale (Scalability)
-                  </h4>
-                  <ul className="mt-2.5 list-inside list-disc space-y-1.5 text-[#2c313a]">
-                    {tradeoffs?.scalability_bottlenecks &&
-                    tradeoffs.scalability_bottlenecks.length > 0 ? (
-                      tradeoffs.scalability_bottlenecks.map((b, i) => (
-                        <li key={i} className="break-words">
-                          {b}
-                        </li>
-                      ))
-                    ) : (
-                      <li className="text-[#756e60] italic">Chưa phát hiện điểm nghẽn.</li>
-                    )}
-                  </ul>
-                </div>
-              </div>
-            </div>
-
-            {/* Section 5: ON-DEMAND ARCHITECTURAL BLUEPRINT */}
-            <div className="border-t border-[#ede7dc] pt-6 font-sans">
+            <section>
               <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
-                <h3 className="flex items-center gap-1.5 text-xs font-bold tracking-wider text-[#756e60] uppercase">
-                  <Code2 className="h-3.5 w-3.5 shrink-0 text-indigo-700" /> Kịch bản Kiến trúc &
-                  Blueprint (On-Demand):
-                </h3>
+                <h3 className={sectionTitle}>Blueprint NestJS</h3>
                 {hasBlueprint && (
                   <button
                     onClick={handleGenerateBlueprint}
                     disabled={generatingBlueprint}
-                    className="flex min-h-[36px] cursor-pointer items-center gap-1 rounded-lg border border-indigo-200 bg-indigo-50 px-2.5 py-1 text-xs font-medium text-indigo-900 transition hover:bg-indigo-100 disabled:opacity-50"
+                    className={`${quietButton} -mr-3`}
                   >
-                    <RefreshCw className={`h-3 w-3 ${generatingBlueprint ? 'animate-spin' : ''}`} />
-                    <span>{generatingBlueprint ? 'Đang tạo lại...' : 'Làm mới Blueprint'}</span>
+                    <RefreshCw className={`h-4 w-4 ${generatingBlueprint ? 'animate-spin' : ''}`} />
+                    {generatingBlueprint ? 'Đang tạo lại…' : 'Tạo lại'}
                   </button>
                 )}
               </div>
 
               {hasBlueprint ? (
-                <div className="space-y-4 text-xs">
-                  <div className="flex flex-wrap items-center justify-between gap-2 rounded-xl border border-indigo-200 bg-indigo-50/60 p-3.5 text-indigo-900">
-                    <div>
-                      <p className="font-bold">🧱 Kiến trúc đề xuất:</p>
-                      <p className="mt-0.5 text-[11px] text-indigo-800">
-                        {blueprint?.architectural_pattern ||
-                          'Hexagonal Architecture / Modular Service Pattern'}
-                      </p>
-                    </div>
-                    {blueprint?.code_snippet && (
-                      <button
-                        onClick={() => handleCopy(blueprint.code_snippet || '', 'code')}
-                        className="flex min-h-[36px] cursor-pointer items-center gap-1 rounded-lg bg-white px-3 py-1.5 text-xs font-medium text-indigo-900 shadow-2xs transition hover:bg-indigo-100"
-                      >
-                        {copiedCode ? (
-                          <Check className="h-3.5 w-3.5 text-emerald-600" />
-                        ) : (
-                          <Copy className="h-3.5 w-3.5" />
-                        )}
-                        <span>{copiedCode ? 'Đã chép' : 'Sao chép mã'}</span>
-                      </button>
-                    )}
-                  </div>
-
+                <div className="space-y-4 text-[14px]">
+                  {blueprint?.architectural_pattern && (
+                    <p className="text-ink-2">
+                      <span className="text-ink font-semibold">Mẫu kiến trúc: </span>
+                      {blueprint.architectural_pattern}
+                    </p>
+                  )}
                   {blueprint?.suggested_module_structure && (
-                    <div className="rounded-xl border border-[#e7e2d9] bg-white p-3.5">
-                      <span className="font-bold text-[#475569]">📁 Cấu trúc Module gợi ý:</span>
-                      <code className="mt-1 block max-w-full overflow-x-auto rounded bg-[#f4efe6] px-2 py-1 font-mono text-[11px] text-[#2c313a]">
+                    <div>
+                      <h4 className="text-muted mb-1.5 text-[13px] font-semibold">
+                        Cấu trúc module
+                      </h4>
+                      <code className="bg-wash text-ink block max-w-full overflow-x-auto rounded-lg px-3 py-2 font-mono text-[13px] whitespace-pre">
                         {blueprint.suggested_module_structure}
                       </code>
                     </div>
                   )}
-
                   {blueprint?.database_integration && (
-                    <div className="rounded-xl border border-[#e7e2d9] bg-white p-3.5">
-                      <span className="font-bold text-[#475569]">🗄️ Tích hợp Cơ sở dữ liệu:</span>
-                      <p className="mt-1 break-words text-[#2c313a]">
-                        {blueprint.database_integration}
-                      </p>
+                    <div>
+                      <h4 className="text-muted mb-1.5 text-[13px] font-semibold">
+                        Tích hợp cơ sở dữ liệu
+                      </h4>
+                      <p className="text-ink-2 break-words">{blueprint.database_integration}</p>
                     </div>
                   )}
-
                   {blueprint?.code_snippet && (
-                    <div className="rounded-xl border border-[#24292f] bg-[#1e2329] p-3 text-white sm:p-4">
-                      <div className="mb-2 flex items-center justify-between text-[11px] text-[#9ca3af]">
-                        <span>typescript (Module Implementation)</span>
+                    <div className="bg-ink overflow-hidden rounded-xl">
+                      <div className="flex items-center justify-between border-b border-white/10 px-4 py-2 text-[12px] text-white/60">
+                        <span>TypeScript</span>
                         <button
                           onClick={() => handleCopy(blueprint.code_snippet || '', 'code')}
-                          className="flex min-h-[32px] cursor-pointer items-center p-1 hover:text-white"
+                          className="flex h-8 cursor-pointer items-center gap-1.5 rounded-full px-2 hover:text-white"
                         >
-                          {copiedCode ? 'Copied!' : 'Copy Code'}
+                          {copiedCode ? (
+                            <Check className="h-3.5 w-3.5" />
+                          ) : (
+                            <Copy className="h-3.5 w-3.5" />
+                          )}
+                          {copiedCode ? 'Đã sao chép' : 'Sao chép mã'}
                         </button>
                       </div>
-                      <pre className="max-h-96 w-full max-w-[calc(100vw-3.5rem)] overflow-x-auto font-mono text-[11px] leading-relaxed text-[#e5e7eb] sm:max-w-none">
+                      <pre className="max-h-96 overflow-x-auto p-4 font-mono text-[12.5px] leading-relaxed text-white/90">
                         {blueprint.code_snippet}
                       </pre>
                     </div>
                   )}
                 </div>
               ) : (
-                <div className="rounded-2xl border border-dashed border-indigo-200 bg-gradient-to-r from-indigo-50/50 to-purple-50/50 p-6 text-center">
-                  <div className="mx-auto mb-2.5 flex h-11 w-11 items-center justify-center rounded-xl bg-white text-indigo-700 shadow-xs">
-                    <Cpu className="h-6 w-6" />
-                  </div>
-                  <h4 className="font-semibold text-[#1c1f24]">
-                    Tạo Blueprint Kiến trúc Thực Chiến theo Yêu Cầu
-                  </h4>
-                  <p className="mx-auto mt-1 max-w-md text-xs leading-relaxed text-[#64748b]">
-                    Tiết kiệm tài nguyên AI: Blueprint và mã nguồn mẫu NestJS/TypeScript chỉ được
-                    tạo khi bạn chủ động yêu cầu cho bài viết này.
+                <div>
+                  <p className="text-muted max-w-prose text-[14px] leading-relaxed">
+                    AI có thể đề xuất cấu trúc module và mã mẫu NestJS áp dụng ý tưởng của bài. Chỉ
+                    tạo khi bạn yêu cầu, để tiết kiệm lượt gọi AI.
                   </p>
-                  <div className="mt-4">
-                    <button
-                      onClick={handleGenerateBlueprint}
-                      disabled={generatingBlueprint}
-                      className="inline-flex min-h-[44px] cursor-pointer items-center gap-2 rounded-xl bg-indigo-900 px-4 py-2.5 text-xs font-semibold text-white shadow-xs transition hover:bg-indigo-950 disabled:opacity-50"
-                    >
-                      <Code2 className={`h-4 w-4 ${generatingBlueprint ? 'animate-spin' : ''}`} />
-                      <span>
-                        {generatingBlueprint
-                          ? 'AI đang tổng hợp mã nguồn kiến trúc...'
-                          : 'Tạo kiến trúc / Blueprint ngay'}
-                      </span>
-                    </button>
-                  </div>
+                  <button
+                    onClick={handleGenerateBlueprint}
+                    disabled={generatingBlueprint}
+                    className="bg-ink hover:bg-ink-deep mt-3 inline-flex h-10 cursor-pointer items-center gap-2 rounded-full px-4 text-[14px] font-semibold text-white transition-colors disabled:cursor-wait disabled:opacity-70"
+                  >
+                    <Code2 className={`h-4 w-4 ${generatingBlueprint ? 'animate-pulse' : ''}`} />
+                    {generatingBlueprint ? 'Đang tạo blueprint…' : 'Tạo blueprint'}
+                  </button>
                 </div>
               )}
-            </div>
+              {blueprintError && (
+                <p role="alert" className="text-danger-700 mt-3 text-[14px]">
+                  {blueprintError}
+                </p>
+              )}
+            </section>
           </div>
         )}
 
-        {/* ================= TAB 2: CHAT COPILOT ================= */}
         {tab === 'chat' && (
           <Suspense
             fallback={
-              <div className="flex items-center justify-center p-8 text-sm text-[#756e60]">
-                <Sparkles className="mr-2 h-4 w-4 animate-spin text-amber-600" />
-                Đang tải AI Chat Copilot...
+              <div
+                role="status"
+                className="text-muted flex items-center justify-center gap-2 p-8 text-[14px]"
+              >
+                <RefreshCw className="h-4 w-4 animate-spin" />
+                Đang mở hỏi đáp…
               </div>
             }
           >
@@ -544,121 +382,113 @@ export const ArticleModalTabs: React.FC<ArticleModalTabsProps> = ({
           </Suspense>
         )}
 
-        {/* ================= TAB 3: LEARNING PATH & RELATED ================= */}
         {tab === 'learning' && (
-          <div className="space-y-5 font-sans text-xs">
-            <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-              <div className="rounded-xl border border-[#e7e2d9] bg-white p-4">
-                <h4 className="flex items-center gap-1.5 font-bold text-[#1c1f24]">
-                  🎯 Kiến thức tiên quyết cần nắm (Prerequisites):
-                </h4>
-                <ul className="mt-2.5 list-inside list-disc space-y-1.5 text-[#475569]">
-                  {learning?.prerequisites && learning.prerequisites.length > 0 ? (
-                    learning.prerequisites.map((item, idx) => (
+          <div className="space-y-9">
+            <div className="grid gap-x-8 gap-y-6 sm:grid-cols-2">
+              <section>
+                <h3 className={`${sectionTitle} mb-2`}>Cần biết trước</h3>
+                {learning?.prerequisites && learning.prerequisites.length > 0 ? (
+                  <ul className={bulletList}>
+                    {learning.prerequisites.map((item, idx) => (
                       <li key={idx} className="break-words">
                         {item}
                       </li>
-                    ))
-                  ) : (
-                    <li className="text-[#756e60] italic">
-                      TypeScript nâng cao, Node.js Event Loop, NestJS DI cơ bản.
-                    </li>
-                  )}
-                </ul>
-              </div>
-
-              <div className="rounded-xl border border-[#e7e2d9] bg-white p-4">
-                <h4 className="flex items-center gap-1.5 font-bold text-[#1c1f24]">
-                  🚀 Chủ đề nên nghiên cứu tiếp theo:
-                </h4>
-                <ul className="mt-2.5 list-inside list-disc space-y-1.5 text-[#475569]">
-                  {learning?.recommended_next_topics &&
-                  learning.recommended_next_topics.length > 0 ? (
-                    learning.recommended_next_topics.map((item, idx) => (
+                    ))}
+                  </ul>
+                ) : (
+                  <p className="text-muted text-[14px]">AI chưa gợi ý kiến thức nền cho bài này.</p>
+                )}
+              </section>
+              <section>
+                <h3 className={`${sectionTitle} mb-2`}>Nên tìm hiểu tiếp</h3>
+                {learning?.recommended_next_topics &&
+                learning.recommended_next_topics.length > 0 ? (
+                  <ul className={bulletList}>
+                    {learning.recommended_next_topics.map((item, idx) => (
                       <li key={idx} className="break-words">
                         {item}
                       </li>
-                    ))
-                  ) : (
-                    <li className="text-[#756e60] italic">
-                      PostgreSQL Vector Indexing, Hybrid Search Reranking.
-                    </li>
-                  )}
-                </ul>
-              </div>
+                    ))}
+                  </ul>
+                ) : (
+                  <p className="text-muted text-[14px]">
+                    AI chưa gợi ý chủ đề tiếp theo cho bài này.
+                  </p>
+                )}
+              </section>
             </div>
 
-            {/* Knowledge Graph: Related Articles */}
-            <div className="rounded-xl border border-[#e7e2d9] bg-[#fbf9f5] p-4">
-              <h4 className="flex items-center gap-1.5 font-bold text-[#1c1f24]">
-                <Link2 className="h-4 w-4 shrink-0 text-indigo-700" />
-                Bài viết liên quan trong TechPulse (Knowledge Graph):
-              </h4>
-              <p className="mt-0.5 text-[11px] text-[#756e60]">
-                Các bài viết cùng chia sẻ công nghệ và chủ đề kiến trúc với bài này:
-              </p>
-
+            <section>
+              <h3 className={`${sectionTitle} mb-1`}>Bài liên quan</h3>
+              <p className="text-muted mb-2 text-[13px]">Cùng công nghệ hoặc chủ đề với bài này.</p>
               {loadingRelated ? (
-                <div className="mt-3 py-2 text-center text-[#756e60] italic">
-                  Đang tìm bài viết liên quan...
-                </div>
+                <p role="status" className="text-muted py-3 text-[14px]">
+                  Đang tìm bài liên quan…
+                </p>
               ) : relatedArticles.length > 0 ? (
-                <div className="mt-3 space-y-2">
+                <ul className="divide-rule border-rule divide-y border-y">
                   {relatedArticles.map((rel) => (
-                    <div
-                      key={rel.id}
-                      onClick={() => onSelectRelatedArticle && onSelectRelatedArticle(rel.id)}
-                      className="flex min-h-[44px] cursor-pointer items-center justify-between rounded-xl border border-[#e7e2d9] bg-white p-3 transition hover:border-indigo-300 hover:bg-indigo-50/40"
-                    >
-                      <div className="min-w-0 pr-2">
-                        <div className="line-clamp-1 font-serif text-[13px] font-semibold text-[#1c1f24]">
-                          {rel.vietnamese_title || rel.title}
-                        </div>
-                        <div className="mt-0.5 flex flex-wrap items-center gap-1.5 text-[10px] text-[#756e60]">
-                          <span>{rel.source_name || 'Tech'}</span>
-                          <span>•</span>
-                          <span>Điểm: {rel.relevance_score.toFixed(1)}</span>
-                          {rel.tags && rel.tags.length > 0 && (
-                            <span className="hidden sm:inline-block">
-                              ({rel.tags.slice(0, 3).join(', ')})
-                            </span>
-                          )}
-                        </div>
-                      </div>
-                      <span className="shrink-0 text-xs font-semibold text-indigo-800">
-                        Xem bài →
-                      </span>
-                    </div>
+                    <li key={rel.id}>
+                      <button
+                        onClick={() => onSelectRelatedArticle && onSelectRelatedArticle(rel.id)}
+                        className="hover:bg-wash/50 grid w-full cursor-pointer grid-cols-[2.75rem_minmax(0,1fr)] items-baseline gap-x-3 py-3 text-left"
+                      >
+                        <span
+                          className={`score-numeral text-[17px] ${
+                            scoreTier(rel.relevance_score) === 'high'
+                              ? 'text-signal-700 font-bold'
+                              : 'text-ink-2 font-semibold'
+                          }`}
+                        >
+                          {rel.relevance_score.toFixed(1)}
+                        </span>
+                        <span className="min-w-0">
+                          <span className="text-ink block text-[15px] leading-snug font-medium">
+                            {rel.vietnamese_title || rel.title}
+                          </span>
+                          <span className="text-muted mt-0.5 block text-[13px]">
+                            {rel.source_name || 'Không rõ nguồn'}
+                          </span>
+                        </span>
+                      </button>
+                    </li>
                   ))}
-                </div>
+                </ul>
               ) : (
-                <div className="mt-3 text-[#756e60] italic">
-                  Chưa có bài viết tương đồng trong hệ thống.
-                </div>
+                <p className="text-muted py-3 text-[14px]">Chưa có bài tương tự trong hệ thống.</p>
               )}
-            </div>
+            </section>
           </div>
         )}
 
-        {/* Source link footer with Safe Area */}
-        <div className="mt-6 flex flex-wrap items-center justify-between gap-3 border-t border-[#e7e2d9] pt-3 font-sans">
+        <div className="border-rule mt-10 flex flex-wrap items-center justify-between gap-3 border-t pt-4">
           <a
             href={article.url}
             target="_blank"
             rel="noreferrer"
-            className="inline-flex min-h-[36px] items-center gap-1.5 text-xs font-semibold break-words text-indigo-900 underline hover:text-indigo-950"
+            className="bg-ink hover:bg-ink-deep inline-flex h-10 items-center gap-1.5 rounded-full px-4 text-[14px] font-semibold text-white transition-colors"
           >
-            <span>Đọc bài gốc tại {article.source_name}</span>
-            <ExternalLink className="h-3.5 w-3.5 shrink-0" />
+            Đọc bài gốc trên {article.source_name || 'trang nguồn'}
+            <ExternalLink className="h-4 w-4" />
           </a>
-
-          <button
-            onClick={handleExportMarkdown}
-            className="inline-flex min-h-[36px] cursor-pointer items-center gap-1 text-xs font-medium text-purple-900 hover:underline"
-          >
-            <FileText className="h-4 w-4" />
-            <span>Tải Markdown cho Obsidian</span>
-          </button>
+          <div className="-mr-3 flex items-center">
+            <button onClick={handleCopyMarkdown} className={quietButton}>
+              {copiedMarkdown ? (
+                <Check className="text-signal-600 h-4 w-4" />
+              ) : (
+                <Copy className="h-4 w-4" />
+              )}
+              {copiedMarkdown ? 'Đã sao chép' : 'Sao chép Markdown'}
+            </button>
+            <button
+              onClick={handleExportMarkdown}
+              disabled={exportingMarkdown}
+              className={quietButton}
+            >
+              <Download className="h-4 w-4" />
+              {exportingMarkdown ? 'Đang xuất…' : 'Tải .md'}
+            </button>
+          </div>
         </div>
       </div>
     </div>

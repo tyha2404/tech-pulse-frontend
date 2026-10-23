@@ -1,14 +1,98 @@
 @import 'tailwindcss';
 
+/* Be Vietnam Pro: designed for Vietnamese, used for UI, titles and score numerals.
+   Literata: reading face for summaries and reader mode (optical sizes). */
+@import '@fontsource/be-vietnam-pro/400.css';
+@import '@fontsource/be-vietnam-pro/500.css';
+@import '@fontsource/be-vietnam-pro/600.css';
+@import '@fontsource/be-vietnam-pro/700.css';
+@import './fonts.css';
+
+/* "Tín hiệu" design tokens. Four hues, each with one job:
+   signal (jade) = high AI score / healthy, ochre = mid score / saved,
+   accent (cobalt) = interactive & focus, danger (brick) = errors & destructive. */
+@theme {
+  --font-sans: 'Be Vietnam Pro', ui-sans-serif, system-ui, sans-serif;
+  --font-serif: 'Literata Variable', 'Literata', Georgia, serif;
+  --font-mono: ui-monospace, 'SF Mono', Menlo, monospace;
+
+  --color-paper: #f4f5f2;
+  --color-surface: #ffffff;
+  --color-wash: #eaece8;
+  --color-wash-strong: #dfe2dd;
+  --color-rule: #dadfd9;
+  --color-rule-strong: #bfc5be;
+  --color-ink: #16202b;
+  --color-ink-deep: #0c131b;
+  --color-ink-2: #3e4955;
+  --color-muted: #5b6570;
+  --color-faint: #7a838c;
+
+  --color-accent-50: #eef2fc;
+  --color-accent-100: #dce4f8;
+  --color-accent-200: #b9c9f1;
+  --color-accent-300: #8ea7e6;
+  --color-accent-400: #5f80d9;
+  --color-accent-500: #3c62cf;
+  --color-accent-600: #2650c8;
+  --color-accent-700: #1f41a3;
+  --color-accent-800: #1b3683;
+  --color-accent-900: #172c66;
+  --color-accent-950: #0f1c42;
+
+  --color-signal-50: #e8f4ef;
+  --color-signal-100: #cde8dd;
+  --color-signal-200: #9dd1bc;
+  --color-signal-300: #67b597;
+  --color-signal-400: #379776;
+  --color-signal-500: #178160;
+  --color-signal-600: #0e7459;
+  --color-signal-700: #0b634c;
+  --color-signal-800: #0a503e;
+  --color-signal-900: #083f31;
+  --color-signal-950: #04261e;
+
+  --color-ochre-50: #fbf4e6;
+  --color-ochre-100: #f5e6c6;
+  --color-ochre-200: #ebcd8e;
+  --color-ochre-300: #dfb05a;
+  --color-ochre-400: #d19634;
+  --color-ochre-500: #b97e1d;
+  --color-ochre-600: #9c6714;
+  --color-ochre-700: #7f5310;
+  --color-ochre-800: #65420e;
+  --color-ochre-900: #4f340c;
+  --color-ochre-950: #2e1e06;
+
+  --color-danger-50: #fcefee;
+  --color-danger-100: #f8d9d9;
+  --color-danger-200: #efb1b1;
+  --color-danger-300: #e28383;
+  --color-danger-400: #d35757;
+  --color-danger-500: #c23b3b;
+  --color-danger-600: #a92e2e;
+  --color-danger-700: #8c2626;
+  --color-danger-800: #712020;
+  --color-danger-900: #5a1b1b;
+  --color-danger-950: #350f0f;
+}
+
 :root {
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Charter', 'Georgia', serif;
   --sat: env(safe-area-inset-top, 0px);
   --sab: env(safe-area-inset-bottom, 0px);
   --sal: env(safe-area-inset-left, 0px);
   --sar: env(safe-area-inset-right, 0px);
   /* Chiều cao thực tế của header, được FeedHeader cập nhật bằng ResizeObserver.
      Dùng làm `top` cho các sticky group header bên dưới. */
-  --app-header-h: 72px;
+  --app-header-h: 64px;
+  /* Chiều cao tab bar dưới trên mobile, để nội dung không bị che. */
+  --app-tabbar-h: 0px;
+}
+
+@media (max-width: 767px) {
+  :root {
+    --app-tabbar-h: calc(58px + env(safe-area-inset-bottom, 0px));
+  }
 }
 
 html,
@@ -17,8 +101,11 @@ body {
   min-height: 100vh;
   min-height: -webkit-fill-available;
   min-height: 100dvh;
-  background-color: #fcfbf9; /* Tone giấy ấm dịu mắt cho người đọc sách */
-  color: #1f2937;
+  background-color: var(--color-paper);
+  color: var(--color-ink);
+  font-family: var(--font-sans);
+  font-feature-settings: 'tnum' 0;
+  -webkit-font-smoothing: antialiased;
   /* `clip` thay cho `hidden`: hidden sẽ biến body thành scroll container và phá vỡ
      position:sticky của header + các group header. `clip` vẫn chặn tràn ngang mà
      không tạo scroll container. */
@@ -27,9 +114,42 @@ body {
   -webkit-text-size-adjust: 100%;
 }
 
-/* Custom editorial typography styling */
+::selection {
+  background: var(--color-signal-100);
+  color: var(--color-ink);
+}
+
+/* One visible focus treatment for every interactive element. In the base layer so
+   utilities (e.g. the stretched-link focus ring on feed items) can override it. */
+@layer base {
+  :focus-visible {
+    outline: 2px solid var(--color-accent-600);
+    outline-offset: 2px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* Reading face for long-form text */
 .reading-font {
-  font-family: 'Charter', 'Georgia', 'Cambria', serif;
+  font-family: var(--font-serif);
+  font-optical-sizing: auto;
+}
+
+/* AI score numerals: tabular so scores align down the feed */
+.score-numeral {
+  font-family: var(--font-sans);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.02em;
 }
 
 /* PWA & iPhone Safe Area utility padding & margins */
@@ -37,11 +157,11 @@ body {
   padding-top: max(env(safe-area-inset-top, 0px), 0px);
 }
 .header-safe-pt {
-  padding-top: calc(max(env(safe-area-inset-top, 0px), 0px) + 0.75rem);
+  padding-top: calc(max(env(safe-area-inset-top, 0px), 0px) + 0.625rem);
 }
 @media (min-width: 640px) {
   .header-safe-pt {
-    padding-top: calc(max(env(safe-area-inset-top, 0px), 0px) + 0.875rem);
+    padding-top: calc(max(env(safe-area-inset-top, 0px), 0px) + 0.75rem);
   }
 }
 

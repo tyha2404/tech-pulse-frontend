@@ -1,24 +1,17 @@
 import React, { useState, useEffect } from 'react';
-import {
-  Sparkles,
-  TrendingUp,
-  ShieldCheck,
-  Send,
-  RefreshCw,
-  Layers,
-  ArrowRight,
-} from 'lucide-react';
+import { Send, RefreshCw } from 'lucide-react';
+import { PageHeader } from './PageHeader';
+import { primaryButton, secondaryButton, sectionHeading } from '../utils/ui';
+import { scoreTier } from '../utils/score';
 import { apiClient } from '../api';
 import type { WeeklyRadarDigest, Article } from '../types';
 
 interface RadarIntelligenceViewProps {
   onSelectArticle: (article: Article) => void;
-  sourcesCount?: number;
 }
 
 export const RadarIntelligenceView: React.FC<RadarIntelligenceViewProps> = ({
   onSelectArticle,
-  sourcesCount = 28,
 }) => {
   const [digest, setDigest] = useState<WeeklyRadarDigest | null>(null);
   const [loading, setLoading] = useState(false);
@@ -36,9 +29,7 @@ export const RadarIntelligenceView: React.FC<RadarIntelligenceViewProps> = ({
       setDigest(res.data);
     } catch (err: any) {
       console.error('Failed to fetch radar digest', err);
-      setErrorMsg(
-        'Không thể tải báo cáo radar từ AI Gateway vào lúc này. Vui lòng bấm "Thử lại" hoặc kiểm tra kết nối mạng.'
-      );
+      setErrorMsg('Không tải được radar: AI gateway không phản hồi. Kiểm tra 9router rồi thử lại.');
     } finally {
       setLoading(false);
     }
@@ -57,200 +48,169 @@ export const RadarIntelligenceView: React.FC<RadarIntelligenceViewProps> = ({
       const res = await apiClient.post('/intelligence/dispatch-digest?channel=all');
       setDispatchMsg(res.data.message || 'Đã gửi bản tin tổng hợp thành công!');
     } catch {
-      setDispatchMsg('Lỗi gửi bản tin hoặc chưa cấu hình webhook.');
+      setDispatchMsg('Không gửi được bản tin. Kiểm tra cấu hình Telegram/Discord trong backend.');
     } finally {
       setDispatching(false);
     }
   };
 
-  const getStatusBadge = (status: string) => {
-    const s = status.toUpperCase();
-    if (s.includes('ADOPT')) {
-      return (
-        <span className="rounded bg-emerald-100 px-2 py-0.5 font-sans text-[10px] font-bold text-emerald-800">
-          ADOPT
-        </span>
-      );
-    }
-    if (s.includes('TRIAL')) {
-      return (
-        <span className="rounded bg-indigo-100 px-2 py-0.5 font-sans text-[10px] font-bold text-indigo-800">
-          TRIAL
-        </span>
-      );
-    }
-    if (s.includes('ASSESS')) {
-      return (
-        <span className="rounded bg-amber-100 px-2 py-0.5 font-sans text-[10px] font-bold text-amber-800">
-          ASSESS
-        </span>
-      );
-    }
-    return (
-      <span className="rounded bg-rose-100 px-2 py-0.5 font-sans text-[10px] font-bold text-rose-800">
-        HOLD
-      </span>
-    );
-  };
+  // Technology-radar rings, in the order a team should act on them
+  const RINGS = [
+    { key: 'ADOPT', label: 'Nên dùng', hint: 'Adopt', tone: 'text-signal-700' },
+    { key: 'TRIAL', label: 'Thử nghiệm', hint: 'Trial', tone: 'text-ink' },
+    { key: 'ASSESS', label: 'Đánh giá', hint: 'Assess', tone: 'text-ochre-700' },
+    { key: 'HOLD', label: 'Tạm dừng', hint: 'Hold', tone: 'text-danger-700' },
+  ];
+  const ringOf = (status: string) =>
+    RINGS.find((r) => status.toUpperCase().includes(r.key))?.key ?? 'HOLD';
 
   return (
-    <div className="space-y-6">
-      {/* Header Banner */}
-      <div className="flex flex-col justify-between gap-4 rounded-2xl border border-[#e7e2d9] bg-gradient-to-r from-[#fbf9f5] via-[#f7f3ea] to-[#f4eee2] p-6 shadow-2xs md:flex-row md:items-center">
-        <div>
-          <h2 className="font-serif text-xl font-bold text-[#1c1f24] sm:text-2xl">
-            Radar Công Nghệ & Trí Tuệ Kỹ Thuật
-          </h2>
-          <p className="mt-1 font-serif text-xs text-[#635d52]">
-            Tổng hợp dữ liệu từ {sourcesCount} nguồn tin cào tự động: ByteByteGo, Google DeepMind,
-            MIT Tech Review, The Verge, OpenAI, Prisma, Qdrant, Vercel...
-          </p>
-        </div>
-
-        <div className="flex shrink-0 items-center gap-2">
-          <button
-            onClick={() => fetchRadarDigest(true)}
-            disabled={loading}
-            className="flex cursor-pointer items-center gap-1.5 rounded-lg border border-[#dcd5c7] bg-white px-3 py-2 font-sans text-xs font-medium text-[#2c313a] shadow-2xs transition hover:bg-[#eee9df] disabled:opacity-50"
-            title="Buộc AI phân tích lại báo cáo mới nhất"
-          >
-            <RefreshCw className={`h-3.5 w-3.5 ${loading ? 'animate-spin' : ''}`} />
-            Làm mới Radar
-          </button>
-          <button
-            onClick={handleDispatch}
-            disabled={dispatching}
-            className="flex cursor-pointer items-center gap-1.5 rounded-lg bg-[#24292f] px-3.5 py-2 font-sans text-xs font-semibold text-white shadow-2xs transition hover:bg-black disabled:opacity-50"
-          >
-            <Send className="h-3.5 w-3.5" />
-            {dispatching ? 'Đang gửi...' : 'Gửi Digest Webhook'}
-          </button>
-        </div>
-      </div>
+    <div>
+      <PageHeader
+        title="Radar công nghệ"
+        description="AI đọc 15 bài điểm cao nhất và chỉ ra xu hướng nào nên dùng, thử nghiệm hay tạm dừng."
+        actions={
+          <>
+            <button
+              onClick={() => fetchRadarDigest(true)}
+              disabled={loading}
+              title="AI phân tích lại từ các bài mới nhất"
+              className={secondaryButton}
+            >
+              <RefreshCw className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
+              Phân tích lại
+            </button>
+            <button onClick={handleDispatch} disabled={dispatching} className={primaryButton}>
+              <Send className="h-4 w-4" />
+              {dispatching ? 'Đang gửi…' : 'Gửi bản tin'}
+            </button>
+          </>
+        }
+      />
 
       {dispatchMsg && (
-        <div className="rounded-xl border border-indigo-200 bg-indigo-50 p-3 font-sans text-xs text-indigo-900">
+        <p role="status" className="text-muted -mt-4 mb-6 text-[14px]">
           {dispatchMsg}
-        </div>
+        </p>
       )}
 
       {errorMsg && !digest && (
-        <div className="rounded-2xl border border-rose-200 bg-rose-50 p-6 text-center font-sans">
-          <p className="text-sm font-medium text-rose-800">{errorMsg}</p>
-          <button
-            onClick={() => fetchRadarDigest(false)}
-            className="mt-3 inline-flex items-center gap-1.5 rounded-lg bg-rose-700 px-4 py-2 text-xs font-semibold text-white hover:bg-rose-800"
-          >
-            <RefreshCw className="h-3.5 w-3.5" /> Thử lại
+        <div role="alert" className="py-12 text-center">
+          <p className="text-danger-700 text-[15px]">{errorMsg}</p>
+          <button onClick={() => fetchRadarDigest(false)} className={`${secondaryButton} mt-4`}>
+            <RefreshCw className="h-4 w-4" /> Thử lại
           </button>
         </div>
       )}
 
       {loading && !digest ? (
-        <div className="py-16 text-center font-sans text-sm text-[#756e60]">
-          <Sparkles className="mx-auto mb-2 h-6 w-6 animate-spin text-amber-600" />
-          AI đang tổng hợp và phân tích báo cáo radar công nghệ...
-          <p className="mt-1 text-xs text-[#9c9384]">
-            Quá trình có thể mất khoảng 15-25 giây cho lần phân tích đầu tiên
-          </p>
+        <div role="status" className="text-muted py-20 text-center text-[14px]">
+          <RefreshCw className="mx-auto mb-3 h-5 w-5 animate-spin" />
+          AI đang tổng hợp radar…
+          <p className="text-faint mt-1 text-[13px]">Lần đầu có thể mất 15–25 giây.</p>
         </div>
       ) : (
         digest && (
-          <>
-            {/* Dominant Trends Heatmap */}
-            <div>
-              <div className="mb-3 flex items-center justify-between">
-                <h3 className="flex items-center gap-2 font-sans text-xs font-bold tracking-wider text-[#756e60] uppercase">
-                  <TrendingUp className="h-4 w-4 text-emerald-700" /> Xu hướng công nghệ cốt lõi
-                  (Technology Radar)
-                </h3>
-              </div>
-              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-                {digest.dominant_trends.map((t, idx) => (
-                  <div
-                    key={idx}
-                    className="flex flex-col justify-between rounded-xl border border-[#e7e2d9] bg-white p-4 shadow-2xs transition hover:border-[#cfc6b6]"
-                  >
-                    <div>
-                      <div className="flex items-center justify-between gap-2">
-                        <span className="font-mono text-sm font-bold text-[#1c1f24]">
-                          {t.topic}
-                        </span>
-                        {getStatusBadge(t.status)}
+          <div className="space-y-12">
+            <section aria-labelledby="radar-trends">
+              <h2 id="radar-trends" className={`${sectionHeading} mb-1`}>
+                Xu hướng {digest.week_label ? `· ${digest.week_label}` : ''}
+              </h2>
+              <div className="divide-rule border-rule divide-y border-y">
+                {RINGS.map((ring) => {
+                  const trends = digest.dominant_trends.filter(
+                    (t) => ringOf(t.status) === ring.key
+                  );
+                  if (trends.length === 0) return null;
+                  return (
+                    <div
+                      key={ring.key}
+                      className="grid gap-x-6 gap-y-3 py-5 sm:grid-cols-[9rem_minmax(0,1fr)]"
+                    >
+                      <div>
+                        <div className={`text-[15px] font-semibold ${ring.tone}`}>{ring.label}</div>
+                        <div className="text-faint text-[13px]">{ring.hint}</div>
                       </div>
-                      <p className="mt-2 font-serif text-xs leading-relaxed text-[#475569]">
-                        {t.summary}
-                      </p>
+                      <ul className="space-y-4">
+                        {trends.map((t, idx) => (
+                          <li key={idx}>
+                            <div className="text-ink text-[16px] font-semibold">{t.topic}</div>
+                            <p className="reading-font text-ink-2 mt-0.5 max-w-prose text-[15px] leading-[1.6]">
+                              {t.summary}
+                            </p>
+                            {t.relevance && (
+                              <p className="text-muted mt-1 text-[13px]">
+                                Mức liên quan: {t.relevance}
+                              </p>
+                            )}
+                          </li>
+                        ))}
+                      </ul>
                     </div>
-                    <div className="mt-3 border-t border-[#f4efe6] pt-2 font-sans text-[11px] text-[#756e60]">
-                      <span className="font-semibold text-[#1e293b]">Ảnh hưởng NestJS/AI:</span>{' '}
-                      {t.relevance}
-                    </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
-            </div>
+            </section>
 
-            {/* Architectural Shifts & Practical Takeaways */}
-            <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-              {/* Shifts */}
-              <div className="rounded-2xl border border-[#e7e2d9] bg-white p-5 shadow-2xs">
-                <h3 className="flex items-center gap-2 font-sans text-xs font-bold tracking-wider text-[#756e60] uppercase">
-                  <Layers className="h-4 w-4 text-indigo-700" /> Sự dịch chuyển kiến trúc tuần này
-                </h3>
-                <ul className="mt-3 list-inside list-disc space-y-2 font-serif text-xs leading-relaxed text-[#2c313a]">
+            <div className="grid gap-x-10 gap-y-10 md:grid-cols-2">
+              <section aria-labelledby="radar-shifts">
+                <h2 id="radar-shifts" className={`${sectionHeading} mb-3`}>
+                  Dịch chuyển kiến trúc
+                </h2>
+                <ul className="reading-font text-ink-2 marker:text-faint list-disc space-y-2 pl-5 text-[15px] leading-[1.6]">
                   {digest.architectural_shifts.map((shift, i) => (
                     <li key={i}>{shift}</li>
                   ))}
                 </ul>
-              </div>
-
-              {/* Actionable Recommendations */}
-              <div className="rounded-2xl border border-[#e7e2d9] bg-white p-5 shadow-2xs">
-                <h3 className="flex items-center gap-2 font-sans text-xs font-bold tracking-wider text-[#756e60] uppercase">
-                  <ShieldCheck className="h-4 w-4 text-emerald-700" /> Khuyến nghị hành động cho đội
-                  ngũ Backend
-                </h3>
-                <ul className="mt-3 list-inside list-disc space-y-2 font-serif text-xs leading-relaxed text-[#2c313a]">
+              </section>
+              <section aria-labelledby="radar-actions">
+                <h2 id="radar-actions" className={`${sectionHeading} mb-3`}>
+                  Nên làm gì tiếp
+                </h2>
+                <ul className="reading-font text-ink-2 marker:text-faint list-disc space-y-2 pl-5 text-[15px] leading-[1.6]">
                   {digest.actionable_recommendations.map((rec, i) => (
                     <li key={i}>{rec}</li>
                   ))}
                 </ul>
-              </div>
+              </section>
             </div>
 
-            {/* Top Articles of the Week */}
             {digest.top_articles && digest.top_articles.length > 0 && (
-              <div>
-                <h3 className="mb-3 flex items-center gap-2 font-sans text-xs font-bold tracking-wider text-[#756e60] uppercase">
-                  ⭐ Các bài viết công nghệ điểm cao nhất tuần
-                </h3>
-                <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-2">
+              <section aria-labelledby="radar-top">
+                <h2 id="radar-top" className={`${sectionHeading} mb-1`}>
+                  Bài làm căn cứ
+                </h2>
+                <ul className="divide-rule border-rule divide-y border-y">
                   {digest.top_articles.map((art) => (
-                    <div
-                      key={art.id}
-                      onClick={() => onSelectArticle(art as any)}
-                      className="flex cursor-pointer items-center justify-between rounded-xl border border-[#e7e2d9] bg-white p-3.5 shadow-2xs transition hover:border-indigo-300 hover:bg-indigo-50/30"
-                    >
-                      <div className="min-w-0 pr-3">
-                        <div className="line-clamp-1 font-serif text-xs font-bold text-[#1c1f24]">
-                          {art.vietnamese_title || art.title}
-                        </div>
-                        <div className="mt-1 flex items-center gap-2 font-sans text-[11px] text-[#756e60]">
-                          <span>{art.source_name || 'Tech'}</span>
-                          <span>•</span>
-                          <span className="font-semibold text-emerald-700">
-                            Điểm: {art.relevance_score.toFixed(1)}
+                    <li key={art.id}>
+                      <button
+                        onClick={() => onSelectArticle(art as unknown as Article)}
+                        className="hover:bg-wash/50 grid w-full cursor-pointer grid-cols-[3rem_minmax(0,1fr)] items-baseline gap-x-3 py-3 text-left"
+                      >
+                        <span
+                          className={`score-numeral text-[18px] ${
+                            scoreTier(art.relevance_score) === 'high'
+                              ? 'text-signal-700 font-bold'
+                              : 'text-ink-2 font-semibold'
+                          }`}
+                        >
+                          {art.relevance_score.toFixed(1)}
+                        </span>
+                        <span className="min-w-0">
+                          <span className="text-ink block text-[15px] leading-snug font-medium">
+                            {art.vietnamese_title || art.title}
                           </span>
-                        </div>
-                      </div>
-                      <ArrowRight className="h-4 w-4 shrink-0 text-indigo-700" />
-                    </div>
+                          <span className="text-muted mt-0.5 block text-[13px]">
+                            {art.source_name}
+                          </span>
+                        </span>
+                      </button>
+                    </li>
                   ))}
-                </div>
-              </div>
+                </ul>
+              </section>
             )}
-          </>
+          </div>
         )
       )}
     </div>

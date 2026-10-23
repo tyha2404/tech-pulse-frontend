@@ -1,26 +1,17 @@
 import React, { useState, useEffect, useCallback, useRef, lazy, Suspense } from 'react';
-import {
-  Sparkles,
-  ExternalLink,
-  RefreshCw,
-  Plus,
-  Trash2,
-  CheckCircle2,
-  AlertCircle,
-  Clock,
-  ShieldCheck,
-  BookOpen,
-  ArrowUpRight,
-} from 'lucide-react';
+import { RefreshCw, Plus, Trash2, BookOpen } from 'lucide-react';
 import { apiClient, getPersonalizedArticles, sendArticleFeedback } from './api';
 import type { Article, Source } from './types';
-import { FeedHeader } from './components/FeedHeader';
+import { FeedHeader, type AppTab } from './components/FeedHeader';
 import { FilterToolbar } from './components/FilterToolbar';
 import { ArticleCard } from './components/ArticleCard';
 import { ArticleModal } from './components/ArticleModal';
 import { ExplanationModal } from './components/ExplanationModal';
 import { AddSourceModal } from './components/AddSourceModal';
 import { SemanticSearchBar } from './components/SemanticSearchBar';
+import { PageHeader } from './components/PageHeader';
+import { primaryButton, sectionHeading } from './utils/ui';
+import { formatRelativeTime, SOURCE_CATEGORY_LABELS, SOURCE_STATUS } from './utils/format';
 
 const RadarIntelligenceView = lazy(() =>
   import('./components/RadarIntelligenceView').then((m) => ({ default: m.RadarIntelligenceView }))
@@ -30,9 +21,14 @@ const AdminDashboard = lazy(() =>
 );
 
 export default function App() {
-  const [activeTab, setActiveTab] = useState<
-    'feed' | 'semantic' | 'personalized' | 'radar' | 'sources' | 'admin'
-  >('feed');
+  const [activeTab, setActiveTab] = useState<AppTab>('feed');
+  const [toast, setToast] = useState<{ message: string; tone: 'info' | 'error' } | null>(null);
+  const toastTimer = useRef<number | undefined>(undefined);
+  const notify = useCallback((message: string, tone: 'info' | 'error' = 'info') => {
+    window.clearTimeout(toastTimer.current);
+    setToast({ message, tone });
+    toastTimer.current = window.setTimeout(() => setToast(null), tone === 'error' ? 7000 : 4000);
+  }, []);
   const [articles, setArticles] = useState<Article[]>([]);
   const [feedbackMap, setFeedbackMap] = useState<Record<number, string>>({});
   const [sources, setSources] = useState<Source[]>([]);
@@ -258,10 +254,10 @@ export default function App() {
       if (selectedArticle && selectedArticle.id === articleId) {
         setSelectedArticle(updated);
       }
-      alert('Đã tóm tắt lại bài viết bằng AI thành công!');
+      notify('Đã tóm tắt lại bài viết.');
     } catch (err: any) {
       const errMsg = err?.response?.data?.detail || err?.message || String(err);
-      alert('Lỗi khi tóm tắt lại bằng AI: ' + errMsg);
+      notify(`Không tóm tắt lại được: ${errMsg}. Thử lại sau ít phút.`, 'error');
     } finally {
       setSummarizingArticleId(null);
     }
@@ -297,14 +293,12 @@ export default function App() {
       setCrawlingAll(true);
       await apiClient.post('/crawl-all');
       if (!silent) {
-        alert(
-          'Đã kích hoạt cào bài mới trong nền! Các bài viết sẽ lần lượt xuất hiện sau khi AI phân tích.'
-        );
+        notify('Đang lấy bài mới. Bài sẽ xuất hiện dần khi AI phân tích xong.');
       }
       await fetchArticles();
       await fetchSources();
     } catch (err) {
-      if (!silent) alert('Lỗi khi cào dữ liệu: ' + err);
+      if (!silent) notify(`Không cập nhật được tin: ${err}. Kiểm tra backend đang chạy.`, 'error');
     } finally {
       setCrawlingAll(false);
     }
@@ -347,21 +341,21 @@ export default function App() {
   const handleCrawlSingle = async (sourceId: number) => {
     try {
       await apiClient.post(`/sources/${sourceId}/crawl`);
-      alert('Đang cào nguồn tin trong nền!');
+      notify('Đang lấy bài mới từ nguồn này.');
       await fetchArticles();
       await fetchSources();
     } catch (err) {
-      alert('Lỗi cào nguồn: ' + err);
+      notify(`Không lấy được bài từ nguồn: ${err}`, 'error');
     }
   };
 
   const handleDeleteSource = async (sourceId: number, name: string) => {
-    if (!confirm(`Bạn có chắc muốn xoá nguồn "${name}"?`)) return;
+    if (!confirm(`Xoá nguồn "${name}" và toàn bộ bài đã thu thập từ nguồn này?`)) return;
     try {
       await apiClient.delete(`/sources/${sourceId}`);
       await fetchSources();
     } catch (err) {
-      alert('Lỗi khi xoá nguồn: ' + err);
+      notify(`Không xoá được nguồn: ${err}`, 'error');
     }
   };
 
@@ -423,95 +417,95 @@ export default function App() {
   );
 
   return (
-    <div className="min-h-screen w-full max-w-full overflow-x-clip bg-[#fbf9f5] font-serif text-[#2c313a] selection:bg-amber-100 selection:text-amber-900">
-      {/* Sub-component: Modular Feed Header */}
+    <div className="bg-paper text-ink min-h-screen w-full max-w-full overflow-x-clip font-sans">
       <FeedHeader
         activeTab={activeTab}
         setActiveTab={setActiveTab}
-        techStacksCount={allTechStacks.length}
-        sourcesCount={sources.length}
         crawlingAll={crawlingAll}
         onCrawlAll={() => handleCrawlAll()}
         onOpenExplanation={() => setShowExplanationModal(true)}
         pullDistance={pullDistance}
       />
 
-      {/* Main Container with Safe Area Bottom */}
       <main
         onTouchStart={handleTouchStart}
         onTouchMove={handleTouchMove}
         onTouchEnd={handleTouchEnd}
-        className="mx-auto w-full max-w-5xl px-3 py-4 pb-[max(env(safe-area-inset-bottom,0px),2rem)] sm:px-6 sm:py-8"
+        className="mx-auto w-full max-w-3xl px-4 pt-5 pb-[calc(var(--app-tabbar-h)+2rem)] sm:px-6 sm:pt-8 lg:max-w-4xl"
       >
         {/* ================= VIEW 1: BÀI ĐỌC (FEED & PERSONALIZED) ================= */}
         {(activeTab === 'feed' || activeTab === 'personalized') && (
           <div>
-            {/* Sub-component: Modular FilterToolbar */}
-            <FilterToolbar
-              selectedCategory={selectedCategory}
-              setSelectedCategory={setSelectedCategory}
-              topOnly={topOnly}
-              setTopOnly={setTopOnly}
-              searchQuery={searchQuery}
-              setSearchQuery={setSearchQuery}
-              onSearchSubmit={() => fetchArticles(true)}
-              readStatus={readStatus}
-              setReadStatus={setReadStatus}
-              bookmarkedOnly={bookmarkedOnly}
-              setBookmarkedOnly={setBookmarkedOnly}
-              viewHidden={viewHidden}
-              setViewHidden={setViewHidden}
-              selectedSourceId={selectedSourceId}
-              setSelectedSourceId={setSelectedSourceId}
-              sources={sources}
-              sortBy={sortBy}
-              setSortBy={setSortBy}
-              groupDuplicates={groupDuplicates}
-              setGroupDuplicates={setGroupDuplicates}
-            />
+            {activeTab === 'personalized' ? (
+              <p className="text-muted mb-4 max-w-prose text-[14px] leading-relaxed">
+                Bài được xếp lại theo chủ đề và nguồn bạn quan tâm. Đánh dấu bài hữu ích hoặc không
+                liên quan để gợi ý chính xác hơn.
+              </p>
+            ) : (
+              <FilterToolbar
+                selectedCategory={selectedCategory}
+                setSelectedCategory={setSelectedCategory}
+                topOnly={topOnly}
+                setTopOnly={setTopOnly}
+                searchQuery={searchQuery}
+                setSearchQuery={setSearchQuery}
+                onSearchSubmit={() => fetchArticles(true)}
+                readStatus={readStatus}
+                setReadStatus={setReadStatus}
+                bookmarkedOnly={bookmarkedOnly}
+                setBookmarkedOnly={setBookmarkedOnly}
+                viewHidden={viewHidden}
+                setViewHidden={setViewHidden}
+                selectedSourceId={selectedSourceId}
+                setSelectedSourceId={setSelectedSourceId}
+                sources={sources}
+                sortBy={sortBy}
+                setSortBy={setSortBy}
+                groupDuplicates={groupDuplicates}
+                setGroupDuplicates={setGroupDuplicates}
+              />
+            )}
 
-            {/* Articles Reading List */}
             {loading ? (
-              <div className="flex flex-col items-center justify-center gap-3 py-24 text-center text-[#756e60]">
-                <RefreshCw className="h-6 w-6 animate-spin text-[#4b5563]" />
-                <p className="font-sans text-xs">Đang tải các trang bản tin...</p>
+              <div
+                role="status"
+                className="text-muted flex items-center justify-center gap-2 py-24 text-[14px]"
+              >
+                <RefreshCw className="h-4 w-4 animate-spin" />
+                Đang tải bài…
               </div>
             ) : articles.length === 0 ? (
-              <div className="mx-auto max-w-lg rounded-2xl border border-[#e7e2d9] bg-white p-8 py-20 text-center">
-                <BookOpen className="mx-auto mb-3 h-10 w-10 text-[#a39c8e]" />
-                <h3 className="font-serif text-base font-bold text-[#2c313a]">
-                  Chưa có bài viết phù hợp
-                </h3>
-                <p className="mt-1 mb-5 font-sans text-xs leading-relaxed text-[#756e60]">
-                  Hiện chưa có bài báo nào trong mục này. Bạn có thể nhấn nút cập nhật để cào thêm
-                  bài mới.
+              <div className="mx-auto max-w-sm py-20 text-center">
+                <BookOpen className="text-faint mx-auto mb-4 h-8 w-8" />
+                <h3 className="text-ink text-[17px] font-semibold">Không có bài nào ở đây</h3>
+                <p className="text-muted mt-1.5 mb-6 text-[14px] leading-relaxed">
+                  Thử bỏ bớt bộ lọc, hoặc lấy bài mới từ các nguồn.
                 </p>
                 <button
                   onClick={() => handleCrawlAll()}
-                  className="cursor-pointer rounded-lg bg-[#2c313a] px-4 py-2 font-sans text-xs font-medium text-white transition hover:bg-[#1a1d23]"
+                  className="bg-ink hover:bg-ink-deep cursor-pointer rounded-full px-5 py-2.5 text-[14px] font-semibold text-white transition-colors"
                 >
-                  Cập nhật tin ngay
+                  Cập nhật tin
                 </button>
               </div>
             ) : (
-              <div className="space-y-10">
+              <div>
                 {groupedArticles.map((group) => (
-                  <section key={group.dateKey} className="space-y-4">
-                    {/* Date Section Header */}
+                  <section key={group.dateKey} aria-labelledby={`day-${group.dateKey}`}>
                     <div
-                      style={{ top: 'var(--app-header-h, 72px)' }}
-                      className="sticky z-20 flex items-center gap-3 bg-[#fbf9f5]/95 py-2 font-sans backdrop-blur-xs"
+                      style={{ top: 'var(--app-header-h, 64px)' }}
+                      className="bg-paper/95 sticky z-20 -mx-4 flex items-baseline justify-between px-4 pt-6 pb-2 backdrop-blur-sm"
                     >
-                      <div className="flex items-center gap-1.5 rounded-full border border-[#ded7ca] bg-[#f4efe6] px-3 py-0.5 text-xs font-bold text-[#554e42] shadow-xs">
-                        <Clock className="h-3 w-3 text-amber-700" />
-                        <span>{group.label}</span>
-                      </div>
-                      <div className="h-px flex-1 bg-[#e7e2d9]"></div>
-                      <span className="text-[11px] text-[#8c8475]">{group.items.length} bài</span>
+                      <h2
+                        id={`day-${group.dateKey}`}
+                        className="text-ink text-[15px] font-semibold first-letter:uppercase"
+                      >
+                        {group.label}
+                      </h2>
+                      <span className="text-muted text-[13px]">{group.items.length} bài</span>
                     </div>
 
-                    {/* Sub-component: Modular ArticleCard List */}
-                    <div className="space-y-5">
+                    <div className="divide-rule border-rule divide-y border-t">
                       {group.items.map((art) => (
                         <ArticleCard
                           key={art.id}
@@ -528,24 +522,22 @@ export default function App() {
                   </section>
                 ))}
 
-                {/* Lazyload & Infinite Scroll / Manual Load More */}
-                <div className="pt-4 pb-8 text-center font-sans">
+                {/* Infinite scroll, with a manual fallback */}
+                <div className="text-muted pt-8 pb-4 text-center text-[13px]">
                   {loadingMore ? (
-                    <div className="flex items-center justify-center gap-2 text-xs text-[#756e60]">
-                      <RefreshCw className="h-4 w-4 animate-spin text-[#4b5563]" />
-                      <span>Đang cuộn tải thêm bài viết tiếp theo...</span>
-                    </div>
+                    <span role="status" className="inline-flex items-center gap-2">
+                      <RefreshCw className="h-4 w-4 animate-spin" />
+                      Đang tải thêm…
+                    </span>
                   ) : hasMore ? (
                     <button
                       onClick={() => fetchArticles(false)}
-                      className="cursor-pointer rounded-xl border border-[#ded7ca] bg-white px-5 py-2.5 text-xs font-semibold text-[#2c313a] shadow-xs transition hover:bg-[#eee9df]"
+                      className="border-rule text-ink hover:bg-wash cursor-pointer rounded-full border px-5 py-2.5 font-medium transition-colors"
                     >
-                      Cuộn hoặc bấm vào đây để tải thêm bài cũ hơn
+                      Tải bài cũ hơn
                     </button>
                   ) : (
-                    <p className="text-xs text-[#a39c8e]">
-                      — Bạn đã xem hết toàn bộ bài viết trong mục này —
-                    </p>
+                    <p>Hết bài trong mục này.</p>
                   )}
                 </div>
               </div>
@@ -555,214 +547,195 @@ export default function App() {
 
         {/* ================= VIEW 2: RADAR TECH & INTELLIGENCE ================= */}
         {activeTab === 'radar' && (
-          <div className="space-y-8">
+          <div className="space-y-12">
             <Suspense
               fallback={
-                <div className="flex h-64 items-center justify-center rounded-2xl border border-[#e7e2d9] bg-white p-8 text-sm text-[#756e60]">
-                  <Sparkles className="mr-2 h-5 w-5 animate-spin text-amber-600" />
-                  Đang tải Radar Tech Intelligence...
+                <div
+                  role="status"
+                  className="text-muted flex h-64 items-center justify-center gap-2 text-[14px]"
+                >
+                  <RefreshCw className="h-4 w-4 animate-spin" />
+                  Đang mở radar…
                 </div>
               }
             >
               <RadarIntelligenceView
-                sourcesCount={sources.length}
                 onSelectArticle={(art) => {
                   const found = articles.find((a) => a.id === art.id);
-                  setSelectedArticle(found || (art as any));
+                  setSelectedArticle(found || art);
                 }}
               />
             </Suspense>
 
-            <div>
-              <div className="mb-4 flex items-center justify-between">
-                <h3 className="flex items-center gap-2 font-serif text-base font-bold text-[#1c1f24]">
-                  <Sparkles className="h-4 w-4 text-amber-600" />
-                  Thư Viện Công Nghệ Mới Xuất Hiện ({allTechStacks.length} công nghệ)
-                </h3>
-              </div>
-
+            <section aria-labelledby="tech-library">
+              <h2 id="tech-library" className={`${sectionHeading} mb-1`}>
+                Công nghệ mới xuất hiện
+              </h2>
+              <p className="text-muted mb-3 text-[13px]">
+                Trích từ {articles.length} bài đang tải trong Bản tin.
+              </p>
               {allTechStacks.length === 0 ? (
-                <div className="rounded-xl border border-[#e7e2d9] bg-white p-8 py-16 text-center">
-                  <p className="font-sans text-xs text-[#756e60]">
-                    Chưa có công nghệ mới nào được trích xuất.
-                  </p>
-                </div>
+                <p className="text-muted py-6 text-[14px]">
+                  Chưa có công nghệ nào. Mở tab Bản tin để tải bài trước.
+                </p>
               ) : (
-                <div className="grid grid-cols-1 gap-4 font-sans md:grid-cols-2 lg:grid-cols-3">
+                <ul className="divide-rule border-rule divide-y border-y">
                   {allTechStacks.map((ts, idx) => (
-                    <div
+                    <li
                       key={idx}
-                      onClick={() => setSelectedArticle(ts.article)}
-                      className="group flex cursor-pointer flex-col justify-between rounded-xl border border-[#e7e2d9] bg-white p-5 shadow-xs transition hover:border-[#cfc7b8] hover:bg-[#fbf9f5]"
+                      className="grid gap-x-6 gap-y-1 py-4 sm:grid-cols-[12rem_minmax(0,1fr)]"
                     >
                       <div>
-                        <div className="mb-2 flex items-center justify-between">
-                          <span className="font-mono text-sm font-bold text-[#0f172a] transition group-hover:text-indigo-900">
-                            ⚡ {ts.name}
-                          </span>
-                          <span className="rounded bg-[#f4efe6] px-2 py-0.5 text-[10px] font-semibold text-[#635d52]">
-                            {ts.category || 'Tool'}
-                          </span>
-                        </div>
-                        <p className="mb-4 font-serif text-xs leading-relaxed text-[#475569]">
-                          {ts.desc || 'Không có mô tả chi tiết.'}
-                        </p>
+                        <div className="text-ink text-[15px] font-semibold">{ts.name}</div>
+                        {ts.category && <div className="text-muted text-[13px]">{ts.category}</div>}
                       </div>
-
-                      <div className="flex items-center justify-between border-t border-[#f0ece3] pt-3 text-[11px] text-[#756e60]">
-                        <span className="max-w-[170px] truncate">
-                          Nguồn: {ts.article.source_name}
-                        </span>
-                        <span className="flex items-center gap-0.5 font-semibold text-[#1c1f24] group-hover:underline">
-                          Xem bài <ArrowUpRight className="h-3 w-3" />
-                        </span>
+                      <div className="min-w-0">
+                        {ts.desc && (
+                          <p className="text-ink-2 text-[14px] leading-relaxed">{ts.desc}</p>
+                        )}
+                        <button
+                          onClick={() => setSelectedArticle(ts.article)}
+                          className="text-muted decoration-rule-strong hover:text-accent-700 hover:decoration-accent-300 mt-1 cursor-pointer text-left text-[13px] underline underline-offset-2"
+                        >
+                          {ts.article.vietnamese_title || ts.article.title}
+                        </button>
                       </div>
-                    </div>
+                    </li>
                   ))}
-                </div>
+                </ul>
               )}
-            </div>
+            </section>
           </div>
         )}
 
         {/* ================= VIEW 3: QUẢN LÝ NGUỒN (SOURCES) ================= */}
         {activeTab === 'sources' && (
-          <div className="font-sans">
-            <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-              <div>
-                <h2 className="flex items-center gap-2 font-serif text-lg font-bold text-[#1c1f24]">
-                  <ShieldCheck className="h-5 w-5 text-emerald-700" />
-                  Bảng Theo Dõi Sức Khỏe Nguồn Tin
-                </h2>
-                <p className="mt-0.5 text-xs text-[#6b6456]">
-                  Quản lý các nguồn cào tự động, kiểm tra tình trạng kết nối và bài viết đã thu
-                  thập.
-                </p>
-              </div>
-              <button
-                onClick={() => setIsAddSourceOpen(true)}
-                className="flex cursor-pointer items-center justify-center gap-1.5 self-start rounded-lg bg-emerald-700 px-3.5 py-2 text-xs font-semibold text-white shadow-xs transition hover:bg-emerald-800 sm:self-auto"
-              >
-                <Plus className="h-4 w-4" /> Thêm nguồn tin
-              </button>
-            </div>
+          <div>
+            <PageHeader
+              title="Nguồn tin"
+              description="Các trang TechPulse tự động lấy bài. Nguồn bị lỗi sẽ hiện lý do ngay bên dưới tên."
+              actions={
+                <button onClick={() => setIsAddSourceOpen(true)} className={primaryButton}>
+                  <Plus className="h-4 w-4" /> Thêm nguồn
+                </button>
+              }
+            />
 
-            {/* Category Filter Pills for Sources */}
-            <div className="mb-4 flex flex-wrap items-center gap-1.5 border-b border-[#e7e2d9] pb-3">
+            <div
+              role="group"
+              aria-label="Lọc theo nhóm nguồn"
+              className="no-scrollbar -mx-4 mb-4 flex gap-1.5 overflow-x-auto px-4 md:mx-0 md:px-0"
+            >
               {[
-                { id: 'all', label: 'Tất cả nguồn' },
-                { id: 'AI & Future Tech', label: '🤖 AI & Công nghệ tương lai' },
-                { id: 'Backend & Architecture', label: '⚙️ Backend & Kiến trúc' },
-                { id: 'Vietnam Tech', label: '🇻🇳 Tin Việt Nam' },
-                { id: 'Global Tech', label: '🌐 Báo Quốc tế' },
+                { id: 'all', label: 'Tất cả' },
+                ...Object.entries(SOURCE_CATEGORY_LABELS).map(([id, label]) => ({ id, label })),
               ].map((c) => {
                 const count =
                   c.id === 'all'
                     ? sources.length
                     : sources.filter((s) => s.category === c.id).length;
+                const active = sourceCategoryFilter === c.id;
                 return (
                   <button
                     key={c.id}
                     onClick={() => setSourceCategoryFilter(c.id)}
-                    className={`cursor-pointer rounded-full px-3 py-1 text-xs whitespace-nowrap transition ${
-                      sourceCategoryFilter === c.id
-                        ? 'bg-[#2c313a] font-medium text-white'
-                        : 'bg-[#eee9df] text-[#554e42] hover:bg-[#e4ded2]'
+                    aria-pressed={active}
+                    className={`flex h-9 shrink-0 cursor-pointer items-center gap-1.5 rounded-full px-3.5 text-[13px] whitespace-nowrap transition-colors ${
+                      active
+                        ? 'bg-ink font-semibold text-white'
+                        : 'text-ink-2 hover:bg-wash font-medium'
                     }`}
                   >
-                    {c.label} ({count})
+                    {c.label}
+                    <span className={`score-numeral ${active ? 'text-white/70' : 'text-faint'}`}>
+                      {count}
+                    </span>
                   </button>
                 );
               })}
             </div>
 
-            <div className="overflow-x-auto rounded-xl border border-[#e7e2d9] bg-white shadow-xs">
-              <table className="w-full min-w-[640px] text-left text-xs">
-                <thead className="border-b border-[#e7e2d9] bg-[#f7f4ed] font-medium text-[#635d52]">
-                  <tr>
-                    <th className="p-3.5">Tên Nguồn</th>
-                    <th className="p-3.5">Trạng Thái</th>
-                    <th className="p-3.5">Đường Dẫn / RSS</th>
-                    <th className="p-3.5">Số Bài Thu Thập</th>
-                    <th className="p-3.5">Lần Cào Gần Nhất</th>
-                    <th className="p-3.5 text-right">Thao Tác</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-[#ede8df]">
-                  {sources
-                    .filter(
-                      (s) => sourceCategoryFilter === 'all' || s.category === sourceCategoryFilter
-                    )
-                    .map((s) => (
-                      <tr key={s.id} className="transition hover:bg-[#fbf9f5]">
-                        <td className="p-3.5">
-                          <div className="font-semibold text-[#1c1f24]">{s.name}</div>
-                          <div className="mt-0.5 inline-block rounded bg-[#f4efe6] px-1.5 py-0.5 text-[10px] font-medium text-[#635d52]">
-                            {s.category}
-                          </div>
-                        </td>
-                        <td className="p-3.5">
-                          {s.status === 'healthy' && (
-                            <span className="inline-flex items-center gap-1 rounded border border-emerald-200 bg-emerald-50 px-2 py-0.5 text-[11px] font-medium text-emerald-800">
-                              <CheckCircle2 className="h-3 w-3" /> Hoạt động tốt
-                            </span>
-                          )}
-                          {s.status === 'error' && (
-                            <span
-                              className="inline-flex items-center gap-1 rounded border border-rose-200 bg-rose-50 px-2 py-0.5 text-[11px] font-medium text-rose-800"
-                              title={s.last_error}
-                            >
-                              <AlertCircle className="h-3 w-3" /> Bị lỗi
-                            </span>
-                          )}
-                          {s.status === 'pending' && (
-                            <span className="inline-flex items-center gap-1 rounded border border-amber-200 bg-amber-50 px-2 py-0.5 text-[11px] font-medium text-amber-800">
-                              <Clock className="h-3 w-3 animate-spin" /> Đang cào...
-                            </span>
-                          )}
-                        </td>
-                        <td className="max-w-[200px] truncate p-3.5 font-mono text-[11px] text-[#756e60]">
-                          <a
-                            href={s.feed_url || s.url}
-                            target="_blank"
-                            rel="noreferrer"
-                            className="flex items-center gap-1 underline hover:text-[#1c1f24]"
-                          >
-                            {s.feed_url || s.url} <ExternalLink className="inline h-2.5 w-2.5" />
-                          </a>
-                        </td>
-                        <td className="p-3.5 font-semibold text-[#2c313a]">
-                          {s.articles_count || 0} bài
-                        </td>
-                        <td className="p-3.5 text-[#756e60]">
-                          {s.last_crawled_at
-                            ? new Date(s.last_crawled_at).toLocaleTimeString('vi-VN') +
-                              ' ' +
-                              new Date(s.last_crawled_at).toLocaleDateString('vi-VN')
-                            : 'Chưa cào'}
-                        </td>
-                        <td className="p-3.5 text-right">
-                          <div className="flex items-center justify-end gap-2">
-                            <button
-                              onClick={() => handleCrawlSingle(s.id)}
-                              className="cursor-pointer rounded border border-[#ded7ca] bg-[#f4efe6] px-2.5 py-1 text-[11px] font-medium text-[#2c313a] transition hover:bg-[#eae4d7]"
-                            >
-                              Cào ngay
-                            </button>
-                            <button
-                              onClick={() => handleDeleteSource(s.id, s.name)}
-                              className="cursor-pointer p-1 text-[#8c8475] transition hover:text-rose-600"
-                              title="Xóa nguồn tin này"
-                            >
-                              <Trash2 className="h-4 w-4" />
-                            </button>
-                          </div>
-                        </td>
-                      </tr>
-                    ))}
-                </tbody>
-              </table>
-            </div>
+            <ul className="divide-rule border-rule divide-y border-y">
+              {sources
+                .filter(
+                  (s) => sourceCategoryFilter === 'all' || s.category === sourceCategoryFilter
+                )
+                .map((s) => {
+                  const status = SOURCE_STATUS[s.status] || SOURCE_STATUS.healthy;
+                  return (
+                    <li
+                      key={s.id}
+                      className="grid grid-cols-[minmax(0,1fr)_auto] gap-x-4 gap-y-2 py-4 md:grid-cols-[minmax(0,1fr)_8rem_6rem_8rem_auto] md:items-center"
+                    >
+                      <div className="min-w-0">
+                        <div className="flex items-baseline gap-2">
+                          <span className="text-ink truncate text-[15px] font-semibold">
+                            {s.name}
+                          </span>
+                          <span className="text-muted shrink-0 text-[13px]">
+                            {SOURCE_CATEGORY_LABELS[s.category] || s.category}
+                          </span>
+                        </div>
+                        <a
+                          href={s.feed_url || s.url}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="text-faint hover:text-accent-700 block truncate text-[13px] hover:underline"
+                        >
+                          {(s.feed_url || s.url).replace(/^https?:\/\//, '')}
+                        </a>
+                        {s.status === 'error' && s.last_error && (
+                          <p className="text-danger-700 mt-1 text-[13px]">{s.last_error}</p>
+                        )}
+                      </div>
+
+                      <div className="text-muted col-start-1 flex flex-wrap items-center gap-x-4 gap-y-1 text-[13px] md:contents">
+                        <span
+                          className={`inline-flex items-center gap-1.5 font-medium ${status.text}`}
+                        >
+                          <span
+                            aria-hidden="true"
+                            className={`h-2 w-2 rounded-full ${status.dot}`}
+                          />
+                          {status.label}
+                        </span>
+                        <span>
+                          <span className="score-numeral text-ink font-semibold">
+                            {s.articles_count || 0}
+                          </span>{' '}
+                          bài
+                        </span>
+                        <span
+                          title={
+                            s.last_crawled_at
+                              ? new Date(s.last_crawled_at).toLocaleString('vi-VN')
+                              : undefined
+                          }
+                        >
+                          {formatRelativeTime(s.last_crawled_at)}
+                        </span>
+                      </div>
+
+                      <div className="col-start-2 row-span-2 row-start-1 flex items-center gap-1 md:col-start-auto md:row-span-1 md:row-start-auto">
+                        <button
+                          onClick={() => handleCrawlSingle(s.id)}
+                          className="border-rule text-ink hover:bg-wash h-9 cursor-pointer rounded-full border px-3.5 text-[13px] font-medium transition-colors"
+                        >
+                          Lấy bài
+                        </button>
+                        <button
+                          onClick={() => handleDeleteSource(s.id, s.name)}
+                          className="text-faint hover:bg-danger-50 hover:text-danger-700 flex h-9 w-9 cursor-pointer items-center justify-center rounded-full transition-colors"
+                          aria-label={`Xoá nguồn ${s.name}`}
+                          title="Xoá nguồn"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </button>
+                      </div>
+                    </li>
+                  );
+                })}
+            </ul>
           </div>
         )}
 
@@ -775,8 +748,8 @@ export default function App() {
         {activeTab === 'admin' && (
           <Suspense
             fallback={
-              <div className="flex h-64 items-center justify-center rounded-2xl border border-[#e7e2d9] bg-white p-8 text-sm text-[#756e60]">
-                <RefreshCw className="mr-2 h-5 w-5 animate-spin text-indigo-700" />
+              <div className="border-rule text-muted flex h-64 items-center justify-center rounded-2xl border bg-white p-8 text-sm">
+                <RefreshCw className="text-accent-700 mr-2 h-5 w-5 animate-spin" />
                 Đang tải Admin Observability Dashboard...
               </div>
             }
@@ -820,6 +793,29 @@ export default function App() {
         onClose={() => setIsAddSourceOpen(false)}
         onSourceAdded={fetchSources}
       />
+
+      <div
+        role={toast?.tone === 'error' ? 'alert' : 'status'}
+        aria-live="polite"
+        className="pointer-events-none fixed inset-x-0 bottom-[calc(var(--app-tabbar-h)+1rem)] z-50 flex justify-center px-4"
+      >
+        {toast && (
+          <div
+            className={`shadow-ink/15 pointer-events-auto flex max-w-md items-start gap-3 rounded-2xl px-4 py-3 text-[14px] leading-snug shadow-lg ${
+              toast.tone === 'error' ? 'bg-danger-700 text-white' : 'bg-ink text-white'
+            }`}
+          >
+            <span className="flex-1">{toast.message}</span>
+            <button
+              onClick={() => setToast(null)}
+              aria-label="Đóng thông báo"
+              className="-mr-1 cursor-pointer rounded-full px-1 text-white/70 hover:text-white"
+            >
+              ✕
+            </button>
+          </div>
+        )}
+      </div>
     </div>
   );
 }

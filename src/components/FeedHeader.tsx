@@ -3,7 +3,7 @@ import {
   BookOpen,
   Search,
   Compass,
-  Sparkles,
+  Radar,
   Layers,
   Activity,
   HelpCircle,
@@ -11,22 +11,29 @@ import {
   ArrowDown,
 } from 'lucide-react';
 
+export type AppTab = 'feed' | 'semantic' | 'personalized' | 'radar' | 'sources' | 'admin';
+
 interface FeedHeaderProps {
-  activeTab: 'feed' | 'semantic' | 'personalized' | 'radar' | 'sources' | 'admin';
-  setActiveTab: (tab: 'feed' | 'semantic' | 'personalized' | 'radar' | 'sources' | 'admin') => void;
-  techStacksCount: number;
-  sourcesCount: number;
+  activeTab: AppTab;
+  setActiveTab: (tab: AppTab) => void;
   crawlingAll: boolean;
   onCrawlAll: () => void;
   onOpenExplanation: () => void;
   pullDistance: number;
 }
 
+const TABS: { id: AppTab; label: string; short: string; icon: React.ElementType }[] = [
+  { id: 'feed', label: 'Bản tin', short: 'Bản tin', icon: BookOpen },
+  { id: 'personalized', label: 'Dành cho bạn', short: 'Cho bạn', icon: Compass },
+  { id: 'semantic', label: 'Tìm theo ngữ nghĩa', short: 'Tìm', icon: Search },
+  { id: 'radar', label: 'Radar công nghệ', short: 'Radar', icon: Radar },
+  { id: 'sources', label: 'Nguồn tin', short: 'Nguồn', icon: Layers },
+  { id: 'admin', label: 'Hệ thống', short: 'Hệ thống', icon: Activity },
+];
+
 export const FeedHeader: React.FC<FeedHeaderProps> = ({
   activeTab,
   setActiveTab,
-  techStacksCount,
-  sourcesCount,
   crawlingAll,
   onCrawlAll,
   onOpenExplanation,
@@ -34,8 +41,8 @@ export const FeedHeader: React.FC<FeedHeaderProps> = ({
 }) => {
   const headerRef = useRef<HTMLElement>(null);
 
-  // Chiều cao header thay đổi theo breakpoint (mobile có thêm nav tab, và cộng safe-area inset).
-  // Đo thật rồi publish ra --app-header-h để các date group header sticky bám đúng ngay dưới header.
+  // Đo chiều cao thật của header (gồm safe-area inset) và publish ra --app-header-h
+  // để các date group header sticky bám đúng ngay dưới header.
   useLayoutEffect(() => {
     const el = headerRef.current;
     if (!el) return;
@@ -63,206 +70,118 @@ export const FeedHeader: React.FC<FeedHeaderProps> = ({
     <>
       <header
         ref={headerRef}
-        className="header-safe-pt sticky top-0 z-30 border-b border-[#e7e2d9] bg-[#fbf9f5]/95 px-3.5 pb-2.5 backdrop-blur-md sm:px-6 sm:pb-3.5"
+        className="header-safe-pt border-rule bg-paper/95 sticky top-0 z-30 border-b px-4 backdrop-blur-md sm:px-6"
       >
-        <div className="mx-auto flex max-w-5xl items-center justify-between gap-2">
-          {/* Logo & Brand */}
-          <div className="flex min-w-0 items-center">
-            <div
-              aria-label="TechPulse"
-              title="TechPulse"
-              className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-[#24292f] font-serif text-base font-bold text-white shadow-sm"
-            >
-              TP
-            </div>
-          </div>
+        <div className="mx-auto flex max-w-5xl items-center justify-between gap-4 pb-2.5 md:pb-0">
+          <button
+            onClick={() => setActiveTab('feed')}
+            className="text-ink flex cursor-pointer items-center gap-2 py-1 text-[17px] font-bold tracking-tight"
+          >
+            <svg viewBox="0 0 24 24" aria-hidden="true" className="text-signal-600 h-5 w-5">
+              <path
+                d="M2 13h4l2.5-7 4 13 3-9 1.5 3H22"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2.25"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+            </svg>
+            TechPulse
+          </button>
 
-          {/* Desktop Navigation Bar */}
-          <div className="hidden items-center rounded-lg border border-[#e2dcd0] bg-[#eee9df]/80 p-1 font-sans md:flex">
-            <button
-              onClick={() => setActiveTab('feed')}
-              className={`flex cursor-pointer items-center gap-1.5 rounded-md px-3 py-1.5 text-xs font-medium transition ${
-                activeTab === 'feed'
-                  ? 'bg-white font-semibold text-[#1c1f24] shadow-xs'
-                  : 'text-[#6b6456] hover:text-[#1c1f24]'
-              }`}
-            >
-              <BookOpen className="h-3.5 w-3.5" /> Bài đọc
-            </button>
-            <button
-              onClick={() => setActiveTab('semantic')}
-              className={`flex cursor-pointer items-center gap-1.5 rounded-md px-3 py-1.5 text-xs font-medium transition ${
-                activeTab === 'semantic'
-                  ? 'bg-white font-semibold text-indigo-950 shadow-xs'
-                  : 'text-[#6b6456] hover:text-[#1c1f24]'
-              }`}
-            >
-              <Search className="h-3.5 w-3.5 text-indigo-600" /> Semantic Search
-            </button>
-            <button
-              onClick={() => setActiveTab('personalized')}
-              className={`flex cursor-pointer items-center gap-1.5 rounded-md px-3 py-1.5 text-xs font-medium transition ${
-                activeTab === 'personalized'
-                  ? 'bg-white font-semibold text-rose-950 shadow-xs'
-                  : 'text-[#6b6456] hover:text-[#1c1f24]'
-              }`}
-            >
-              <Compass className="h-3.5 w-3.5 text-rose-500" /> Dành cho bạn
-            </button>
-            <button
-              onClick={() => setActiveTab('radar')}
-              className={`flex cursor-pointer items-center gap-1.5 rounded-md px-3 py-1.5 text-xs font-medium transition ${
-                activeTab === 'radar'
-                  ? 'bg-white font-semibold text-[#1c1f24] shadow-xs'
-                  : 'text-[#6b6456] hover:text-[#1c1f24]'
-              }`}
-            >
-              <Sparkles className="h-3.5 w-3.5 text-amber-600" /> Radar Tech ({techStacksCount})
-            </button>
-            <button
-              onClick={() => setActiveTab('sources')}
-              className={`flex cursor-pointer items-center gap-1.5 rounded-md px-3 py-1.5 text-xs font-medium transition ${
-                activeTab === 'sources'
-                  ? 'bg-white font-semibold text-[#1c1f24] shadow-xs'
-                  : 'text-[#6b6456] hover:text-[#1c1f24]'
-              }`}
-            >
-              <Layers className="h-3.5 w-3.5" /> Nguồn ({sourcesCount})
-            </button>
-            <button
-              onClick={() => setActiveTab('admin')}
-              className={`flex cursor-pointer items-center gap-1.5 rounded-md px-3.5 py-1.5 text-xs font-medium transition ${
-                activeTab === 'admin'
-                  ? 'bg-white font-semibold text-[#1c1f24] shadow-xs'
-                  : 'text-[#6b6456] hover:text-[#1c1f24]'
-              }`}
-            >
-              <Activity className="h-3.5 w-3.5 text-emerald-600" /> Admin Health
-            </button>
-          </div>
+          <nav aria-label="Điều hướng chính" className="hidden self-stretch md:flex">
+            {TABS.map((tab) => {
+              const active = activeTab === tab.id;
+              return (
+                <button
+                  key={tab.id}
+                  onClick={() => setActiveTab(tab.id)}
+                  aria-current={active ? 'page' : undefined}
+                  className={`-mb-px cursor-pointer border-b-2 px-3 pt-4 pb-3.5 text-[13px] whitespace-nowrap transition-colors ${
+                    active
+                      ? 'border-ink text-ink font-semibold'
+                      : 'text-muted hover:text-ink border-transparent font-medium'
+                  }`}
+                >
+                  {tab.label}
+                </button>
+              );
+            })}
+          </nav>
 
-          {/* Top Actions with Minimum Touch Target (44x44px on mobile) */}
-          <div className="flex shrink-0 items-center gap-1.5 font-sans sm:gap-2">
+          <div className="flex shrink-0 items-center gap-1.5">
             <button
               onClick={onOpenExplanation}
-              className="flex min-h-[44px] min-w-[44px] cursor-pointer items-center justify-center rounded-lg border border-[#e2dcd0] text-[#756e60] transition hover:bg-[#eee9df] hover:text-[#1c1f24]"
-              title="Tìm hiểu về Điểm AI & Radar Tech Stack"
-              aria-label="Về Điểm AI & Radar"
+              className="text-muted hover:bg-wash hover:text-ink flex h-10 w-10 cursor-pointer items-center justify-center rounded-full transition-colors"
+              title="Điểm AI được tính thế nào?"
+              aria-label="Điểm AI được tính thế nào?"
             >
-              <HelpCircle className="h-4 w-4" />
+              <HelpCircle className="h-[18px] w-[18px]" />
             </button>
             <button
               onClick={onCrawlAll}
               disabled={crawlingAll}
-              className="flex min-h-[44px] cursor-pointer items-center gap-1.5 rounded-lg bg-[#2c313a] px-3 py-2 text-xs font-medium text-white shadow-xs transition hover:bg-[#1a1d23] disabled:opacity-50 sm:px-3.5"
+              className="bg-ink hover:bg-ink-deep flex h-10 cursor-pointer items-center gap-2 rounded-full px-4 text-[13px] font-semibold text-white transition-colors disabled:cursor-wait disabled:opacity-70"
             >
-              <RefreshCw className={`h-3.5 w-3.5 ${crawlingAll ? 'animate-spin' : ''}`} />
-              <span className="hidden sm:inline">
-                {crawlingAll ? 'Đang cập nhật...' : 'Cập nhật tin mới'}
-              </span>
-              <span className="sm:hidden">{crawlingAll ? 'Đang cào' : 'Cập nhật'}</span>
+              <RefreshCw className={`h-4 w-4 ${crawlingAll ? 'animate-spin' : ''}`} />
+              {crawlingAll ? 'Đang cập nhật' : 'Cập nhật tin'}
             </button>
           </div>
         </div>
-
-        {/* Mobile Navigation Tabs - Optimized for iPhone 15 Pro (393px width, min touch target 44px) */}
-        <nav
-          aria-label="Điều hướng chính"
-          className="no-scrollbar mt-2 flex items-center justify-between gap-1 overflow-x-auto border-t border-[#e7e2d9]/70 pt-1.5 font-sans text-[11px] md:hidden"
-        >
-          <button
-            onClick={() => setActiveTab('feed')}
-            className={`flex min-h-[44px] flex-1 shrink-0 cursor-pointer items-center justify-center gap-1 rounded-lg px-2 py-2 text-center font-medium transition ${
-              activeTab === 'feed'
-                ? 'bg-[#eee9df] font-bold text-[#1c1f24] shadow-2xs'
-                : 'text-[#6b6456] hover:bg-[#f4efe6]'
-            }`}
-          >
-            <BookOpen className="h-3.5 w-3.5 shrink-0" />
-            <span>Bài đọc</span>
-          </button>
-          <button
-            onClick={() => setActiveTab('semantic')}
-            className={`flex min-h-[44px] flex-1 shrink-0 cursor-pointer items-center justify-center gap-1 rounded-lg px-2 py-2 text-center font-medium transition ${
-              activeTab === 'semantic'
-                ? 'bg-[#eee9df] font-bold text-[#1c1f24] shadow-2xs'
-                : 'text-[#6b6456] hover:bg-[#f4efe6]'
-            }`}
-          >
-            <Search className="h-3.5 w-3.5 shrink-0 text-indigo-600" />
-            <span>Search</span>
-          </button>
-          <button
-            onClick={() => setActiveTab('personalized')}
-            className={`flex min-h-[44px] flex-1 shrink-0 cursor-pointer items-center justify-center gap-1 rounded-lg px-2 py-2 text-center font-medium transition ${
-              activeTab === 'personalized'
-                ? 'bg-[#eee9df] font-bold text-[#1c1f24] shadow-2xs'
-                : 'text-[#6b6456] hover:bg-[#f4efe6]'
-            }`}
-          >
-            <Compass className="h-3.5 w-3.5 shrink-0 text-rose-500" />
-            <span>Gợi ý</span>
-          </button>
-          <button
-            onClick={() => setActiveTab('radar')}
-            className={`flex min-h-[44px] flex-1 shrink-0 cursor-pointer items-center justify-center gap-1 rounded-lg px-2 py-2 text-center font-medium transition ${
-              activeTab === 'radar'
-                ? 'bg-[#eee9df] font-bold text-[#1c1f24] shadow-2xs'
-                : 'text-[#6b6456] hover:bg-[#f4efe6]'
-            }`}
-          >
-            <Sparkles className="h-3.5 w-3.5 shrink-0 text-amber-600" />
-            <span>Radar</span>
-          </button>
-          <button
-            onClick={() => setActiveTab('sources')}
-            className={`flex min-h-[44px] flex-1 shrink-0 cursor-pointer items-center justify-center gap-1 rounded-lg px-2 py-2 text-center font-medium transition ${
-              activeTab === 'sources'
-                ? 'bg-[#eee9df] font-bold text-[#1c1f24] shadow-2xs'
-                : 'text-[#6b6456] hover:bg-[#f4efe6]'
-            }`}
-          >
-            <Layers className="h-3.5 w-3.5 shrink-0" />
-            <span>Nguồn</span>
-          </button>
-          <button
-            onClick={() => setActiveTab('admin')}
-            className={`flex min-h-[44px] flex-1 shrink-0 cursor-pointer items-center justify-center gap-1 rounded-lg px-2 py-2 text-center font-medium transition ${
-              activeTab === 'admin'
-                ? 'bg-[#eee9df] font-bold text-[#1c1f24] shadow-2xs'
-                : 'text-[#6b6456] hover:bg-[#f4efe6]'
-            }`}
-          >
-            <Activity className="h-3.5 w-3.5 shrink-0 text-emerald-600" />
-            <span>Admin</span>
-          </button>
-        </nav>
       </header>
 
-      {/* Pull-To-Refresh Indicator */}
+      {/* Mobile tab bar: bottom of the screen, within thumb reach */}
+      <nav
+        aria-label="Điều hướng chính"
+        className="border-rule bg-paper/95 fixed inset-x-0 bottom-0 z-40 border-t pb-[env(safe-area-inset-bottom,0px)] backdrop-blur-md md:hidden"
+      >
+        <div className="grid grid-cols-6">
+          {TABS.map((tab) => {
+            const active = activeTab === tab.id;
+            const Icon = tab.icon;
+            return (
+              <button
+                key={tab.id}
+                onClick={() => setActiveTab(tab.id)}
+                aria-current={active ? 'page' : undefined}
+                className={`flex h-[58px] cursor-pointer flex-col items-center justify-center gap-1 text-[10.5px] leading-none transition-colors ${
+                  active ? 'text-ink font-semibold' : 'text-muted font-medium'
+                }`}
+              >
+                <Icon className="h-5 w-5" strokeWidth={active ? 2.25 : 1.75} />
+                <span className="whitespace-nowrap">{tab.short}</span>
+              </button>
+            );
+          })}
+        </div>
+      </nav>
+
+      {/* Pull-to-refresh indicator */}
       {(pullDistance > 0 || crawlingAll) && activeTab === 'feed' && (
         <div
-          style={{ height: `${crawlingAll ? 48 : pullDistance}px` }}
-          className="flex items-center justify-center overflow-hidden transition-all duration-200"
+          role="status"
+          style={{ height: `${crawlingAll ? 44 : pullDistance}px` }}
+          className="text-muted flex items-center justify-center overflow-hidden text-[13px] transition-[height] duration-200"
         >
-          <div className="flex items-center gap-2 rounded-full border border-[#ded7ca] bg-white px-3.5 py-1.5 font-sans text-xs font-medium text-[#2c313a] shadow-xs">
+          <span className="flex items-center gap-2">
             {crawlingAll ? (
               <>
-                <RefreshCw className="h-3.5 w-3.5 animate-spin text-[#4b5563]" />
-                <span>Đang cào & cập nhật bài mới từ các nguồn...</span>
+                <RefreshCw className="h-4 w-4 animate-spin" />
+                Đang lấy bài mới từ các nguồn…
               </>
             ) : pullDistance >= 60 ? (
               <>
-                <RefreshCw className="h-3.5 w-3.5 text-emerald-600" />
-                <span>Thả tay để kích hoạt cào bài mới ngay</span>
+                <RefreshCw className="text-signal-600 h-4 w-4" />
+                Thả tay để cập nhật
               </>
             ) : (
               <>
-                <ArrowDown className="h-3.5 w-3.5 text-[#8c8475]" />
-                <span>Kéo xuống để cập nhật tin mới</span>
+                <ArrowDown className="h-4 w-4" />
+                Kéo xuống để cập nhật
               </>
             )}
-          </div>
+          </span>
         </div>
       )}
     </>

@@ -2,6 +2,8 @@ import React, { useState } from 'react';
 import { Plus, X, CheckCircle2, AlertCircle } from 'lucide-react';
 import type { CrawlTestResult } from '../types';
 import { apiClient } from '../api';
+import { primaryButton, secondaryButton } from '../utils/ui';
+import { SOURCE_CATEGORY_LABELS } from '../utils/format';
 
 interface AddSourceModalProps {
   isOpen: boolean;
@@ -16,9 +18,11 @@ export const AddSourceModal: React.FC<AddSourceModalProps> = ({
 }) => {
   const [newSourceName, setNewSourceName] = useState('');
   const [newSourceUrl, setNewSourceUrl] = useState('');
-  const [newSourceCategory, setNewSourceCategory] = useState('Backend & Tech');
+  const [newSourceCategory, setNewSourceCategory] = useState('Backend & Architecture');
   const [testingSource, setTestingSource] = useState(false);
   const [testResult, setTestResult] = useState<CrawlTestResult | null>(null);
+  const [saveError, setSaveError] = useState<string | null>(null);
+  const [saving, setSaving] = useState(false);
 
   if (!isOpen) return null;
 
@@ -46,6 +50,8 @@ export const AddSourceModal: React.FC<AddSourceModalProps> = ({
 
   const handleCreateSource = async (e: React.FormEvent) => {
     e.preventDefault();
+    setSaveError(null);
+    setSaving(true);
     try {
       await apiClient.post('/sources', {
         name: newSourceName,
@@ -59,126 +65,142 @@ export const AddSourceModal: React.FC<AddSourceModalProps> = ({
       setTestResult(null);
       await onSourceAdded();
     } catch (err: any) {
-      alert('Lỗi: ' + (err?.response?.data?.detail || err.message));
+      setSaveError(`Không thêm được nguồn: ${err?.response?.data?.detail || err.message}`);
+    } finally {
+      setSaving(false);
     }
   };
+
+  const field =
+    'h-11 w-full rounded-lg border border-rule bg-surface px-3 text-[16px] text-ink placeholder:text-faint focus:border-ink-2 focus:outline-none sm:h-10 sm:text-[14px]';
 
   return (
     <div
       onClick={onClose}
-      className="fixed inset-0 z-50 flex cursor-pointer items-end justify-center bg-black/40 p-0 font-sans backdrop-blur-xs sm:items-center sm:p-4"
+      className="bg-ink-deep/40 fixed inset-0 z-50 flex items-end justify-center p-0 backdrop-blur-xs sm:items-center sm:p-4"
     >
       <div
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="add-source-title"
         onClick={(e) => e.stopPropagation()}
         style={{ paddingBottom: 'max(env(safe-area-inset-bottom, 0px), 1.25rem)' }}
-        className="animate-in fade-in slide-in-from-bottom-2 sm:slide-in-from-bottom-0 w-full max-w-lg cursor-default rounded-t-2xl border-0 border-[#e7e2d9] bg-white p-5 shadow-xl sm:rounded-2xl sm:border sm:p-6"
+        className="bg-paper shadow-ink/20 w-full max-w-lg cursor-default rounded-t-2xl p-5 shadow-2xl sm:rounded-2xl sm:p-7"
       >
-        <div className="mb-4 flex items-center justify-between border-b border-[#e7e2d9] pb-3">
-          <h3 className="flex items-center gap-2 font-serif text-base font-bold text-[#1c1f24]">
-            <Plus className="h-5 w-5 text-emerald-700" /> Thêm Nguồn Tin Bằng URL
-          </h3>
+        <div className="mb-5 flex items-start justify-between gap-4">
+          <div>
+            <h2 id="add-source-title" className="text-ink text-[20px] font-semibold">
+              Thêm nguồn tin
+            </h2>
+            <p className="text-muted mt-1 text-[14px]">
+              Dán link trang web hoặc RSS. TechPulse tự tìm feed.
+            </p>
+          </div>
           <button
             onClick={onClose}
-            className="flex min-h-[44px] min-w-[44px] cursor-pointer items-center justify-center rounded-lg text-[#756e60] transition hover:bg-[#f4efe6] hover:text-[#1c1f24]"
-            aria-label="Đóng dialog"
+            className="text-muted hover:bg-wash hover:text-ink -mt-1 -mr-2 flex h-11 w-11 shrink-0 cursor-pointer items-center justify-center rounded-full transition-colors"
+            aria-label="Đóng"
           >
             <X className="h-5 w-5" />
           </button>
         </div>
 
-        <form onSubmit={handleCreateSource} className="space-y-4 text-xs">
+        <form onSubmit={handleCreateSource} className="space-y-4">
           <div>
-            <label className="mb-1 block font-medium text-[#475569]">Tên nguồn tin:</label>
-            <input
-              type="text"
-              placeholder="Ví dụ: Netflix Engineering Blog"
-              value={newSourceName}
-              onChange={(e) => setNewSourceName(e.target.value)}
-              required
-              className="h-11 w-full rounded-xl border border-[#dcd5c7] bg-white px-3 text-[16px] text-[#1e293b] focus:border-[#7c7465] focus:outline-none sm:h-9 sm:text-xs"
-            />
-          </div>
-
-          <div>
-            <label className="mb-1 block font-medium text-[#475569]">
-              URL Trang web hoặc RSS Feed:
+            <label htmlFor="src-url" className="text-ink-2 mb-1.5 block text-[13px] font-medium">
+              Link trang web hoặc RSS
             </label>
             <div className="flex gap-2">
               <input
+                id="src-url"
                 type="url"
                 placeholder="https://netflixtechblog.com"
                 value={newSourceUrl}
-                onChange={(e) => setNewSourceUrl(e.target.value)}
+                onChange={(e) => {
+                  setNewSourceUrl(e.target.value);
+                  setTestResult(null);
+                }}
                 required
-                className="h-11 flex-1 rounded-xl border border-[#dcd5c7] bg-white px-3 text-[16px] text-[#1e293b] focus:border-[#7c7465] focus:outline-none sm:h-9 sm:text-xs"
+                className={`${field} flex-1`}
               />
               <button
                 type="button"
                 onClick={handleTestSource}
                 disabled={testingSource || !newSourceUrl}
-                className="flex min-h-[44px] cursor-pointer items-center justify-center rounded-xl border border-[#ded7ca] bg-[#f4efe6] px-3.5 py-2 font-medium text-[#2c313a] transition hover:bg-[#eae4d7] disabled:opacity-50 sm:min-h-9"
+                className="border-rule text-ink hover:bg-wash h-11 shrink-0 cursor-pointer rounded-lg border px-3.5 text-[14px] font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-50 sm:h-10"
               >
-                {testingSource ? 'Đang test...' : 'Kiểm tra'}
+                {testingSource ? 'Đang kiểm tra…' : 'Kiểm tra'}
               </button>
             </div>
+            {testResult && (
+              <p
+                role="status"
+                className={`mt-2 flex items-start gap-1.5 text-[13px] ${testResult.success ? 'text-signal-800' : 'text-danger-700'}`}
+              >
+                {testResult.success ? (
+                  <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0" />
+                ) : (
+                  <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" />
+                )}
+                <span className="break-words">
+                  {testResult.success
+                    ? `Đọc được ${testResult.items_count} bài${
+                        testResult.sample_titles?.[0]
+                          ? `, ví dụ: “${testResult.sample_titles[0]}”`
+                          : ''
+                      }`
+                    : `Không đọc được: ${testResult.error}`}
+                </span>
+              </p>
+            )}
           </div>
 
-          {testResult && (
-            <div
-              className={`rounded-xl border p-3.5 ${
-                testResult.success
-                  ? 'border-emerald-200 bg-emerald-50 text-emerald-900'
-                  : 'border-rose-200 bg-rose-50 text-rose-900'
-              }`}
-            >
-              {testResult.success ? (
-                <div>
-                  <div className="mb-1 flex items-center gap-1 font-semibold">
-                    <CheckCircle2 className="h-4 w-4" /> Kết nối thành công! Tìm thấy{' '}
-                    {testResult.items_count} bài viết.
-                  </div>
-                  {testResult.sample_titles && testResult.sample_titles.length > 0 && (
-                    <div className="mt-1 text-[11px] break-words text-[#475569]">
-                      Bài mẫu: "{testResult.sample_titles[0]}"
-                    </div>
-                  )}
-                </div>
-              ) : (
-                <div className="flex items-start gap-1.5">
-                  <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" />
-                  <div className="break-words">Lỗi kiểm tra: {testResult.error}</div>
-                </div>
-              )}
-            </div>
-          )}
+          <div>
+            <label htmlFor="src-name" className="text-ink-2 mb-1.5 block text-[13px] font-medium">
+              Tên hiển thị
+            </label>
+            <input
+              id="src-name"
+              type="text"
+              placeholder="Netflix Engineering"
+              value={newSourceName}
+              onChange={(e) => setNewSourceName(e.target.value)}
+              required
+              className={field}
+            />
+          </div>
 
           <div>
-            <label className="mb-1 block font-medium text-[#475569]">Chủ đề:</label>
+            <label htmlFor="src-cat" className="text-ink-2 mb-1.5 block text-[13px] font-medium">
+              Nhóm
+            </label>
             <select
+              id="src-cat"
               value={newSourceCategory}
               onChange={(e) => setNewSourceCategory(e.target.value)}
-              className="h-11 w-full rounded-xl border border-[#dcd5c7] bg-white px-3 text-[16px] text-[#1e293b] focus:border-[#7c7465] focus:outline-none sm:h-9 sm:text-xs"
+              className={`${field} cursor-pointer`}
             >
-              <option value="AI & Future Tech">🤖 AI & Công nghệ tương lai</option>
-              <option value="Backend & Architecture">⚙️ Backend & Kiến trúc hệ thống</option>
-              <option value="Vietnam Tech">🇻🇳 Tin công nghệ Việt Nam</option>
-              <option value="Global Tech">🌐 Báo công nghệ quốc tế</option>
+              {Object.entries(SOURCE_CATEGORY_LABELS).map(([id, label]) => (
+                <option key={id} value={id}>
+                  {label}
+                </option>
+              ))}
             </select>
           </div>
 
-          <div className="flex justify-end gap-2 border-t border-[#e7e2d9] pt-3">
-            <button
-              type="button"
-              onClick={onClose}
-              className="flex min-h-[44px] cursor-pointer items-center justify-center rounded-xl bg-[#f4efe6] px-4 py-2 font-medium text-[#475569] transition hover:bg-[#eae4d7] sm:min-h-9"
-            >
-              Hủy
+          {saveError && (
+            <p role="alert" className="text-danger-700 text-[13px]">
+              {saveError}
+            </p>
+          )}
+
+          <div className="flex justify-end gap-2 pt-2">
+            <button type="button" onClick={onClose} className={secondaryButton}>
+              Huỷ
             </button>
-            <button
-              type="submit"
-              className="flex min-h-[44px] cursor-pointer items-center justify-center rounded-xl bg-emerald-700 px-4 py-2 font-semibold text-white transition hover:bg-emerald-800 sm:min-h-9"
-            >
-              Lưu nguồn tin
+            <button type="submit" disabled={saving} className={primaryButton}>
+              <Plus className="h-4 w-4" />
+              {saving ? 'Đang thêm…' : 'Thêm nguồn'}
             </button>
           </div>
         </form>

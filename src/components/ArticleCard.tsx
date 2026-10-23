@@ -1,17 +1,16 @@
-import React from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import {
-  Clock,
   ThumbsUp,
   ThumbsDown,
   Bookmark,
-  Eye,
-  EyeOff,
-  Sparkles,
-  ArrowUpRight,
+  MoreHorizontal,
   Download,
+  EyeOff,
+  Eye,
 } from 'lucide-react';
 import type { Article } from '../types';
 import { generateArticleMarkdown, downloadMarkdownFile } from '../utils/markdownExport';
+import { scoreTier } from '../utils/score';
 
 interface ArticleCardProps {
   article: Article;
@@ -23,6 +22,16 @@ interface ArticleCardProps {
   onFilterSource?: (sourceId: number) => void;
 }
 
+const SCORE_STYLE = {
+  high: 'text-[30px] font-bold text-signal-700 sm:text-[34px]',
+  mid: 'text-[24px] font-semibold text-ink-2 sm:text-[26px]',
+  low: 'text-[19px] font-medium text-muted sm:text-[20px]',
+  none: 'text-[19px] font-medium text-muted',
+};
+
+const iconButton =
+  'relative z-10 flex h-9 w-9 cursor-pointer items-center justify-center rounded-full transition-colors';
+
 export const ArticleCard: React.FC<ArticleCardProps> = React.memo(
   ({
     article,
@@ -33,226 +42,224 @@ export const ArticleCard: React.FC<ArticleCardProps> = React.memo(
     onToggleHidden,
     onFilterSource,
   }) => {
-    const handleQuickExport = (e: React.MouseEvent) => {
-      e.stopPropagation();
-      const md = generateArticleMarkdown(article);
-      downloadMarkdownFile(article.vietnamese_title || article.title, md);
-    };
+    const [menuOpen, setMenuOpen] = useState(false);
+    const menuRef = useRef<HTMLDivElement>(null);
+    const tier = scoreTier(article.relevance_score);
+    const title = article.vietnamese_title || article.title;
+
+    useEffect(() => {
+      if (!menuOpen) return;
+      const close = (e: MouseEvent | KeyboardEvent) => {
+        if (
+          e instanceof KeyboardEvent
+            ? e.key === 'Escape'
+            : !menuRef.current?.contains(e.target as Node)
+        )
+          setMenuOpen(false);
+      };
+      document.addEventListener('mousedown', close);
+      document.addEventListener('keydown', close);
+      return () => {
+        document.removeEventListener('mousedown', close);
+        document.removeEventListener('keydown', close);
+      };
+    }, [menuOpen]);
+
+    const publishedTime = article.published_at
+      ? new Date(article.published_at).toLocaleTimeString('vi-VN', {
+          hour: '2-digit',
+          minute: '2-digit',
+        })
+      : null;
 
     return (
       <article
-        onClick={() => onOpen(article)}
-        className={`group relative cursor-pointer overflow-hidden rounded-2xl border p-4 shadow-xs transition sm:p-6 ${
-          article.is_read
-            ? 'border-[#ede7dc] bg-[#faf8f4] opacity-80 hover:border-[#cfc7b8] hover:opacity-100'
-            : 'border-[#e7e2d9] bg-white hover:border-[#cfc7b8] hover:bg-[#fcfbf9]'
+        className={`group relative grid grid-cols-[3.25rem_minmax(0,1fr)] gap-x-3 py-5 sm:grid-cols-[4.75rem_minmax(0,1fr)] sm:gap-x-4 ${
+          article.is_read ? 'opacity-75 hover:opacity-100' : ''
         }`}
       >
-        {/* Header meta - Mobile Friendly */}
-        <div className="mb-2.5 flex flex-wrap items-center justify-between gap-2 font-sans">
-          <div className="flex flex-wrap items-center gap-1.5 sm:gap-2">
-            <span
-              onClick={(e) => {
-                if (article.source_id && onFilterSource) {
-                  e.stopPropagation();
-                  onFilterSource(article.source_id);
-                }
-              }}
-              className="cursor-pointer rounded-md bg-[#f4efe6] px-2 py-0.5 text-[11px] font-semibold tracking-wide text-[#756e60] uppercase transition hover:bg-[#e7e1d5] hover:text-[#1c1f24]"
-              title={`Bấm để chỉ xem các bài từ ${article.source_name || 'nguồn này'}`}
-            >
-              {article.source_name || 'Bản tin'}
-            </span>
-            <span className="text-[11px] text-[#8c8475]">
-              {article.published_at
-                ? new Date(article.published_at).toLocaleTimeString('vi-VN', {
-                    hour: '2-digit',
-                    minute: '2-digit',
-                  })
-                : 'Mới cập nhật'}
-            </span>
-            <span className="text-[11px] text-[#a8a193]">·</span>
-            <span className="flex items-center gap-0.5 text-[11px] text-[#8c8475]">
-              <Clock className="inline h-3 w-3 shrink-0" />{' '}
-              {article.reading_time_minutes ||
-                Math.max(1, Math.ceil((article.vietnamese_summary?.length || 300) / 350))}{' '}
-              phút
-            </span>
-          </div>
-
-          <div className="flex items-center gap-1">
-            {article.relevance_score > 0 && (
-              <span
-                className={`rounded-md px-2 py-0.5 text-[11px] font-bold ${
-                  article.relevance_score >= 8.0
-                    ? 'border border-emerald-200 bg-emerald-50 text-emerald-800'
-                    : article.relevance_score >= 6.0
-                      ? 'border border-amber-200 bg-amber-50 text-amber-800'
-                      : 'bg-stone-100 text-stone-600'
-                }`}
-              >
-                {article.relevance_score.toFixed(1)}/10
-              </span>
-            )}
-
-            {/* Quick Feedback Actions (Min touch target 38x38px on mobile) */}
-            <button
-              onClick={(e) => onFeedback(e, article.id, 'like')}
-              className={`flex min-h-[38px] min-w-[38px] cursor-pointer items-center justify-center rounded-lg transition ${
-                feedbackState === 'like'
-                  ? 'bg-emerald-100 text-emerald-800'
-                  : 'text-[#8c8475] hover:bg-emerald-50 hover:text-emerald-700'
-              }`}
-              title="Đánh giá bài viết hay"
-              aria-label="Thích bài viết"
-            >
-              <ThumbsUp className="h-4 w-4" />
-            </button>
-
-            <button
-              onClick={(e) => onFeedback(e, article.id, 'dislike')}
-              className={`flex min-h-[38px] min-w-[38px] cursor-pointer items-center justify-center rounded-lg transition ${
-                feedbackState === 'dislike'
-                  ? 'bg-rose-100 text-rose-800'
-                  : 'text-[#8c8475] hover:bg-rose-50 hover:text-rose-700'
-              }`}
-              title="Bài viết không liên quan"
-              aria-label="Không thích bài viết"
-            >
-              <ThumbsDown className="h-4 w-4" />
-            </button>
-
-            {/* Quick action: Bookmark */}
-            <button
-              onClick={(e) => onToggleBookmark(article.id, article.is_bookmarked, e)}
-              className={`flex min-h-[38px] min-w-[38px] cursor-pointer items-center justify-center rounded-lg transition ${
-                article.is_bookmarked
-                  ? 'bg-amber-100 text-amber-800 hover:bg-amber-200'
-                  : 'text-[#8c8475] hover:bg-amber-50 hover:text-amber-700'
-              }`}
-              title={article.is_bookmarked ? 'Bỏ lưu bài viết' : 'Lưu bài viết vào đọc sau'}
-              aria-label="Lưu bài viết"
-            >
-              <Bookmark
-                className="h-4 w-4"
-                fill={article.is_bookmarked ? 'currentColor' : 'none'}
-              />
-            </button>
-
-            {/* Quick action: Export Markdown */}
-            <button
-              onClick={handleQuickExport}
-              className="flex min-h-[38px] min-w-[38px] cursor-pointer items-center justify-center rounded-lg text-[#8c8475] transition hover:bg-purple-50 hover:text-purple-700"
-              title="Xuất file Markdown cho Obsidian"
-              aria-label="Xuất file Markdown"
-            >
-              <Download className="h-4 w-4" />
-            </button>
-
-            {/* Quick action: Hide / Unhide */}
-            <button
-              onClick={(e) => onToggleHidden(article.id, article.is_hidden, e)}
-              className={`flex min-h-[38px] min-w-[38px] cursor-pointer items-center justify-center rounded-lg transition ${
-                article.is_hidden
-                  ? 'text-rose-700 hover:bg-rose-100'
-                  : 'text-[#8c8475] hover:bg-rose-50 hover:text-rose-600'
-              }`}
-              title={article.is_hidden ? 'Bỏ ẩn bài viết này' : 'Không thích / Ẩn bài viết'}
-              aria-label="Ẩn bài viết"
-            >
-              {article.is_hidden ? <Eye className="h-4 w-4" /> : <EyeOff className="h-4 w-4" />}
-            </button>
-          </div>
+        <div
+          className={`score-numeral pt-0.5 leading-none ${SCORE_STYLE[tier]}`}
+          title={
+            tier === 'none'
+              ? 'Chưa được AI chấm điểm'
+              : `Điểm AI: ${article.relevance_score.toFixed(1)}/10`
+          }
+        >
+          <span aria-hidden="true">
+            {tier === 'none' ? '–' : article.relevance_score.toFixed(1)}
+          </span>
+          <span className="sr-only">
+            {tier === 'none'
+              ? 'Chưa chấm điểm'
+              : `Điểm AI ${article.relevance_score.toFixed(1)} trên 10`}
+          </span>
         </div>
 
-        {/* Article Title */}
-        <h2
-          className={`mb-2 font-serif text-base leading-snug font-bold break-words transition sm:text-lg md:text-xl ${
-            article.is_read
-              ? 'text-[#474e5a] group-hover:text-indigo-950'
-              : 'text-[#1a1d20] group-hover:text-indigo-950'
-          }`}
-        >
-          {article.vietnamese_title || article.title}
-        </h2>
+        <div className="min-w-0">
+          <h2
+            className={`text-[17px] leading-snug font-semibold tracking-[-0.01em] text-pretty break-words sm:text-[19px] ${
+              article.is_read ? 'text-muted' : 'text-ink'
+            }`}
+          >
+            {/* Stretched button: the whole item opens the article, other controls sit above it */}
+            <button
+              onClick={() => onOpen(article)}
+              className="group-hover:decoration-rule-strong focus-visible:after:outline-accent-600 cursor-pointer text-left group-hover:underline group-hover:underline-offset-4 after:absolute after:inset-0 after:content-[''] focus-visible:outline-none focus-visible:after:rounded-lg focus-visible:after:outline-2"
+            >
+              {title}
+            </button>
+          </h2>
 
-        {/* Editorial Summary */}
-        <p
-          className={`mb-3 font-serif text-[13px] leading-relaxed break-words sm:text-[14px] ${
-            article.is_read ? 'text-[#646a75]' : 'text-[#4a4f59]'
-          }`}
-        >
-          {article.vietnamese_summary || article.title}
-        </p>
+          {article.vietnamese_summary && (
+            <p className="reading-font text-ink-2 mt-1.5 line-clamp-3 text-[15px] leading-[1.6]">
+              {article.vietnamese_summary}
+            </p>
+          )}
 
-        {/* Key Takeaways Preview (3 bullet points) */}
-        {article.key_takeaways && article.key_takeaways.length > 0 && (
-          <div className="mb-3 rounded-xl border border-[#eee8dd] bg-[#faf8f5] p-3 text-xs">
-            <div className="mb-1.5 flex items-center gap-1 font-sans text-[10px] font-bold tracking-wider text-[#635c50] uppercase">
-              <Sparkles className="h-3 w-3 text-amber-600" /> Điểm cốt lõi kỹ thuật:
-            </div>
-            <ul className="space-y-1 font-serif text-[#3f4651]">
-              {article.key_takeaways.slice(0, 3).map((point, pIdx) => (
-                <li key={pIdx} className="flex items-start gap-1.5">
-                  <span className="font-bold text-amber-700">•</span>
-                  <span className="break-words">{point}</span>
-                </li>
+          {tier === 'high' && article.key_takeaways?.length > 0 && (
+            <ul className="reading-font border-signal-200 text-ink-2 mt-3 space-y-1 border-l-2 pl-3 text-[14px] leading-[1.55]">
+              {article.key_takeaways.slice(0, 3).map((point, i) => (
+                <li key={i}>{point}</li>
               ))}
             </ul>
-          </div>
-        )}
+          )}
 
-        {/* Story Cluster Coverage Badges (Google News Style) */}
-        {article.related_articles && article.related_articles.length > 0 && (
-          <div
-            onClick={(e) => e.stopPropagation()}
-            className="mb-3 rounded-xl border border-indigo-100 bg-indigo-50/50 p-2.5 text-xs"
-          >
-            <div className="flex flex-wrap items-center gap-1.5 font-sans">
-              <span className="flex items-center gap-1 text-[11px] font-semibold text-indigo-900">
-                📰 Cùng chủ đề trên {article.related_articles.length} báo khác:
-              </span>
-              {article.related_articles.map((rel) => (
-                <a
-                  key={rel.id}
-                  href={rel.url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  title={rel.vietnamese_title || rel.title}
-                  className="inline-flex max-w-[200px] items-center gap-1 truncate rounded border border-indigo-200 bg-white px-2 py-1 text-[11px] font-medium text-indigo-800 shadow-2xs transition hover:border-indigo-400 hover:bg-indigo-50 hover:text-indigo-950"
-                >
-                  <span className="truncate">{rel.source_name || 'Nguồn khác'}</span>
-                  <ArrowUpRight className="h-3 w-3 shrink-0 text-indigo-600" />
-                </a>
+          {article.related_articles && article.related_articles.length > 0 && (
+            <p className="text-muted mt-2.5 text-[13px]">
+              Cũng đưa tin:{' '}
+              {article.related_articles.map((rel, i) => (
+                <React.Fragment key={rel.id}>
+                  {i > 0 && ', '}
+                  <a
+                    href={rel.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    title={rel.vietnamese_title || rel.title}
+                    className="text-ink-2 decoration-rule-strong hover:text-accent-700 hover:decoration-accent-300 relative z-10 font-medium underline underline-offset-2"
+                  >
+                    {rel.source_name || 'Nguồn khác'}
+                  </a>
+                </React.Fragment>
               ))}
+            </p>
+          )}
+
+          <div className="mt-3 flex items-center justify-between gap-2">
+            <div className="text-muted flex min-w-0 flex-wrap items-center gap-x-3 gap-y-1 text-[13px]">
+              {article.source_id && onFilterSource ? (
+                <button
+                  onClick={() => onFilterSource(article.source_id!)}
+                  title={`Chỉ xem bài từ ${article.source_name || 'nguồn này'}`}
+                  className="text-ink-2 hover:text-accent-700 relative z-10 cursor-pointer font-medium hover:underline"
+                >
+                  {article.source_name || 'Bản tin'}
+                </button>
+              ) : (
+                <span className="text-ink-2 font-medium">{article.source_name || 'Bản tin'}</span>
+              )}
+              {publishedTime && <span>{publishedTime}</span>}
+              <span>{article.reading_time_minutes || 1} phút đọc</span>
+              {article.is_read && <span>Đã đọc</span>}
             </div>
-          </div>
-        )}
 
-        {/* Bottom row: Tech tags & Read CTA */}
-        <div className="flex flex-wrap items-center justify-between gap-2 border-t border-[#f0ece3] pt-3 font-sans">
-          <div className="flex flex-wrap items-center gap-1.5">
-            {article.new_tech_stacks &&
-              article.new_tech_stacks.length > 0 &&
-              article.new_tech_stacks.slice(0, 3).map((ts, idx) => (
-                <span
-                  key={idx}
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    onOpen(article);
-                  }}
-                  className="rounded-md border border-[#e2dcd0] bg-[#f4f1ea] px-2 py-0.5 font-mono text-[11px] text-[#334155] transition hover:bg-[#e9e4d9]"
+            <div className="-mr-2 flex shrink-0 items-center">
+              <button
+                onClick={(e) => onToggleBookmark(article.id, article.is_bookmarked, e)}
+                className={`${iconButton} ${
+                  article.is_bookmarked
+                    ? 'text-ochre-600'
+                    : 'text-faint hover:bg-wash hover:text-ink'
+                }`}
+                aria-pressed={article.is_bookmarked}
+                aria-label={article.is_bookmarked ? 'Bỏ lưu' : 'Lưu để đọc sau'}
+                title={article.is_bookmarked ? 'Bỏ lưu' : 'Lưu để đọc sau'}
+              >
+                <Bookmark
+                  className="h-[18px] w-[18px]"
+                  fill={article.is_bookmarked ? 'currentColor' : 'none'}
+                />
+              </button>
+              <button
+                onClick={(e) => onFeedback(e, article.id, 'like')}
+                className={`${iconButton} ${
+                  feedbackState === 'like'
+                    ? 'text-signal-700'
+                    : 'text-faint hover:bg-wash hover:text-ink'
+                }`}
+                aria-pressed={feedbackState === 'like'}
+                aria-label="Bài hữu ích"
+                title="Bài hữu ích: gợi ý thêm bài tương tự"
+              >
+                <ThumbsUp
+                  className="h-[18px] w-[18px]"
+                  fill={feedbackState === 'like' ? 'currentColor' : 'none'}
+                />
+              </button>
+              <button
+                onClick={(e) => onFeedback(e, article.id, 'dislike')}
+                className={`${iconButton} ${
+                  feedbackState === 'dislike'
+                    ? 'text-danger-600'
+                    : 'text-faint hover:bg-wash hover:text-ink'
+                }`}
+                aria-pressed={feedbackState === 'dislike'}
+                aria-label="Bài không liên quan"
+                title="Bài không liên quan: bớt gợi ý bài tương tự"
+              >
+                <ThumbsDown
+                  className="h-[18px] w-[18px]"
+                  fill={feedbackState === 'dislike' ? 'currentColor' : 'none'}
+                />
+              </button>
+
+              <div ref={menuRef} className="relative z-10">
+                <button
+                  onClick={() => setMenuOpen((o) => !o)}
+                  aria-haspopup="menu"
+                  aria-expanded={menuOpen}
+                  aria-label="Thao tác khác"
+                  className={`${iconButton} text-faint hover:bg-wash hover:text-ink ${menuOpen ? 'bg-wash text-ink' : ''}`}
                 >
-                  ⚡ {ts.name}
-                </span>
-              ))}
-          </div>
-
-          <div className="flex items-center gap-2">
-            {article.is_read && <span className="text-[11px] text-[#8c8475] italic">Đã đọc</span>}
-            <span className="flex items-center gap-1 text-xs font-semibold text-[#2c313a] group-hover:text-indigo-800">
-              Mở chi tiết <ArrowUpRight className="h-3.5 w-3.5" />
-            </span>
+                  <MoreHorizontal className="h-[18px] w-[18px]" />
+                </button>
+                {menuOpen && (
+                  <div
+                    role="menu"
+                    className="border-rule bg-surface shadow-ink/10 absolute right-0 bottom-full mb-1 w-56 overflow-hidden rounded-xl border py-1 text-[14px] shadow-lg"
+                  >
+                    <button
+                      role="menuitem"
+                      onClick={() => {
+                        downloadMarkdownFile(title, generateArticleMarkdown(article));
+                        setMenuOpen(false);
+                      }}
+                      className="text-ink hover:bg-wash flex w-full cursor-pointer items-center gap-2.5 px-3.5 py-2.5 text-left"
+                    >
+                      <Download className="text-muted h-4 w-4" /> Tải Markdown (Obsidian)
+                    </button>
+                    <button
+                      role="menuitem"
+                      onClick={(e) => {
+                        setMenuOpen(false);
+                        onToggleHidden(article.id, article.is_hidden, e);
+                      }}
+                      className="text-ink hover:bg-wash flex w-full cursor-pointer items-center gap-2.5 px-3.5 py-2.5 text-left"
+                    >
+                      {article.is_hidden ? (
+                        <>
+                          <Eye className="text-muted h-4 w-4" /> Hiện lại bài này
+                        </>
+                      ) : (
+                        <>
+                          <EyeOff className="text-muted h-4 w-4" /> Ẩn bài này
+                        </>
+                      )}
+                    </button>
+                  </div>
+                )}
+              </div>
+            </div>
           </div>
         </div>
       </article>
