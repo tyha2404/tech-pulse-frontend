@@ -34,7 +34,7 @@ export const ExplanationModal: React.FC<ExplanationModalProps> = ({ isOpen, onCl
   return (
     <div
       onClick={onClose}
-      className="bg-ink-deep/40 fixed inset-0 z-50 flex items-end justify-center p-0 backdrop-blur-xs sm:items-center sm:p-4"
+      className="bg-scrim/40 fixed inset-0 z-50 flex items-end justify-center p-0 backdrop-blur-xs sm:items-center sm:p-4"
     >
       <div
         role="dialog"

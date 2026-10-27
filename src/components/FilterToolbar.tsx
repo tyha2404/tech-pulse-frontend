@@ -118,7 +118,7 @@ export const FilterToolbar: React.FC<FilterToolbarProps> = ({
 
   return (
     <div className="mb-2 space-y-3">
-      <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+      <div className="flex flex-col gap-3 xl:flex-row xl:items-center xl:justify-between">
         <div
           role="group"
           aria-label="Chủ đề"
@@ -131,7 +131,7 @@ export const FilterToolbar: React.FC<FilterToolbarProps> = ({
               aria-pressed={selectedCategory === c.id}
               className={`${chipBase} ${
                 selectedCategory === c.id
-                  ? 'bg-ink font-semibold text-white'
+                  ? 'bg-primary font-semibold text-white'
                   : 'text-ink-2 hover:bg-wash font-medium'
               }`}
             >
@@ -188,7 +188,7 @@ export const FilterToolbar: React.FC<FilterToolbarProps> = ({
             <SlidersHorizontal className="h-4 w-4" />
             Bộ lọc
             {activeChips.length > 0 && (
-              <span className="score-numeral bg-ink flex h-5 min-w-5 items-center justify-center rounded-full px-1.5 text-[11px] font-semibold text-white">
+              <span className="score-numeral bg-primary flex h-5 min-w-5 items-center justify-center rounded-full px-1.5 text-[11px] font-semibold text-white">
                 {activeChips.length}
               </span>
             )}
@@ -215,7 +215,7 @@ export const FilterToolbar: React.FC<FilterToolbarProps> = ({
                 onClick={() => setView(v.id)}
                 className={`${chipBase} h-8 px-3 ${
                   view === v.id
-                    ? 'bg-ink font-semibold text-white'
+                    ? 'bg-primary font-semibold text-white'
                     : 'text-ink-2 hover:bg-wash font-medium'
                 }`}
               >

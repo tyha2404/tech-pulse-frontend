@@ -436,6 +436,23 @@ export default function App() {
         {/* ================= VIEW 1: BÀI ĐỌC (FEED & PERSONALIZED) ================= */}
         {(activeTab === 'feed' || activeTab === 'personalized') && (
           <div>
+            <div className="feed-intro border-rule mb-6 flex flex-wrap items-end justify-between gap-4 border-b pb-6">
+              <div>
+                <p className="text-muted mb-2 text-[13px]">
+                  TechPulse / Dành cho người làm công nghệ
+                </p>
+                <h1 className="text-ink text-[28px] font-bold tracking-tight sm:text-[36px]">
+                  {activeTab === 'personalized' ? 'Góc đọc của bạn' : 'Nắm bắt nhịp công nghệ.'}
+                </h1>
+                <p className="text-muted mt-2 max-w-lg text-[14px] leading-relaxed">
+                  Tin Backend & AI, được chọn lọc và tóm tắt bằng tiếng Việt.
+                </p>
+              </div>
+              <div className="text-muted flex items-center gap-2 text-[12px]">
+                <span className="bg-signal-600 h-2 w-2 rounded-full" aria-hidden="true" />
+                Điểm AI giúp bạn chọn bài đáng đọc
+              </div>
+            </div>
             {activeTab === 'personalized' ? (
               <p className="text-muted mb-4 max-w-prose text-[14px] leading-relaxed">
                 Bài được xếp lại theo chủ đề và nguồn bạn quan tâm. Đánh dấu bài hữu ích hoặc không
@@ -483,7 +500,7 @@ export default function App() {
                 </p>
                 <button
                   onClick={() => handleCrawlAll()}
-                  className="bg-ink hover:bg-ink-deep cursor-pointer rounded-full px-5 py-2.5 text-[14px] font-semibold text-white transition-colors"
+                  className="bg-primary hover:bg-primary-hover cursor-pointer rounded-full px-5 py-2.5 text-[14px] font-semibold text-white transition-colors"
                 >
                   Cập nhật tin
                 </button>
@@ -642,7 +659,7 @@ export default function App() {
                     aria-pressed={active}
                     className={`flex h-9 shrink-0 cursor-pointer items-center gap-1.5 rounded-full px-3.5 text-[13px] whitespace-nowrap transition-colors ${
                       active
-                        ? 'bg-ink font-semibold text-white'
+                        ? 'bg-primary font-semibold text-white'
                         : 'text-ink-2 hover:bg-wash font-medium'
                     }`}
                   >
@@ -748,7 +765,7 @@ export default function App() {
         {activeTab === 'admin' && (
           <Suspense
             fallback={
-              <div className="border-rule text-muted flex h-64 items-center justify-center rounded-2xl border bg-white p-8 text-sm">
+              <div className="border-rule text-muted bg-surface flex h-64 items-center justify-center rounded-2xl border p-8 text-sm">
                 <RefreshCw className="text-accent-700 mr-2 h-5 w-5 animate-spin" />
                 Đang tải Admin Observability Dashboard...
               </div>
@@ -802,7 +819,7 @@ export default function App() {
         {toast && (
           <div
             className={`shadow-ink/15 pointer-events-auto flex max-w-md items-start gap-3 rounded-2xl px-4 py-3 text-[14px] leading-snug shadow-lg ${
-              toast.tone === 'error' ? 'bg-danger-700 text-white' : 'bg-ink text-white'
+              toast.tone === 'error' ? 'bg-danger-solid text-white' : 'bg-primary text-white'
             }`}
           >
             <span className="flex-1">{toast.message}</span>

@@ -11,6 +11,8 @@ import {
   ArrowDown,
 } from 'lucide-react';
 
+import { ThemeControl } from './ThemeControl';
+
 export type AppTab = 'feed' | 'semantic' | 'personalized' | 'radar' | 'sources' | 'admin';
 
 interface FeedHeaderProps {
@@ -72,7 +74,7 @@ export const FeedHeader: React.FC<FeedHeaderProps> = ({
         ref={headerRef}
         className="header-safe-pt border-rule bg-paper/95 sticky top-0 z-30 border-b px-4 backdrop-blur-md sm:px-6"
       >
-        <div className="mx-auto flex max-w-5xl items-center justify-between gap-4 pb-2.5 md:pb-0">
+        <div className="mx-auto flex max-w-6xl items-center justify-between gap-2 pb-2.5 xl:pb-0">
           <button
             onClick={() => setActiveTab('feed')}
             className="text-ink flex cursor-pointer items-center gap-2 py-1 text-[17px] font-bold tracking-tight"
@@ -90,7 +92,7 @@ export const FeedHeader: React.FC<FeedHeaderProps> = ({
             TechPulse
           </button>
 
-          <nav aria-label="Điều hướng chính" className="hidden self-stretch md:flex">
+          <nav aria-label="Điều hướng chính" className="hidden self-stretch xl:flex">
             {TABS.map((tab) => {
               const active = activeTab === tab.id;
               return (
@@ -100,7 +102,7 @@ export const FeedHeader: React.FC<FeedHeaderProps> = ({
                   aria-current={active ? 'page' : undefined}
                   className={`-mb-px cursor-pointer border-b-2 px-3 pt-4 pb-3.5 text-[13px] whitespace-nowrap transition-colors ${
                     active
-                      ? 'border-ink text-ink font-semibold'
+                      ? 'border-accent-600 text-accent-700 font-semibold'
                       : 'text-muted hover:text-ink border-transparent font-medium'
                   }`}
                 >
@@ -110,7 +112,8 @@ export const FeedHeader: React.FC<FeedHeaderProps> = ({
             })}
           </nav>
 
-          <div className="flex shrink-0 items-center gap-1.5">
+          <div className="flex shrink-0 items-center gap-0.5">
+            <ThemeControl />
             <button
               onClick={onOpenExplanation}
               className="text-muted hover:bg-wash hover:text-ink flex h-10 w-10 cursor-pointer items-center justify-center rounded-full transition-colors"
@@ -121,11 +124,14 @@ export const FeedHeader: React.FC<FeedHeaderProps> = ({
             </button>
             <button
               onClick={onCrawlAll}
+              aria-label={crawlingAll ? 'Đang cập nhật tin' : 'Cập nhật tin'}
               disabled={crawlingAll}
-              className="bg-ink hover:bg-ink-deep flex h-10 cursor-pointer items-center gap-2 rounded-full px-4 text-[13px] font-semibold text-white transition-colors disabled:cursor-wait disabled:opacity-70"
+              className="bg-primary hover:bg-primary-hover flex h-10 cursor-pointer items-center gap-2 rounded-full px-4 text-[13px] font-semibold text-white transition-colors disabled:cursor-wait disabled:opacity-70"
             >
               <RefreshCw className={`h-4 w-4 ${crawlingAll ? 'animate-spin' : ''}`} />
-              {crawlingAll ? 'Đang cập nhật' : 'Cập nhật tin'}
+              <span className="hidden sm:inline">
+                {crawlingAll ? 'Đang cập nhật' : 'Cập nhật tin'}
+              </span>
             </button>
           </div>
         </div>
@@ -134,7 +140,7 @@ export const FeedHeader: React.FC<FeedHeaderProps> = ({
       {/* Mobile tab bar: bottom of the screen, within thumb reach */}
       <nav
         aria-label="Điều hướng chính"
-        className="border-rule bg-paper/95 fixed inset-x-0 bottom-0 z-40 border-t pb-[env(safe-area-inset-bottom,0px)] backdrop-blur-md md:hidden"
+        className="border-rule bg-paper/95 fixed inset-x-0 bottom-0 z-40 border-t pb-[env(safe-area-inset-bottom,0px)] backdrop-blur-md xl:hidden"
       >
         <div className="grid grid-cols-6">
           {TABS.map((tab) => {

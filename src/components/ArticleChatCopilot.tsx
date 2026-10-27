@@ -97,7 +97,7 @@ export const ArticleChatCopilot: React.FC<ArticleChatCopilotProps> = ({ articleI
           messages.map((m, idx) =>
             m.role === 'user' ? (
               <div key={idx} className="flex justify-end">
-                <div className="bg-ink max-w-[85%] rounded-2xl rounded-br-md px-4 py-2.5 text-[15px] leading-relaxed whitespace-pre-wrap text-white">
+                <div className="bg-primary max-w-[85%] rounded-2xl rounded-br-md px-4 py-2.5 text-[15px] leading-relaxed whitespace-pre-wrap text-white">
                   {m.content}
                 </div>
               </div>
@@ -168,7 +168,7 @@ export const ArticleChatCopilot: React.FC<ArticleChatCopilotProps> = ({ articleI
         <button
           type="submit"
           disabled={loading || !input.trim()}
-          className="bg-ink hover:bg-ink-deep flex h-10 w-10 shrink-0 cursor-pointer items-center justify-center rounded-full text-white transition-colors disabled:cursor-not-allowed disabled:opacity-30"
+          className="bg-primary hover:bg-primary-hover flex h-10 w-10 shrink-0 cursor-pointer items-center justify-center rounded-full text-white transition-colors disabled:cursor-not-allowed disabled:opacity-30"
           aria-label="Gửi câu hỏi"
         >
           <Send className="h-4 w-4" />

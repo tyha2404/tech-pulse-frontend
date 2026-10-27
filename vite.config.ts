@@ -16,8 +16,8 @@ export default defineConfig({
         short_name: 'TechPulse',
         description:
           'Tự động cào, tổng hợp và phân tích tin tức chuyên sâu cho Backend & AI Engineers',
-        theme_color: '#f4f5f2',
-        background_color: '#f4f5f2',
+        theme_color: '#f2f5f8',
+        background_color: '#f2f5f8',
         display: 'standalone',
         orientation: 'portrait',
         icons: [

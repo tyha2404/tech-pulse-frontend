@@ -55,7 +55,7 @@ export const ArticleModal: React.FC<ArticleModalProps> = ({
   return (
     <div
       onClick={onClose}
-      className="bg-ink-deep/50 fixed inset-0 z-50 flex items-end justify-center p-0 backdrop-blur-xs sm:items-center sm:p-4"
+      className="bg-scrim/50 fixed inset-0 z-50 flex items-end justify-center p-0 backdrop-blur-xs sm:items-center sm:p-4"
     >
       <div
         role="dialog"

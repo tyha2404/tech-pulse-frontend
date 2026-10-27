@@ -317,7 +317,7 @@ export const ArticleModalTabs: React.FC<ArticleModalTabsProps> = ({
                     </div>
                   )}
                   {blueprint?.code_snippet && (
-                    <div className="bg-ink overflow-hidden rounded-xl">
+                    <div className="bg-code overflow-hidden rounded-xl">
                       <div className="flex items-center justify-between border-b border-white/10 px-4 py-2 text-[12px] text-white/60">
                         <span>TypeScript</span>
                         <button
@@ -347,7 +347,7 @@ export const ArticleModalTabs: React.FC<ArticleModalTabsProps> = ({
                   <button
                     onClick={handleGenerateBlueprint}
                     disabled={generatingBlueprint}
-                    className="bg-ink hover:bg-ink-deep mt-3 inline-flex h-10 cursor-pointer items-center gap-2 rounded-full px-4 text-[14px] font-semibold text-white transition-colors disabled:cursor-wait disabled:opacity-70"
+                    className="bg-primary hover:bg-primary-hover mt-3 inline-flex h-10 cursor-pointer items-center gap-2 rounded-full px-4 text-[14px] font-semibold text-white transition-colors disabled:cursor-wait disabled:opacity-70"
                   >
                     <Code2 className={`h-4 w-4 ${generatingBlueprint ? 'animate-pulse' : ''}`} />
                     {generatingBlueprint ? 'Đang tạo blueprint…' : 'Tạo blueprint'}
@@ -466,7 +466,7 @@ export const ArticleModalTabs: React.FC<ArticleModalTabsProps> = ({
             href={article.url}
             target="_blank"
             rel="noreferrer"
-            className="bg-ink hover:bg-ink-deep inline-flex h-10 items-center gap-1.5 rounded-full px-4 text-[14px] font-semibold text-white transition-colors"
+            className="bg-primary hover:bg-primary-hover inline-flex h-10 items-center gap-1.5 rounded-full px-4 text-[14px] font-semibold text-white transition-colors"
           >
             Đọc bài gốc trên {article.source_name || 'trang nguồn'}
             <ExternalLink className="h-4 w-4" />
