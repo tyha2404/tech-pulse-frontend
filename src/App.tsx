@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback, useRef, lazy, Suspense } from 'react';
-import { RefreshCw, Plus, Trash2, BookOpen } from 'lucide-react';
+import { IconClose, IconFeed, IconPlus, IconSpinner, IconTrash } from './components/icons';
 import { apiClient, getPersonalizedArticles, sendArticleFeedback } from './api';
 import type { Article, Source } from './types';
 import { FeedHeader, type AppTab } from './components/FeedHeader';
@@ -436,51 +436,37 @@ export default function App() {
         {/* ================= VIEW 1: BÀI ĐỌC (FEED & PERSONALIZED) ================= */}
         {(activeTab === 'feed' || activeTab === 'personalized') && (
           <div>
-            <div className="feed-intro border-rule mb-6 flex flex-wrap items-end justify-between gap-4 border-b pb-6">
-              <div>
-                <p className="text-muted mb-2 text-[13px]">
-                  TechPulse / Dành cho người làm công nghệ
-                </p>
-                <h1 className="text-ink text-[28px] font-bold tracking-tight sm:text-[36px]">
-                  {activeTab === 'personalized' ? 'Góc đọc của bạn' : 'Nắm bắt nhịp công nghệ.'}
-                </h1>
-                <p className="text-muted mt-2 max-w-lg text-[14px] leading-relaxed">
-                  Tin Backend & AI, được chọn lọc và tóm tắt bằng tiếng Việt.
-                </p>
-              </div>
-              <div className="text-muted flex items-center gap-2 text-[12px]">
-                <span className="bg-signal-600 h-2 w-2 rounded-full" aria-hidden="true" />
-                Điểm AI giúp bạn chọn bài đáng đọc
-              </div>
-            </div>
             {activeTab === 'personalized' ? (
-              <p className="text-muted mb-4 max-w-prose text-[14px] leading-relaxed">
-                Bài được xếp lại theo chủ đề và nguồn bạn quan tâm. Đánh dấu bài hữu ích hoặc không
-                liên quan để gợi ý chính xác hơn.
-              </p>
-            ) : (
-              <FilterToolbar
-                selectedCategory={selectedCategory}
-                setSelectedCategory={setSelectedCategory}
-                topOnly={topOnly}
-                setTopOnly={setTopOnly}
-                searchQuery={searchQuery}
-                setSearchQuery={setSearchQuery}
-                onSearchSubmit={() => fetchArticles(true)}
-                readStatus={readStatus}
-                setReadStatus={setReadStatus}
-                bookmarkedOnly={bookmarkedOnly}
-                setBookmarkedOnly={setBookmarkedOnly}
-                viewHidden={viewHidden}
-                setViewHidden={setViewHidden}
-                selectedSourceId={selectedSourceId}
-                setSelectedSourceId={setSelectedSourceId}
-                sources={sources}
-                sortBy={sortBy}
-                setSortBy={setSortBy}
-                groupDuplicates={groupDuplicates}
-                setGroupDuplicates={setGroupDuplicates}
+              <PageHeader
+                title="Dành cho bạn"
+                description="Bài được xếp lại theo chủ đề và nguồn bạn quan tâm. Đánh dấu bài hữu ích hoặc không liên quan để gợi ý chính xác hơn."
               />
+            ) : (
+              <>
+                <h1 className="sr-only">Bản tin</h1>
+                <FilterToolbar
+                  selectedCategory={selectedCategory}
+                  setSelectedCategory={setSelectedCategory}
+                  topOnly={topOnly}
+                  setTopOnly={setTopOnly}
+                  searchQuery={searchQuery}
+                  setSearchQuery={setSearchQuery}
+                  onSearchSubmit={() => fetchArticles(true)}
+                  readStatus={readStatus}
+                  setReadStatus={setReadStatus}
+                  bookmarkedOnly={bookmarkedOnly}
+                  setBookmarkedOnly={setBookmarkedOnly}
+                  viewHidden={viewHidden}
+                  setViewHidden={setViewHidden}
+                  selectedSourceId={selectedSourceId}
+                  setSelectedSourceId={setSelectedSourceId}
+                  sources={sources}
+                  sortBy={sortBy}
+                  setSortBy={setSortBy}
+                  groupDuplicates={groupDuplicates}
+                  setGroupDuplicates={setGroupDuplicates}
+                />
+              </>
             )}
 
             {loading ? (
@@ -488,20 +474,17 @@ export default function App() {
                 role="status"
                 className="text-muted flex items-center justify-center gap-2 py-24 text-[14px]"
               >
-                <RefreshCw className="h-4 w-4 animate-spin" />
+                <IconSpinner className="h-4 w-4 animate-spin" />
                 Đang tải bài…
               </div>
             ) : articles.length === 0 ? (
               <div className="mx-auto max-w-sm py-20 text-center">
-                <BookOpen className="text-faint mx-auto mb-4 h-8 w-8" />
+                <IconFeed className="text-faint mx-auto mb-4 h-8 w-8" />
                 <h3 className="text-ink text-[17px] font-semibold">Không có bài nào ở đây</h3>
                 <p className="text-muted mt-1.5 mb-6 text-[14px] leading-relaxed">
                   Thử bỏ bớt bộ lọc, hoặc lấy bài mới từ các nguồn.
                 </p>
-                <button
-                  onClick={() => handleCrawlAll()}
-                  className="bg-primary hover:bg-primary-hover cursor-pointer rounded-full px-5 py-2.5 text-[14px] font-semibold text-white transition-colors"
-                >
+                <button onClick={() => handleCrawlAll()} className={primaryButton}>
                   Cập nhật tin
                 </button>
               </div>
@@ -543,7 +526,7 @@ export default function App() {
                 <div className="text-muted pt-8 pb-4 text-center text-[13px]">
                   {loadingMore ? (
                     <span role="status" className="inline-flex items-center gap-2">
-                      <RefreshCw className="h-4 w-4 animate-spin" />
+                      <IconSpinner className="h-4 w-4 animate-spin" />
                       Đang tải thêm…
                     </span>
                   ) : hasMore ? (
@@ -571,7 +554,7 @@ export default function App() {
                   role="status"
                   className="text-muted flex h-64 items-center justify-center gap-2 text-[14px]"
                 >
-                  <RefreshCw className="h-4 w-4 animate-spin" />
+                  <IconSpinner className="h-4 w-4 animate-spin" />
                   Đang mở radar…
                 </div>
               }
@@ -633,7 +616,7 @@ export default function App() {
               description="Các trang TechPulse tự động lấy bài. Nguồn bị lỗi sẽ hiện lý do ngay bên dưới tên."
               actions={
                 <button onClick={() => setIsAddSourceOpen(true)} className={primaryButton}>
-                  <Plus className="h-4 w-4" /> Thêm nguồn
+                  <IconPlus className="h-4 w-4" /> Thêm nguồn
                 </button>
               }
             />
@@ -685,11 +668,11 @@ export default function App() {
                       className="grid grid-cols-[minmax(0,1fr)_auto] gap-x-4 gap-y-2 py-4 md:grid-cols-[minmax(0,1fr)_8rem_6rem_8rem_auto] md:items-center"
                     >
                       <div className="min-w-0">
-                        <div className="flex items-baseline gap-2">
-                          <span className="text-ink truncate text-[15px] font-semibold">
+                        <div className="flex flex-wrap items-baseline gap-x-2">
+                          <span className="text-ink max-w-full truncate text-[15px] font-semibold">
                             {s.name}
                           </span>
-                          <span className="text-muted shrink-0 text-[13px]">
+                          <span className="text-muted text-[13px]">
                             {SOURCE_CATEGORY_LABELS[s.category] || s.category}
                           </span>
                         </div>
@@ -746,7 +729,7 @@ export default function App() {
                           aria-label={`Xoá nguồn ${s.name}`}
                           title="Xoá nguồn"
                         >
-                          <Trash2 className="h-4 w-4" />
+                          <IconTrash className="h-4 w-4" />
                         </button>
                       </div>
                     </li>
@@ -765,9 +748,12 @@ export default function App() {
         {activeTab === 'admin' && (
           <Suspense
             fallback={
-              <div className="border-rule text-muted bg-surface flex h-64 items-center justify-center rounded-2xl border p-8 text-sm">
-                <RefreshCw className="text-accent-700 mr-2 h-5 w-5 animate-spin" />
-                Đang tải Admin Observability Dashboard...
+              <div
+                role="status"
+                className="text-muted flex h-64 items-center justify-center gap-2 text-[14px]"
+              >
+                <IconSpinner className="h-4 w-4 animate-spin" />
+                Đang tải số liệu hệ thống…
               </div>
             }
           >
@@ -826,9 +812,9 @@ export default function App() {
             <button
               onClick={() => setToast(null)}
               aria-label="Đóng thông báo"
-              className="-mr-1 cursor-pointer rounded-full px-1 text-white/70 hover:text-white"
+              className="-mr-1.5 flex h-6 w-6 shrink-0 cursor-pointer items-center justify-center rounded-full text-white/70 hover:text-white"
             >
-              ✕
+              <IconClose className="h-4 w-4" />
             </button>
           </div>
         )}

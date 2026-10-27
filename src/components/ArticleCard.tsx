@@ -1,16 +1,17 @@
 import React, { useEffect, useRef, useState } from 'react';
 import {
-  ThumbsUp,
-  ThumbsDown,
-  Bookmark,
-  MoreHorizontal,
-  Download,
-  EyeOff,
-  Eye,
-} from 'lucide-react';
+  IconBookmark,
+  IconDownload,
+  IconEye,
+  IconEyeOff,
+  IconMore,
+  IconThumbsDown,
+  IconThumbsUp,
+} from './icons';
 import type { Article } from '../types';
 import { generateArticleMarkdown, downloadMarkdownFile } from '../utils/markdownExport';
 import { scoreTier } from '../utils/score';
+import { ScoreBadge } from './ScoreBadge';
 
 interface ArticleCardProps {
   article: Article;
@@ -21,13 +22,6 @@ interface ArticleCardProps {
   onToggleHidden: (articleId: number, currentHidden: boolean, e: React.MouseEvent) => void;
   onFilterSource?: (sourceId: number) => void;
 }
-
-const SCORE_STYLE = {
-  high: 'text-[30px] font-bold text-signal-700 sm:text-[34px]',
-  mid: 'text-[24px] font-semibold text-ink-2 sm:text-[26px]',
-  low: 'text-[19px] font-medium text-muted sm:text-[20px]',
-  none: 'text-[19px] font-medium text-muted',
-};
 
 const iconButton =
   'relative z-10 flex h-9 w-9 cursor-pointer items-center justify-center rounded-full transition-colors';
@@ -74,28 +68,8 @@ export const ArticleCard: React.FC<ArticleCardProps> = React.memo(
 
     return (
       <article
-        className={`group relative grid grid-cols-[3.25rem_minmax(0,1fr)] gap-x-3 py-5 sm:grid-cols-[4.75rem_minmax(0,1fr)] sm:gap-x-4 ${
-          article.is_read ? 'opacity-75 hover:opacity-100' : ''
-        }`}
+        className={`group relative py-5 ${article.is_read ? 'opacity-75 hover:opacity-100' : ''}`}
       >
-        <div
-          className={`score-numeral pt-0.5 leading-none ${SCORE_STYLE[tier]}`}
-          title={
-            tier === 'none'
-              ? 'Chưa được AI chấm điểm'
-              : `Điểm AI: ${article.relevance_score.toFixed(1)}/10`
-          }
-        >
-          <span aria-hidden="true">
-            {tier === 'none' ? '–' : article.relevance_score.toFixed(1)}
-          </span>
-          <span className="sr-only">
-            {tier === 'none'
-              ? 'Chưa chấm điểm'
-              : `Điểm AI ${article.relevance_score.toFixed(1)} trên 10`}
-          </span>
-        </div>
-
         <div className="min-w-0">
           <h2
             className={`text-[17px] leading-snug font-semibold tracking-[-0.01em] text-pretty break-words sm:text-[19px] ${
@@ -147,11 +121,12 @@ export const ArticleCard: React.FC<ArticleCardProps> = React.memo(
 
           <div className="mt-3 flex items-center justify-between gap-2">
             <div className="text-muted flex min-w-0 flex-wrap items-center gap-x-3 gap-y-1 text-[13px]">
+              <ScoreBadge score={article.relevance_score} />
               {article.source_id && onFilterSource ? (
                 <button
                   onClick={() => onFilterSource(article.source_id!)}
                   title={`Chỉ xem bài từ ${article.source_name || 'nguồn này'}`}
-                  className="text-ink-2 hover:text-accent-700 relative z-10 cursor-pointer font-medium hover:underline"
+                  className="text-ink-2 hover:text-accent-700 relative z-10 max-w-full cursor-pointer truncate text-left font-medium hover:underline"
                 >
                   {article.source_name || 'Bản tin'}
                 </button>
@@ -175,7 +150,7 @@ export const ArticleCard: React.FC<ArticleCardProps> = React.memo(
                 aria-label={article.is_bookmarked ? 'Bỏ lưu' : 'Lưu để đọc sau'}
                 title={article.is_bookmarked ? 'Bỏ lưu' : 'Lưu để đọc sau'}
               >
-                <Bookmark
+                <IconBookmark
                   className="h-[18px] w-[18px]"
                   fill={article.is_bookmarked ? 'currentColor' : 'none'}
                 />
@@ -191,7 +166,7 @@ export const ArticleCard: React.FC<ArticleCardProps> = React.memo(
                 aria-label="Bài hữu ích"
                 title="Bài hữu ích: gợi ý thêm bài tương tự"
               >
-                <ThumbsUp
+                <IconThumbsUp
                   className="h-[18px] w-[18px]"
                   fill={feedbackState === 'like' ? 'currentColor' : 'none'}
                 />
@@ -207,7 +182,7 @@ export const ArticleCard: React.FC<ArticleCardProps> = React.memo(
                 aria-label="Bài không liên quan"
                 title="Bài không liên quan: bớt gợi ý bài tương tự"
               >
-                <ThumbsDown
+                <IconThumbsDown
                   className="h-[18px] w-[18px]"
                   fill={feedbackState === 'dislike' ? 'currentColor' : 'none'}
                 />
@@ -221,7 +196,7 @@ export const ArticleCard: React.FC<ArticleCardProps> = React.memo(
                   aria-label="Thao tác khác"
                   className={`${iconButton} text-faint hover:bg-wash hover:text-ink ${menuOpen ? 'bg-wash text-ink' : ''}`}
                 >
-                  <MoreHorizontal className="h-[18px] w-[18px]" />
+                  <IconMore className="h-[18px] w-[18px]" />
                 </button>
                 {menuOpen && (
                   <div
@@ -236,7 +211,7 @@ export const ArticleCard: React.FC<ArticleCardProps> = React.memo(
                       }}
                       className="text-ink hover:bg-wash flex w-full cursor-pointer items-center gap-2.5 px-3.5 py-2.5 text-left"
                     >
-                      <Download className="text-muted h-4 w-4" /> Tải Markdown (Obsidian)
+                      <IconDownload className="text-muted h-4 w-4" /> Tải Markdown (Obsidian)
                     </button>
                     <button
                       role="menuitem"
@@ -248,11 +223,11 @@ export const ArticleCard: React.FC<ArticleCardProps> = React.memo(
                     >
                       {article.is_hidden ? (
                         <>
-                          <Eye className="text-muted h-4 w-4" /> Hiện lại bài này
+                          <IconEye className="text-muted h-4 w-4" /> Hiện lại bài này
                         </>
                       ) : (
                         <>
-                          <EyeOff className="text-muted h-4 w-4" /> Ẩn bài này
+                          <IconEyeOff className="text-muted h-4 w-4" /> Ẩn bài này
                         </>
                       )}
                     </button>

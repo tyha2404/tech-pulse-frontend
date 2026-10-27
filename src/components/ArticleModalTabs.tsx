@@ -1,9 +1,17 @@
 import React, { useState, useEffect, lazy, Suspense } from 'react';
-import { Code2, Copy, Check, ExternalLink, Download, RefreshCw } from 'lucide-react';
+import {
+  IconCheck,
+  IconCode,
+  IconCopy,
+  IconDownload,
+  IconExternal,
+  IconRefresh,
+  IconSpinner,
+} from './icons';
 import type { Article, RelatedArticleItem } from '../types';
 import { apiClient, generateArticleBlueprint, exportArticleMarkdown } from '../api';
 import { generateArticleMarkdown, downloadMarkdownFile } from '../utils/markdownExport';
-import { scoreTier } from '../utils/score';
+import { ScoreBadge } from './ScoreBadge';
 
 const ArticleChatCopilot = lazy(() =>
   import('./ArticleChatCopilot').then((m) => ({ default: m.ArticleChatCopilot }))
@@ -195,9 +203,9 @@ export const ArticleModalTabs: React.FC<ArticleModalTabsProps> = ({
                     className={quietButton}
                   >
                     {copiedSummary ? (
-                      <Check className="text-signal-600 h-4 w-4" />
+                      <IconCheck className="text-signal-600 h-4 w-4" />
                     ) : (
-                      <Copy className="h-4 w-4" />
+                      <IconCopy className="h-4 w-4" />
                     )}
                     {copiedSummary ? 'Đã sao chép' : 'Sao chép'}
                   </button>
@@ -206,7 +214,7 @@ export const ArticleModalTabs: React.FC<ArticleModalTabsProps> = ({
                     disabled={summarizing}
                     className={quietButton}
                   >
-                    <RefreshCw className={`h-4 w-4 ${summarizing ? 'animate-spin' : ''}`} />
+                    <IconRefresh className={`h-4 w-4 ${summarizing ? 'animate-spin' : ''}`} />
                     {summarizing ? 'Đang phân tích…' : 'Phân tích lại'}
                   </button>
                 </div>
@@ -284,7 +292,9 @@ export const ArticleModalTabs: React.FC<ArticleModalTabsProps> = ({
                     disabled={generatingBlueprint}
                     className={`${quietButton} -mr-3`}
                   >
-                    <RefreshCw className={`h-4 w-4 ${generatingBlueprint ? 'animate-spin' : ''}`} />
+                    <IconRefresh
+                      className={`h-4 w-4 ${generatingBlueprint ? 'animate-spin' : ''}`}
+                    />
                     {generatingBlueprint ? 'Đang tạo lại…' : 'Tạo lại'}
                   </button>
                 )}
@@ -325,9 +335,9 @@ export const ArticleModalTabs: React.FC<ArticleModalTabsProps> = ({
                           className="flex h-8 cursor-pointer items-center gap-1.5 rounded-full px-2 hover:text-white"
                         >
                           {copiedCode ? (
-                            <Check className="h-3.5 w-3.5" />
+                            <IconCheck className="h-3.5 w-3.5" />
                           ) : (
-                            <Copy className="h-3.5 w-3.5" />
+                            <IconCopy className="h-3.5 w-3.5" />
                           )}
                           {copiedCode ? 'Đã sao chép' : 'Sao chép mã'}
                         </button>
@@ -349,7 +359,7 @@ export const ArticleModalTabs: React.FC<ArticleModalTabsProps> = ({
                     disabled={generatingBlueprint}
                     className="bg-primary hover:bg-primary-hover mt-3 inline-flex h-10 cursor-pointer items-center gap-2 rounded-full px-4 text-[14px] font-semibold text-white transition-colors disabled:cursor-wait disabled:opacity-70"
                   >
-                    <Code2 className={`h-4 w-4 ${generatingBlueprint ? 'animate-pulse' : ''}`} />
+                    <IconCode className={`h-4 w-4 ${generatingBlueprint ? 'animate-pulse' : ''}`} />
                     {generatingBlueprint ? 'Đang tạo blueprint…' : 'Tạo blueprint'}
                   </button>
                 </div>
@@ -370,7 +380,7 @@ export const ArticleModalTabs: React.FC<ArticleModalTabsProps> = ({
                 role="status"
                 className="text-muted flex items-center justify-center gap-2 p-8 text-[14px]"
               >
-                <RefreshCw className="h-4 w-4 animate-spin" />
+                <IconSpinner className="h-4 w-4 animate-spin" />
                 Đang mở hỏi đáp…
               </div>
             }
@@ -431,22 +441,14 @@ export const ArticleModalTabs: React.FC<ArticleModalTabsProps> = ({
                     <li key={rel.id}>
                       <button
                         onClick={() => onSelectRelatedArticle && onSelectRelatedArticle(rel.id)}
-                        className="hover:bg-wash/50 grid w-full cursor-pointer grid-cols-[2.75rem_minmax(0,1fr)] items-baseline gap-x-3 py-3 text-left"
+                        className="hover:bg-wash/50 block w-full cursor-pointer py-3 text-left"
                       >
-                        <span
-                          className={`score-numeral text-[17px] ${
-                            scoreTier(rel.relevance_score) === 'high'
-                              ? 'text-signal-700 font-bold'
-                              : 'text-ink-2 font-semibold'
-                          }`}
-                        >
-                          {rel.relevance_score.toFixed(1)}
-                        </span>
                         <span className="min-w-0">
                           <span className="text-ink block text-[15px] leading-snug font-medium">
                             {rel.vietnamese_title || rel.title}
                           </span>
-                          <span className="text-muted mt-0.5 block text-[13px]">
+                          <span className="text-muted mt-1.5 flex items-center gap-3 text-[13px]">
+                            <ScoreBadge score={rel.relevance_score} />
                             {rel.source_name || 'Không rõ nguồn'}
                           </span>
                         </span>
@@ -469,14 +471,14 @@ export const ArticleModalTabs: React.FC<ArticleModalTabsProps> = ({
             className="bg-primary hover:bg-primary-hover inline-flex h-10 items-center gap-1.5 rounded-full px-4 text-[14px] font-semibold text-white transition-colors"
           >
             Đọc bài gốc trên {article.source_name || 'trang nguồn'}
-            <ExternalLink className="h-4 w-4" />
+            <IconExternal className="h-4 w-4" />
           </a>
           <div className="-mr-3 flex items-center">
             <button onClick={handleCopyMarkdown} className={quietButton}>
               {copiedMarkdown ? (
-                <Check className="text-signal-600 h-4 w-4" />
+                <IconCheck className="text-signal-600 h-4 w-4" />
               ) : (
-                <Copy className="h-4 w-4" />
+                <IconCopy className="h-4 w-4" />
               )}
               {copiedMarkdown ? 'Đã sao chép' : 'Sao chép Markdown'}
             </button>
@@ -485,7 +487,7 @@ export const ArticleModalTabs: React.FC<ArticleModalTabsProps> = ({
               disabled={exportingMarkdown}
               className={quietButton}
             >
-              <Download className="h-4 w-4" />
+              <IconDownload className="h-4 w-4" />
               {exportingMarkdown ? 'Đang xuất…' : 'Tải .md'}
             </button>
           </div>

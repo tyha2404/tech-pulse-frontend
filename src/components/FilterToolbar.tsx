@@ -1,5 +1,6 @@
-import React, { useId, useState } from 'react';
-import { Search, SlidersHorizontal, X } from 'lucide-react';
+import React, { useEffect, useId, useRef, useState } from 'react';
+import { IconClose, IconFilter, IconSearch } from './icons';
+import { Select } from './Select';
 import type { Source } from '../types';
 
 interface FilterToolbarProps {
@@ -44,6 +45,7 @@ const VIEWS: { id: View; label: string }[] = [
 ];
 
 const SORT_LABELS = { newest: 'Mới nhất', oldest: 'Cũ nhất', score: 'Điểm cao nhất' } as const;
+type SortKey = keyof typeof SORT_LABELS;
 
 export const FilterToolbar: React.FC<FilterToolbarProps> = ({
   selectedCategory,
@@ -69,6 +71,32 @@ export const FilterToolbar: React.FC<FilterToolbarProps> = ({
 }) => {
   const [panelOpen, setPanelOpen] = useState(false);
   const panelId = useId();
+  const popoverRef = useRef<HTMLDivElement>(null);
+  const triggerRef = useRef<HTMLButtonElement>(null);
+
+  const closePanel = () => {
+    setPanelOpen(false);
+    triggerRef.current?.focus();
+  };
+
+  // Popover: close on outside click, or on Escape (returning focus to the trigger)
+  useEffect(() => {
+    if (!panelOpen) return;
+    const onPointer = (e: MouseEvent) => {
+      if (!popoverRef.current?.contains(e.target as Node)) setPanelOpen(false);
+    };
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key !== 'Escape') return;
+      setPanelOpen(false);
+      triggerRef.current?.focus();
+    };
+    document.addEventListener('mousedown', onPointer);
+    document.addEventListener('keydown', onKey);
+    return () => {
+      document.removeEventListener('mousedown', onPointer);
+      document.removeEventListener('keydown', onKey);
+    };
+  }, [panelOpen]);
 
   const view: View = viewHidden
     ? 'hidden'
@@ -86,7 +114,7 @@ export const FilterToolbar: React.FC<FilterToolbarProps> = ({
 
   const sourceName = sources.find((s) => s.id === selectedSourceId)?.name;
 
-  // Filters living in the panel, shown as removable chips when active
+  // Filters living in the popover, shown as removable chips when active
   const activeChips: { key: string; label: string; clear: () => void }[] = [];
   if (view !== 'all')
     activeChips.push({
@@ -122,7 +150,7 @@ export const FilterToolbar: React.FC<FilterToolbarProps> = ({
         <div
           role="group"
           aria-label="Chủ đề"
-          className="no-scrollbar -mx-4 flex items-center gap-1.5 overflow-x-auto px-4 md:mx-0 md:px-0"
+          className="no-scrollbar -mx-4 flex items-center gap-1.5 overflow-x-auto px-4 md:mx-0 md:px-0 xl:shrink-0"
         >
           {CATEGORIES.map((c) => (
             <button
@@ -153,16 +181,16 @@ export const FilterToolbar: React.FC<FilterToolbarProps> = ({
           </button>
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 xl:min-w-0 xl:flex-1 xl:justify-end">
           <form
             role="search"
             onSubmit={(e) => {
               e.preventDefault();
               onSearchSubmit();
             }}
-            className="relative min-w-0 flex-1 md:w-60 md:flex-none"
+            className="relative min-w-0 flex-1 md:w-60 md:flex-none xl:w-auto xl:max-w-60 xl:flex-1"
           >
-            <Search className="text-muted pointer-events-none absolute top-1/2 left-3.5 h-4 w-4 -translate-y-1/2" />
+            <IconSearch className="text-muted pointer-events-none absolute top-1/2 left-3.5 h-4 w-4 -translate-y-1/2" />
             <label className="sr-only" htmlFor={`${panelId}-q`}>
               Tìm trong bản tin
             </label>
@@ -175,100 +203,128 @@ export const FilterToolbar: React.FC<FilterToolbarProps> = ({
               className="border-rule bg-surface text-ink placeholder:text-faint focus:border-ink-2 h-10 w-full rounded-full border pr-4 pl-10 text-[16px] focus:outline-none md:h-9 md:text-[13px]"
             />
           </form>
-          <button
-            onClick={() => setPanelOpen((o) => !o)}
-            aria-expanded={panelOpen}
-            aria-controls={panelId}
-            className={`flex h-10 shrink-0 cursor-pointer items-center gap-2 rounded-full border px-3.5 text-[13px] font-medium transition-colors md:h-9 ${
-              panelOpen || activeChips.length
-                ? 'border-ink text-ink'
-                : 'border-rule text-ink-2 hover:bg-wash'
-            }`}
-          >
-            <SlidersHorizontal className="h-4 w-4" />
-            Bộ lọc
-            {activeChips.length > 0 && (
-              <span className="score-numeral bg-primary flex h-5 min-w-5 items-center justify-center rounded-full px-1.5 text-[11px] font-semibold text-white">
-                {activeChips.length}
-              </span>
+
+          <div ref={popoverRef} className="relative shrink-0">
+            <button
+              ref={triggerRef}
+              onClick={() => setPanelOpen((o) => !o)}
+              aria-haspopup="dialog"
+              aria-expanded={panelOpen}
+              aria-controls={panelId}
+              className={`flex h-10 shrink-0 cursor-pointer items-center gap-2 rounded-full border px-3.5 text-[13px] font-medium transition-colors md:h-9 ${
+                panelOpen || activeChips.length
+                  ? 'border-ink text-ink'
+                  : 'border-rule text-ink-2 hover:bg-wash'
+              } ${panelOpen ? 'bg-wash' : ''}`}
+            >
+              <IconFilter className="h-4 w-4" />
+              Bộ lọc
+              {activeChips.length > 0 && (
+                <span className="score-numeral bg-primary flex h-5 min-w-5 items-center justify-center rounded-full px-1.5 text-[11px] font-semibold text-white">
+                  {activeChips.length}
+                </span>
+              )}
+            </button>
+
+            {panelOpen && (
+              <div
+                id={panelId}
+                role="dialog"
+                aria-label="Bộ lọc"
+                className="border-rule bg-surface shadow-ink/10 absolute top-full right-0 z-40 mt-2 flex max-h-[calc(100dvh-var(--app-header-h)-var(--app-tabbar-h)-8rem)] w-[min(22rem,calc(100vw-2rem))] flex-col overflow-hidden rounded-2xl border shadow-lg"
+              >
+                <div className="no-scrollbar space-y-4 overflow-y-auto p-4">
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="min-w-0">
+                      <label
+                        htmlFor={`${panelId}-view`}
+                        className="text-muted mb-1.5 block text-[13px] font-medium"
+                      >
+                        Trạng thái
+                      </label>
+                      <Select
+                        id={`${panelId}-view`}
+                        label="Trạng thái"
+                        value={view}
+                        onChange={setView}
+                        options={VIEWS.map((v) => ({ value: v.id, label: v.label }))}
+                      />
+                    </div>
+                    <div className="min-w-0">
+                      <label
+                        htmlFor={`${panelId}-sort`}
+                        className="text-muted mb-1.5 block text-[13px] font-medium"
+                      >
+                        Sắp xếp
+                      </label>
+                      <Select
+                        id={`${panelId}-sort`}
+                        label="Sắp xếp"
+                        value={sortBy}
+                        onChange={setSortBy}
+                        options={(Object.keys(SORT_LABELS) as SortKey[]).map((id) => ({
+                          value: id,
+                          label: SORT_LABELS[id],
+                        }))}
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <label
+                      htmlFor={`${panelId}-src`}
+                      className="text-muted mb-1.5 block text-[13px] font-medium"
+                    >
+                      Nguồn
+                    </label>
+                    {/* 0 stands for "every source"; real source ids start at 1 */}
+                    <Select
+                      id={`${panelId}-src`}
+                      label="Nguồn"
+                      value={selectedSourceId ?? 0}
+                      onChange={(id) => setSelectedSourceId(id || null)}
+                      options={[
+                        { value: 0, label: `Tất cả ${sources.length} nguồn` },
+                        ...sources.map((s) => ({
+                          value: s.id,
+                          label: s.name,
+                          hint: String(s.articles_count || 0),
+                        })),
+                      ]}
+                    />
+                  </div>
+
+                  <label className="text-ink-2 flex cursor-pointer items-start gap-3 text-[13px] leading-snug">
+                    <input
+                      type="checkbox"
+                      checked={groupDuplicates}
+                      onChange={(e) => setGroupDuplicates(e.target.checked)}
+                      className="accent-ink mt-px h-4 w-4 shrink-0 cursor-pointer"
+                    />
+                    Gộp bài cùng chủ đề từ nhiều báo thành một
+                  </label>
+                </div>
+
+                <div className="border-rule flex shrink-0 items-center justify-between border-t px-4 py-3">
+                  <button
+                    onClick={() => activeChips.forEach((chip) => chip.clear())}
+                    disabled={activeChips.length === 0}
+                    className="text-ink-2 hover:text-ink cursor-pointer text-[13px] font-medium underline-offset-2 hover:underline disabled:cursor-default disabled:no-underline disabled:opacity-40"
+                  >
+                    Đặt lại
+                  </button>
+                  <button
+                    onClick={closePanel}
+                    className="bg-primary hover:bg-primary-hover h-8 cursor-pointer rounded-full px-4 text-[13px] font-semibold text-white transition-colors"
+                  >
+                    Xong
+                  </button>
+                </div>
+              </div>
             )}
-          </button>
+          </div>
         </div>
       </div>
-
-      {panelOpen && (
-        <div
-          id={panelId}
-          className="border-rule bg-surface grid gap-4 rounded-2xl border p-4 sm:grid-cols-[auto_1fr] sm:items-center sm:gap-x-6"
-        >
-          <span className="text-muted text-[13px] font-medium">Trạng thái</span>
-          <div
-            role="radiogroup"
-            aria-label="Trạng thái bài"
-            className="no-scrollbar -mt-2 flex gap-1 overflow-x-auto sm:mt-0"
-          >
-            {VIEWS.map((v) => (
-              <button
-                key={v.id}
-                role="radio"
-                aria-checked={view === v.id}
-                onClick={() => setView(v.id)}
-                className={`${chipBase} h-8 px-3 ${
-                  view === v.id
-                    ? 'bg-primary font-semibold text-white'
-                    : 'text-ink-2 hover:bg-wash font-medium'
-                }`}
-              >
-                {v.label}
-              </button>
-            ))}
-          </div>
-
-          <label htmlFor={`${panelId}-src`} className="text-muted text-[13px] font-medium">
-            Nguồn
-          </label>
-          <select
-            id={`${panelId}-src`}
-            value={selectedSourceId || ''}
-            onChange={(e) => setSelectedSourceId(e.target.value ? Number(e.target.value) : null)}
-            className="border-rule bg-surface text-ink -mt-2 h-10 w-full cursor-pointer rounded-lg border px-3 text-[16px] sm:mt-0 sm:max-w-xs sm:text-[13px]"
-          >
-            <option value="">Tất cả {sources.length} nguồn</option>
-            {sources.map((s) => (
-              <option key={s.id} value={s.id}>
-                {s.name} ({s.articles_count || 0})
-              </option>
-            ))}
-          </select>
-
-          <label htmlFor={`${panelId}-sort`} className="text-muted text-[13px] font-medium">
-            Sắp xếp
-          </label>
-          <select
-            id={`${panelId}-sort`}
-            value={sortBy}
-            onChange={(e) => setSortBy(e.target.value as 'newest' | 'oldest' | 'score')}
-            className="border-rule bg-surface text-ink -mt-2 h-10 w-full cursor-pointer rounded-lg border px-3 text-[16px] sm:mt-0 sm:max-w-xs sm:text-[13px]"
-          >
-            {Object.entries(SORT_LABELS).map(([id, label]) => (
-              <option key={id} value={id}>
-                {label}
-              </option>
-            ))}
-          </select>
-
-          <span className="text-muted text-[13px] font-medium">Tin trùng</span>
-          <label className="text-ink-2 -mt-2 flex cursor-pointer items-center gap-3 text-[13px] sm:mt-0">
-            <input
-              type="checkbox"
-              checked={groupDuplicates}
-              onChange={(e) => setGroupDuplicates(e.target.checked)}
-              className="accent-ink h-4 w-4 cursor-pointer"
-            />
-            Gộp bài cùng chủ đề từ nhiều báo thành một
-          </label>
-        </div>
-      )}
 
       {activeChips.length > 0 && (
         <div className="flex flex-wrap items-center gap-1.5">
@@ -283,7 +339,7 @@ export const FilterToolbar: React.FC<FilterToolbarProps> = ({
                 aria-label={`Bỏ lọc: ${chip.label}`}
                 className="text-muted hover:bg-wash-strong hover:text-ink flex h-6 w-6 cursor-pointer items-center justify-center rounded-full"
               >
-                <X className="h-3.5 w-3.5" />
+                <IconClose className="h-3.5 w-3.5" />
               </button>
             </span>
           ))}

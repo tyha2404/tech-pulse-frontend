@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Send, Copy, Check, Loader2 } from 'lucide-react';
+import { IconCheck, IconCopy, IconSend, IconSpinner } from './icons';
 import { apiClient } from '../api';
 import type { ChatMessage } from '../types';
 
@@ -112,11 +112,11 @@ export const ArticleChatCopilot: React.FC<ArticleChatCopilotProps> = ({ articleI
                 >
                   {copiedIndex === idx ? (
                     <>
-                      <Check className="text-signal-600 h-3.5 w-3.5" /> Đã sao chép
+                      <IconCheck className="text-signal-600 h-3.5 w-3.5" /> Đã sao chép
                     </>
                   ) : (
                     <>
-                      <Copy className="h-3.5 w-3.5" /> Sao chép
+                      <IconCopy className="h-3.5 w-3.5" /> Sao chép
                     </>
                   )}
                 </button>
@@ -127,7 +127,7 @@ export const ArticleChatCopilot: React.FC<ArticleChatCopilotProps> = ({ articleI
 
         {loading && (
           <p role="status" className="text-muted flex items-center gap-2 text-[14px]">
-            <Loader2 className="h-4 w-4 animate-spin" /> AI đang soạn câu trả lời…
+            <IconSpinner className="h-4 w-4 animate-spin" /> AI đang soạn câu trả lời…
           </p>
         )}
       </div>
@@ -171,7 +171,7 @@ export const ArticleChatCopilot: React.FC<ArticleChatCopilotProps> = ({ articleI
           className="bg-primary hover:bg-primary-hover flex h-10 w-10 shrink-0 cursor-pointer items-center justify-center rounded-full text-white transition-colors disabled:cursor-not-allowed disabled:opacity-30"
           aria-label="Gửi câu hỏi"
         >
-          <Send className="h-4 w-4" />
+          <IconSend className="h-4 w-4" />
         </button>
       </form>
     </div>

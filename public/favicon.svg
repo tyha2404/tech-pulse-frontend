@@ -1,10 +1,8 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 32 32">
-  <rect width="32" height="32" rx="7" fill="#24292f" />
-  <g fill="#ffffff">
-    <path d="M6.6 9H13.6V11.6H11.4V23H8.8V11.6H6.6Z" />
-    <path
-      fill-rule="evenodd"
-      d="M16 9H22.8Q25.4 9 25.4 11.6V16.4Q25.4 19 22.8 19H18.6V23H16V9ZM18.6 11.6V16.4H22.2Q22.8 16.4 22.8 15.8V12.2Q22.8 11.6 22.2 11.6H18.6Z"
-    />
+  <!-- TechPulse mark: one signal rising above the noise. Same geometry as components/Logo.tsx -->
+  <rect width="32" height="32" rx="8" fill="#234e79" />
+  <g fill="none" stroke-linecap="round" stroke-width="3.25">
+    <path stroke="#ffffff" stroke-opacity="0.45" d="M8.5 19.5v3M13.5 17v5.5M23.5 18.5v4" />
+    <path stroke="#7ddcb6" d="M18.5 8.5v14" />
   </g>
 </svg>

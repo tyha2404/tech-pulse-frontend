@@ -1,9 +1,9 @@
 import React, { Suspense, lazy } from 'react';
-import { X, Bookmark, Eye, EyeOff, RefreshCw, Download } from 'lucide-react';
+import { IconBookmark, IconClose, IconDownload, IconEye, IconEyeOff, IconSpinner } from './icons';
 import type { Article } from '../types';
 import { generateArticleMarkdown, downloadMarkdownFile } from '../utils/markdownExport';
 import { exportArticleMarkdown } from '../api';
-import { scoreTier } from '../utils/score';
+import { ScoreBadge } from './ScoreBadge';
 
 const ArticleModalTabs = lazy(() =>
   import('./ArticleModalTabs').then((m) => ({ default: m.ArticleModalTabs }))
@@ -47,7 +47,6 @@ export const ArticleModal: React.FC<ArticleModalProps> = ({
     }
   };
 
-  const tier = scoreTier(article.relevance_score);
   const title = article.vietnamese_title || article.title;
   const headerButton =
     'flex h-10 cursor-pointer items-center gap-1.5 rounded-full px-2.5 text-[13px] font-medium transition-colors sm:px-3';
@@ -79,7 +78,7 @@ export const ArticleModal: React.FC<ArticleModalProps> = ({
                     : 'text-muted hover:bg-wash hover:text-ink'
                 }`}
               >
-                <Bookmark
+                <IconBookmark
                   className="h-[18px] w-[18px]"
                   fill={article.is_bookmarked ? 'currentColor' : 'none'}
                 />
@@ -90,7 +89,7 @@ export const ArticleModal: React.FC<ArticleModalProps> = ({
                 title="Tải file Markdown cho Obsidian"
                 className={`${headerButton} text-muted hover:bg-wash hover:text-ink`}
               >
-                <Download className="h-[18px] w-[18px]" />
+                <IconDownload className="h-[18px] w-[18px]" />
                 Markdown
               </button>
               <button
@@ -98,9 +97,9 @@ export const ArticleModal: React.FC<ArticleModalProps> = ({
                 className={`${headerButton} text-muted hover:bg-wash hover:text-ink`}
               >
                 {article.is_hidden ? (
-                  <Eye className="h-[18px] w-[18px]" />
+                  <IconEye className="h-[18px] w-[18px]" />
                 ) : (
-                  <EyeOff className="h-[18px] w-[18px]" />
+                  <IconEyeOff className="h-[18px] w-[18px]" />
                 )}
                 {article.is_hidden ? 'Hiện lại' : 'Ẩn'}
               </button>
@@ -110,41 +109,22 @@ export const ArticleModal: React.FC<ArticleModalProps> = ({
               className="text-muted hover:bg-wash hover:text-ink -mr-2 flex h-11 w-11 cursor-pointer items-center justify-center rounded-full transition-colors"
               aria-label="Đóng"
             >
-              <X className="h-5 w-5" />
+              <IconClose className="h-5 w-5" />
             </button>
           </div>
 
-          <div className="grid grid-cols-[auto_minmax(0,1fr)] gap-x-4">
-            <div
-              className={`score-numeral pt-0.5 leading-none ${
-                tier === 'high'
-                  ? 'text-signal-700 text-[34px] font-bold'
-                  : tier === 'mid'
-                    ? 'text-ink-2 text-[28px] font-semibold'
-                    : 'text-muted text-[22px] font-medium'
-              }`}
+          <div>
+            <h2
+              id="article-modal-title"
+              className="text-ink text-[19px] leading-snug font-semibold tracking-[-0.01em] text-pretty break-words sm:text-[22px]"
             >
-              <span aria-hidden="true">
-                {tier === 'none' ? '–' : article.relevance_score.toFixed(1)}
-              </span>
-              <span className="sr-only">
-                {tier === 'none'
-                  ? 'Chưa chấm điểm'
-                  : `Điểm AI ${article.relevance_score.toFixed(1)} trên 10`}
-              </span>
-            </div>
-            <div className="min-w-0">
-              <h2
-                id="article-modal-title"
-                className="text-ink text-[19px] leading-snug font-semibold tracking-[-0.01em] text-pretty break-words sm:text-[22px]"
-              >
-                {title}
-              </h2>
-              <p className="text-muted mt-1.5 text-[13px]">
-                <span className="text-ink-2 font-medium">{article.source_name}</span>
-                {article.reading_time_minutes ? ` · ${article.reading_time_minutes} phút đọc` : ''}
-              </p>
-            </div>
+              {title}
+            </h2>
+            <p className="text-muted mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-[13px]">
+              <ScoreBadge score={article.relevance_score} />
+              <span className="text-ink-2 font-medium">{article.source_name || 'Bản tin'}</span>
+              <span>{article.reading_time_minutes || 1} phút đọc</span>
+            </p>
           </div>
         </div>
 
@@ -158,7 +138,7 @@ export const ArticleModal: React.FC<ArticleModalProps> = ({
                 role="status"
                 className="text-muted flex h-64 items-center justify-center gap-2 text-[14px]"
               >
-                <RefreshCw className="h-4 w-4 animate-spin" />
+                <IconSpinner className="h-4 w-4 animate-spin" />
                 Đang tải phân tích…
               </div>
             }

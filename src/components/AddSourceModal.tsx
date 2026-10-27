@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { Plus, X, CheckCircle2, AlertCircle } from 'lucide-react';
+import { IconAlert, IconCheckCircle, IconClose, IconPlus } from './icons';
+import { Select } from './Select';
 import type { CrawlTestResult } from '../types';
 import { apiClient } from '../api';
 import { primaryButton, secondaryButton } from '../utils/ui';
@@ -101,7 +102,7 @@ export const AddSourceModal: React.FC<AddSourceModalProps> = ({
             className="text-muted hover:bg-wash hover:text-ink -mt-1 -mr-2 flex h-11 w-11 shrink-0 cursor-pointer items-center justify-center rounded-full transition-colors"
             aria-label="Đóng"
           >
-            <X className="h-5 w-5" />
+            <IconClose className="h-5 w-5" />
           </button>
         </div>
 
@@ -138,9 +139,9 @@ export const AddSourceModal: React.FC<AddSourceModalProps> = ({
                 className={`mt-2 flex items-start gap-1.5 text-[13px] ${testResult.success ? 'text-signal-800' : 'text-danger-700'}`}
               >
                 {testResult.success ? (
-                  <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0" />
+                  <IconCheckCircle className="mt-0.5 h-4 w-4 shrink-0" />
                 ) : (
-                  <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" />
+                  <IconAlert className="mt-0.5 h-4 w-4 shrink-0" />
                 )}
                 <span className="break-words">
                   {testResult.success
@@ -174,18 +175,16 @@ export const AddSourceModal: React.FC<AddSourceModalProps> = ({
             <label htmlFor="src-cat" className="text-ink-2 mb-1.5 block text-[13px] font-medium">
               Nhóm
             </label>
-            <select
+            <Select
               id="src-cat"
+              label="Nhóm"
               value={newSourceCategory}
-              onChange={(e) => setNewSourceCategory(e.target.value)}
-              className={`${field} cursor-pointer`}
-            >
-              {Object.entries(SOURCE_CATEGORY_LABELS).map(([id, label]) => (
-                <option key={id} value={id}>
-                  {label}
-                </option>
-              ))}
-            </select>
+              onChange={setNewSourceCategory}
+              options={Object.entries(SOURCE_CATEGORY_LABELS).map(([id, label]) => ({
+                value: id,
+                label,
+              }))}
+            />
           </div>
 
           {saveError && (
@@ -199,7 +198,7 @@ export const AddSourceModal: React.FC<AddSourceModalProps> = ({
               Huỷ
             </button>
             <button type="submit" disabled={saving} className={primaryButton}>
-              <Plus className="h-4 w-4" />
+              <IconPlus className="h-4 w-4" />
               {saving ? 'Đang thêm…' : 'Thêm nguồn'}
             </button>
           </div>

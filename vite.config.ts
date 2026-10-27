@@ -10,7 +10,7 @@ export default defineConfig({
     tailwindcss(),
     VitePWA({
       registerType: 'autoUpdate',
-      includeAssets: ['favicon.svg', 'icons.svg'],
+      includeAssets: ['favicon.svg', 'favicon.ico', 'apple-touch-icon.png'],
       manifest: {
         name: 'TechPulse AI - Tạp chí Công nghệ Backend & AI',
         short_name: 'TechPulse',
@@ -20,12 +20,17 @@ export default defineConfig({
         background_color: '#f2f5f8',
         display: 'standalone',
         orientation: 'portrait',
+        // Generated from public/favicon.svg; the maskable one is full-bleed with the mark
+        // inside the safe zone so Android's crop never clips it.
         icons: [
+          { src: 'favicon.svg', sizes: 'any', type: 'image/svg+xml', purpose: 'any' },
+          { src: 'pwa-192x192.png', sizes: '192x192', type: 'image/png', purpose: 'any' },
+          { src: 'pwa-512x512.png', sizes: '512x512', type: 'image/png', purpose: 'any' },
           {
-            src: 'favicon.svg',
-            sizes: '192x192 512x512',
-            type: 'image/svg+xml',
-            purpose: 'any maskable',
+            src: 'maskable-512x512.png',
+            sizes: '512x512',
+            type: 'image/png',
+            purpose: 'maskable',
           },
         ],
       },
@@ -50,9 +55,6 @@ export default defineConfig({
           if (id.includes('node_modules')) {
             if (id.includes('react') || id.includes('react-dom')) {
               return 'vendor-react';
-            }
-            if (id.includes('lucide-react')) {
-              return 'vendor-icons';
             }
             if (id.includes('axios') || id.includes('clsx') || id.includes('tailwind-merge')) {
               return 'vendor-utils';

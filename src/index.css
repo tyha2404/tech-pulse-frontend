@@ -17,6 +17,8 @@
   --font-mono: ui-monospace, 'SF Mono', Menlo, monospace;
 
   --color-primary: #234e79;
+  /* Logo spike only; identical in both themes so the mark matches the favicon. */
+  --color-pulse: #7ddcb6;
   --color-primary-hover: #193c60;
   --color-scrim: #050b12;
   --color-code: #16202b;
@@ -160,16 +162,6 @@
   --color-danger-800: #ffcbd0;
   --color-danger-900: #ffdee1;
   --color-danger-950: #fff0f1;
-}
-
-.theme-control:focus-within {
-  outline: 2px solid var(--color-accent-600);
-  outline-offset: 2px;
-}
-
-.feed-intro {
-  border-left: 3px solid var(--color-accent-600);
-  padding-left: 1.25rem;
 }
 
 html,

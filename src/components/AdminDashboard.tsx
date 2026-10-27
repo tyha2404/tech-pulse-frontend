@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { RefreshCw } from 'lucide-react';
+import { IconRefresh, IconSpinner } from './icons';
 import { PageHeader } from './PageHeader';
 import { primaryButton, secondaryButton, sectionHeading } from '../utils/ui';
 import { formatRelativeTime } from '../utils/format';
@@ -79,7 +79,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = () => {
         role="status"
         className="text-muted flex items-center justify-center gap-2 py-24 text-[14px]"
       >
-        <RefreshCw className="h-4 w-4 animate-spin" /> Đang tải tình trạng hệ thống…
+        <IconSpinner className="h-4 w-4 animate-spin" /> Đang tải tình trạng hệ thống…
       </p>
     );
   }
@@ -91,7 +91,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = () => {
           Không tải được số liệu: backend không phản hồi.
         </p>
         <button onClick={loadData} className={`${secondaryButton} mt-4`}>
-          <RefreshCw className="h-4 w-4" /> Thử lại
+          <IconRefresh className="h-4 w-4" /> Thử lại
         </button>
       </div>
     );
@@ -146,7 +146,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = () => {
         actions={
           <>
             <button onClick={loadData} disabled={refreshing} className={secondaryButton}>
-              <RefreshCw className={`h-4 w-4 ${refreshing ? 'animate-spin' : ''}`} />
+              <IconRefresh className={`h-4 w-4 ${refreshing ? 'animate-spin' : ''}`} />
               Làm mới
             </button>
             <button

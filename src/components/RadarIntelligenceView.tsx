@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { Send, RefreshCw } from 'lucide-react';
+import { IconRefresh, IconSend, IconSpinner } from './icons';
 import { PageHeader } from './PageHeader';
 import { primaryButton, secondaryButton, sectionHeading } from '../utils/ui';
-import { scoreTier } from '../utils/score';
+import { ScoreBadge } from './ScoreBadge';
 import { apiClient } from '../api';
 import type { WeeklyRadarDigest, Article } from '../types';
 
@@ -77,11 +77,11 @@ export const RadarIntelligenceView: React.FC<RadarIntelligenceViewProps> = ({
               title="AI phân tích lại từ các bài mới nhất"
               className={secondaryButton}
             >
-              <RefreshCw className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
+              <IconRefresh className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
               Phân tích lại
             </button>
             <button onClick={handleDispatch} disabled={dispatching} className={primaryButton}>
-              <Send className="h-4 w-4" />
+              <IconSend className="h-4 w-4" />
               {dispatching ? 'Đang gửi…' : 'Gửi bản tin'}
             </button>
           </>
@@ -98,14 +98,14 @@ export const RadarIntelligenceView: React.FC<RadarIntelligenceViewProps> = ({
         <div role="alert" className="py-12 text-center">
           <p className="text-danger-700 text-[15px]">{errorMsg}</p>
           <button onClick={() => fetchRadarDigest(false)} className={`${secondaryButton} mt-4`}>
-            <RefreshCw className="h-4 w-4" /> Thử lại
+            <IconRefresh className="h-4 w-4" /> Thử lại
           </button>
         </div>
       )}
 
       {loading && !digest ? (
         <div role="status" className="text-muted py-20 text-center text-[14px]">
-          <RefreshCw className="mx-auto mb-3 h-5 w-5 animate-spin" />
+          <IconSpinner className="mx-auto mb-3 h-5 w-5 animate-spin" />
           AI đang tổng hợp radar…
           <p className="text-faint mt-1 text-[13px]">Lần đầu có thể mất 15–25 giây.</p>
         </div>
@@ -185,22 +185,14 @@ export const RadarIntelligenceView: React.FC<RadarIntelligenceViewProps> = ({
                     <li key={art.id}>
                       <button
                         onClick={() => onSelectArticle(art as unknown as Article)}
-                        className="hover:bg-wash/50 grid w-full cursor-pointer grid-cols-[3rem_minmax(0,1fr)] items-baseline gap-x-3 py-3 text-left"
+                        className="hover:bg-wash/50 block w-full cursor-pointer py-3 text-left"
                       >
-                        <span
-                          className={`score-numeral text-[18px] ${
-                            scoreTier(art.relevance_score) === 'high'
-                              ? 'text-signal-700 font-bold'
-                              : 'text-ink-2 font-semibold'
-                          }`}
-                        >
-                          {art.relevance_score.toFixed(1)}
-                        </span>
                         <span className="min-w-0">
                           <span className="text-ink block text-[15px] leading-snug font-medium">
                             {art.vietnamese_title || art.title}
                           </span>
-                          <span className="text-muted mt-0.5 block text-[13px]">
+                          <span className="text-muted mt-1.5 flex items-center gap-3 text-[13px]">
+                            <ScoreBadge score={art.relevance_score} />
                             {art.source_name}
                           </span>
                         </span>

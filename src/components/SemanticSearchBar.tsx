@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
-import { Search, Loader2, ThumbsUp, ThumbsDown } from 'lucide-react';
+import { IconSearch, IconSpinner, IconThumbsDown, IconThumbsUp } from './icons';
 import { PageHeader } from './PageHeader';
 import { primaryButton } from '../utils/ui';
-import { scoreTier } from '../utils/score';
+import { ScoreBadge } from './ScoreBadge';
 import type { Article } from '../types';
 import { searchSemanticArticles, sendArticleFeedback } from '../api';
 
@@ -65,7 +65,7 @@ export const SemanticSearchBar: React.FC<SemanticSearchBarProps> = ({ onSelectAr
         }}
         className="border-rule bg-surface focus-within:border-ink-2 flex items-center gap-2 rounded-full border py-1.5 pr-1.5 pl-4"
       >
-        <Search className="text-muted h-5 w-5 shrink-0" />
+        <IconSearch className="text-muted h-5 w-5 shrink-0" />
         <label htmlFor="semantic-q" className="sr-only">
           Bạn muốn tìm hiểu gì?
         </label>
@@ -82,7 +82,7 @@ export const SemanticSearchBar: React.FC<SemanticSearchBarProps> = ({ onSelectAr
           disabled={loading || !query.trim()}
           className={`${primaryButton} disabled:cursor-not-allowed disabled:opacity-40`}
         >
-          {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Tìm'}
+          {loading ? <IconSpinner className="h-4 w-4 animate-spin" /> : 'Tìm'}
         </button>
       </form>
 
@@ -109,7 +109,7 @@ export const SemanticSearchBar: React.FC<SemanticSearchBarProps> = ({ onSelectAr
             role="status"
             className="text-muted flex items-center justify-center gap-2 py-16 text-[14px]"
           >
-            <Loader2 className="h-4 w-4 animate-spin" /> Đang tìm bài cùng ý nghĩa…
+            <IconSpinner className="h-4 w-4 animate-spin" /> Đang tìm bài cùng ý nghĩa…
           </p>
         ) : error ? (
           <p role="alert" className="text-danger-700 py-12 text-center text-[15px]">
@@ -130,20 +130,7 @@ export const SemanticSearchBar: React.FC<SemanticSearchBarProps> = ({ onSelectAr
               </p>
               <ul className="divide-rule border-rule divide-y border-y">
                 {results.map((art) => (
-                  <li
-                    key={art.id}
-                    className="group relative grid grid-cols-[3.25rem_minmax(0,1fr)] gap-x-3 py-4 sm:grid-cols-[4rem_minmax(0,1fr)]"
-                  >
-                    <span
-                      className={`score-numeral pt-0.5 text-[20px] leading-none ${
-                        scoreTier(art.relevance_score) === 'high'
-                          ? 'text-signal-700 font-bold'
-                          : 'text-ink-2 font-semibold'
-                      }`}
-                      title={`Điểm AI ${art.relevance_score.toFixed(1)}/10`}
-                    >
-                      {art.relevance_score.toFixed(1)}
-                    </span>
+                  <li key={art.id} className="group relative py-4">
                     <div className="min-w-0">
                       <h3 className="text-ink text-[16px] leading-snug font-semibold">
                         <button
@@ -159,7 +146,8 @@ export const SemanticSearchBar: React.FC<SemanticSearchBarProps> = ({ onSelectAr
                         </p>
                       )}
                       <div className="mt-2 flex items-center justify-between gap-2">
-                        <p className="text-muted text-[13px]">
+                        <p className="text-muted flex min-w-0 flex-wrap items-center gap-x-3 gap-y-1 text-[13px]">
+                          <ScoreBadge score={art.relevance_score} />
                           <span className="text-ink-2 font-medium">
                             {art.source_name || 'Không rõ nguồn'}
                           </span>
@@ -180,7 +168,7 @@ export const SemanticSearchBar: React.FC<SemanticSearchBarProps> = ({ onSelectAr
                                 : 'text-faint hover:bg-wash hover:text-ink'
                             }`}
                           >
-                            <ThumbsUp
+                            <IconThumbsUp
                               className="h-[18px] w-[18px]"
                               fill={feedbackMap[art.id] === 'like' ? 'currentColor' : 'none'}
                             />
@@ -195,7 +183,7 @@ export const SemanticSearchBar: React.FC<SemanticSearchBarProps> = ({ onSelectAr
                                 : 'text-faint hover:bg-wash hover:text-ink'
                             }`}
                           >
-                            <ThumbsDown
+                            <IconThumbsDown
                               className="h-[18px] w-[18px]"
                               fill={feedbackMap[art.id] === 'dislike' ? 'currentColor' : 'none'}
                             />
