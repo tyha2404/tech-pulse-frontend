@@ -2,6 +2,7 @@ import React, { useEffect, useId, useRef, useState } from 'react';
 import { IconClose, IconFilter, IconSearch } from './icons';
 import { Select } from './Select';
 import type { Source } from '../types';
+import { SOURCE_CATEGORY_LABELS } from '../utils/format';
 
 interface FilterToolbarProps {
   selectedCategory: string;
@@ -28,10 +29,7 @@ interface FilterToolbarProps {
 
 const CATEGORIES = [
   { id: 'all', label: 'Tất cả' },
-  { id: 'AI', label: 'AI' },
-  { id: 'Backend', label: 'Backend' },
-  { id: 'Vietnam', label: 'Việt Nam' },
-  { id: 'Global', label: 'Quốc tế' },
+  ...Object.entries(SOURCE_CATEGORY_LABELS).map(([id, label]) => ({ id, label })),
 ];
 
 type View = 'all' | 'unread' | 'read' | 'saved' | 'hidden';
