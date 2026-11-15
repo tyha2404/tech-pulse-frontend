@@ -19,7 +19,7 @@ export const AddSourceModal: React.FC<AddSourceModalProps> = ({
 }) => {
   const [newSourceName, setNewSourceName] = useState('');
   const [newSourceUrl, setNewSourceUrl] = useState('');
-  const [newSourceCategory, setNewSourceCategory] = useState('Backend & Architecture');
+  const [newSourceCategory, setNewSourceCategory] = useState('Vietnam Dev');
   const [testingSource, setTestingSource] = useState(false);
   const [testResult, setTestResult] = useState<CrawlTestResult | null>(null);
   const [saveError, setSaveError] = useState<string | null>(null);
@@ -115,7 +115,7 @@ export const AddSourceModal: React.FC<AddSourceModalProps> = ({
               <input
                 id="src-url"
                 type="url"
-                placeholder="https://netflixtechblog.com"
+                placeholder="https://viblo.asia"
                 value={newSourceUrl}
                 onChange={(e) => {
                   setNewSourceUrl(e.target.value);
@@ -163,7 +163,7 @@ export const AddSourceModal: React.FC<AddSourceModalProps> = ({
             <input
               id="src-name"
               type="text"
-              placeholder="Netflix Engineering"
+              placeholder="Viblo"
               value={newSourceName}
               onChange={(e) => setNewSourceName(e.target.value)}
               required

@@ -14,10 +14,8 @@ export function formatRelativeTime(dateStr?: string): string {
 }
 
 export const SOURCE_CATEGORY_LABELS: Record<string, string> = {
-  'AI & Future Tech': 'AI & công nghệ mới',
-  'Backend & Architecture': 'Backend & kiến trúc',
-  'Vietnam Tech': 'Việt Nam',
-  'Global Tech': 'Quốc tế',
+  'Vietnam Tech': 'Tin công nghệ',
+  'Vietnam Dev': 'Lập trình',
 };
 
 export const SOURCE_STATUS: Record<string, { label: string; dot: string; text: string }> = {
