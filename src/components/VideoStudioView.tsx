@@ -67,6 +67,10 @@ export const VideoStudioView: React.FC<VideoStudioViewProps> = ({ notify }) => {
 
   const running = job?.status === 'running';
 
+  const description = job?.min_score
+    ? `Tạo video ngắn từ tất cả bài từ ${job.min_score} điểm chưa lên video nào (tối đa ${job.max_articles ?? 20} bài, cần ít nhất ${job.min_articles ?? 3}). Video xong sẽ tự gửi tới Telegram.`
+    : 'Tạo video ngắn từ các bài điểm cao chưa lên video nào. Video xong sẽ tự gửi tới Telegram.';
+
   // Runs once, when a build that was running turns out to be finished
   const handleFinished = useCallback(
     (done: VideoJobStatus) => {
@@ -109,7 +113,14 @@ export const VideoStudioView: React.FC<VideoStudioViewProps> = ({ notify }) => {
     try {
       const res = await startVideo(reuseUsed);
       if (res.started) {
-        setJob({ status: 'running', step: 'Chọn bài', elapsed_sec: 0, result: null, error: null });
+        setJob((prev) => ({
+          ...prev,
+          status: 'running',
+          step: 'Chọn bài',
+          elapsed_sec: 0,
+          result: null,
+          error: null,
+        }));
       } else {
         setNotice(res.message ?? 'Chưa tạo được video.');
         if (res.skipped === 'busy') setJob(await getVideoStatus());
@@ -148,7 +159,7 @@ export const VideoStudioView: React.FC<VideoStudioViewProps> = ({ notify }) => {
     <div>
       <PageHeader
         title="Video TikTok"
-        description="Tạo video ngắn từ 3 bài điểm cao nhất chưa lên video nào. Video xong sẽ tự gửi tới Telegram."
+        description={description}
         actions={
           <button onClick={handleStart} disabled={starting || running} className={primaryButton}>
             {starting || running ? (

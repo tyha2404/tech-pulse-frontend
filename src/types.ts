@@ -201,4 +201,7 @@ export interface VideoJobStatus {
   elapsed_sec: number | null;
   result: { success: boolean; message?: string; telegram_sent?: boolean | null } | null;
   error: string | null;
+  min_score?: number; // articles below this score never go into a video
+  min_articles?: number;
+  max_articles?: number;
 }
