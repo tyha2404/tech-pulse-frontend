@@ -16,6 +16,9 @@ import { formatRelativeTime, SOURCE_CATEGORY_LABELS, SOURCE_STATUS } from './uti
 const RadarIntelligenceView = lazy(() =>
   import('./components/RadarIntelligenceView').then((m) => ({ default: m.RadarIntelligenceView }))
 );
+const VideoStudioView = lazy(() =>
+  import('./components/VideoStudioView').then((m) => ({ default: m.VideoStudioView }))
+);
 const AdminDashboard = lazy(() =>
   import('./components/AdminDashboard').then((m) => ({ default: m.AdminDashboard }))
 );
@@ -742,6 +745,23 @@ export default function App() {
         {/* ================= VIEW 4: SEMANTIC SEARCH ================= */}
         {activeTab === 'semantic' && (
           <SemanticSearchBar onSelectArticle={(art) => setSelectedArticle(art)} />
+        )}
+
+        {/* ================= VIDEO TIKTOK ================= */}
+        {activeTab === 'video' && (
+          <Suspense
+            fallback={
+              <div
+                role="status"
+                className="text-muted flex h-64 items-center justify-center gap-2 text-[14px]"
+              >
+                <IconSpinner className="h-4 w-4 animate-spin" />
+                Đang mở trang video…
+              </div>
+            }
+          >
+            <VideoStudioView notify={notify} />
+          </Suspense>
         )}
 
         {/* ================= VIEW 5: ADMIN OBSERVABILITY DASHBOARD ================= */}

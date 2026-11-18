@@ -1,5 +1,12 @@
 import axios from 'axios';
-import type { AdminMetrics, Article, UserPreference } from './types';
+import type {
+  AdminMetrics,
+  Article,
+  NewsVideo,
+  UserPreference,
+  VideoJobStatus,
+  VideoStartResponse,
+} from './types';
 
 // Vite reads environment variables prefixed with VITE_
 export const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || '/api';
@@ -118,4 +125,29 @@ export async function generateArticleBlueprint(articleId: number): Promise<Artic
     );
     return res.data;
   }
+}
+
+// Video API: building takes minutes, so POST only starts it and the UI polls the status
+export async function startVideo(reuseUsedArticles = false): Promise<VideoStartResponse> {
+  const res = await apiClient.post<VideoStartResponse>('/video/generate', null, {
+    params: reuseUsedArticles ? { force: true } : {},
+  });
+  return res.data;
+}
+
+export async function getVideoStatus(): Promise<VideoJobStatus> {
+  const res = await apiClient.get<VideoJobStatus>('/video/status');
+  return res.data;
+}
+
+export async function listVideos(): Promise<NewsVideo[]> {
+  const res = await apiClient.get<NewsVideo[]>('/videos');
+  return res.data;
+}
+
+export async function resendVideoToTelegram(
+  id: number
+): Promise<{ success: boolean; message: string }> {
+  const res = await apiClient.post<{ success: boolean; message: string }>(`/videos/${id}/telegram`);
+  return res.data;
 }

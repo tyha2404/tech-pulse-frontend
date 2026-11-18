@@ -98,6 +98,14 @@ export const IconSystem = createIcon(
 
 /* ---------- Actions ---------- */
 
+export const IconVideo = createIcon(
+  'IconVideo',
+  <>
+    <rect x="3.5" y="5.5" width="17" height="13" rx="3" />
+    <path d="m10.5 9.75 4 2.25-4 2.25z" />
+  </>
+);
+
 export const IconRefresh = createIcon(
   'IconRefresh',
   <>

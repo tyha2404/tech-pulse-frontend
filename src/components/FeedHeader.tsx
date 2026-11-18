@@ -10,12 +10,13 @@ import {
   IconSources,
   IconSpinner,
   IconSystem,
+  IconVideo,
 } from './icons';
 import type { Icon as IconType } from './icons';
 import { Logo } from './Logo';
 import { ThemeControl } from './ThemeControl';
 
-export type AppTab = 'feed' | 'semantic' | 'personalized' | 'radar' | 'sources' | 'admin';
+export type AppTab = 'feed' | 'semantic' | 'personalized' | 'radar' | 'video' | 'sources' | 'admin';
 
 interface FeedHeaderProps {
   activeTab: AppTab;
@@ -31,6 +32,7 @@ const TABS: { id: AppTab; label: string; short: string; icon: IconType }[] = [
   { id: 'personalized', label: 'Dành cho bạn', short: 'Cho bạn', icon: IconForYou },
   { id: 'semantic', label: 'Tìm theo ngữ nghĩa', short: 'Tìm', icon: IconSearch },
   { id: 'radar', label: 'Radar công nghệ', short: 'Radar', icon: IconRadar },
+  { id: 'video', label: 'Video TikTok', short: 'Video', icon: IconVideo },
   { id: 'sources', label: 'Nguồn tin', short: 'Nguồn', icon: IconSources },
   { id: 'admin', label: 'Hệ thống', short: 'Hệ thống', icon: IconSystem },
 ];
@@ -135,7 +137,7 @@ export const FeedHeader: React.FC<FeedHeaderProps> = ({
         aria-label="Điều hướng chính"
         className="border-rule bg-paper/95 fixed inset-x-0 bottom-0 z-40 border-t pb-[env(safe-area-inset-bottom,0px)] backdrop-blur-md xl:hidden"
       >
-        <div className="grid grid-cols-6">
+        <div className="grid grid-cols-7">
           {TABS.map((tab) => {
             const active = activeTab === tab.id;
             const Icon = tab.icon;

@@ -177,3 +177,28 @@ export interface UserPreference {
   created_at?: string;
   updated_at?: string;
 }
+
+export interface NewsVideo {
+  id: number;
+  file: string;
+  url: string; // relative to the API base, e.g. /video/files/techpulse-….mp4
+  caption?: string;
+  duration_sec?: number;
+  telegram_sent: boolean | null; // null: Telegram is not configured
+  created_at: string;
+  articles: { id: number; title: string; url: string }[];
+}
+
+export interface VideoStartResponse {
+  started: boolean;
+  skipped?: 'busy' | 'not_enough_new_articles';
+  message?: string;
+}
+
+export interface VideoJobStatus {
+  status: 'idle' | 'running' | 'done' | 'skipped' | 'failed';
+  step: string;
+  elapsed_sec: number | null;
+  result: { success: boolean; message?: string; telegram_sent?: boolean | null } | null;
+  error: string | null;
+}
